@@ -38,13 +38,29 @@ h2{font-size:24px;margin:4px 0 6px;letter-spacing:-.01em}
 .grid.big{grid-template-columns:repeat(auto-fill,minmax(340px,1fr))}
 .card{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;cursor:pointer;min-width:0;transition:border-color .15s,box-shadow .15s}
 .card:hover{border-color:#cfc8bb}
-.card.sel{border-color:var(--acc);box-shadow:0 0 0 2px var(--acc)}
+.card.sel{border-color:var(--ok);box-shadow:0 0 0 2px var(--ok)}
 .media{position:relative;aspect-ratio:16/9;background:#1b1b1b;overflow:hidden}
 .media.v916{aspect-ratio:16/9}
 .media video,.media img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.media hyperframes-player{position:absolute;inset:0;width:100%;height:100%;display:block}
+.media hyperframes-player{position:absolute;inset:0;width:100%;height:100%;display:block;transition:opacity .25s}
+/* значок «оживёт»: пропадает, пока превью играет */
+.media[data-kind]::after{content:"";position:absolute;right:8px;bottom:8px;z-index:3;width:30px;height:30px;border-radius:50%;background:rgba(21,21,21,.72) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12'%3E%3Cpath d='M3 1.5v9l7.5-4.5z' fill='%23fff'/%3E%3C/svg%3E") 55% 50%/12px no-repeat;transition:opacity .2s;pointer-events:none}
+.media[data-on]::after{opacity:0}
+.ph{position:absolute;inset:0;display:grid;place-items:center;padding:0 18%;text-align:center;color:#d8d3ca;font-weight:600;font-size:17px;background:radial-gradient(120% 90% at 50% 40%,#2b2a27,#151514)}
 .code{position:absolute;left:8px;top:8px;z-index:2;background:rgba(21,21,21,.82);color:#fff;font-weight:700;font-size:13px;border-radius:7px;padding:2px 8px}
-.pick{position:absolute;right:8px;top:8px;z-index:2;background:var(--acc);color:#fff;font-weight:700;font-size:12px;border-radius:7px;padding:3px 8px;display:none}
+.pick{position:absolute;right:8px;top:8px;z-index:4;background:var(--ok);color:#fff;font-weight:700;font-size:12px;border-radius:7px;padding:3px 8px;display:none}
+.acts{display:flex;gap:8px;margin-top:10px}
+.acts button{flex:1;min-height:40px;border-radius:10px;font-weight:600;cursor:pointer}
+.acts .see{border:1px solid var(--line);background:var(--paper)}
+.acts .take{border:0;background:var(--ink);color:#fff}
+.card.sel .acts .take{background:var(--ok)}
+.chip.more{border-style:dashed}
+.stepm{display:none}
+.mbar{display:none}
+.copytop{width:100%;max-width:420px;min-height:48px;margin:4px 0 10px}
+.short{font-size:15px;line-height:21px;margin:0 0 12px}
+.anchors{display:flex;gap:16px;margin:0 0 14px}.anchors a{color:var(--ink);font-weight:600;min-height:44px;display:inline-flex;align-items:center}
+@media (min-width:1100px){.grid.two{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}}
 .card.sel .pick{display:block}
 .body{padding:10px 12px 12px}
 .ttl{font-weight:650;font-size:15.5px}
@@ -86,8 +102,14 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:1
 .tempo i{flex:1;background:var(--ink);opacity:.15;border-radius:3px}
 .loadmore{margin:18px auto 0;display:block}
 .note{font-size:13px;color:var(--mute);margin-top:10px}
-@media (max-width:980px){.wrap{grid-template-columns:1fr}.side{display:none;position:fixed;inset:auto 0 0 0;top:auto;max-height:70vh;border-radius:16px 16px 0 0;z-index:30;box-shadow:0 -10px 30px rgba(0,0,0,.18)}.side.open{display:block;padding-bottom:84px}
-.fab{display:flex;position:fixed;right:14px;bottom:14px;z-index:31;border:0;background:var(--ink);color:#fff;border-radius:999px;padding:12px 18px;font-weight:650;box-shadow:0 6px 20px rgba(0,0,0,.25)}}
+@media (max-width:980px){.wrap{grid-template-columns:1fr;padding-bottom:calc(96px + env(safe-area-inset-bottom))}.side{display:none;position:fixed;inset:auto 0 0 0;top:auto;max-height:70vh;border-radius:16px 16px 0 0;z-index:30;box-shadow:0 -10px 30px rgba(0,0,0,.18)}.side.open{display:block;padding-bottom:calc(84px + env(safe-area-inset-bottom))}
+.mbar{display:flex;gap:8px;position:fixed;left:0;right:0;bottom:0;z-index:31;padding:12px 12px calc(12px + env(safe-area-inset-bottom));background:rgba(245,242,236,.96);backdrop-filter:blur(8px);border-top:1px solid var(--line)}
+.mbar button{min-height:44px;border-radius:12px;font-weight:650;cursor:pointer}
+.mbar .fab{display:block;flex:none;border:1px solid var(--line);background:var(--paper);color:var(--ink);padding:0 14px}
+.mbar .big-btn{flex:1;padding:0 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}}
+@media (max-width:600px){.steps{display:none}.stepm{display:flex;align-items:center;gap:8px;height:44px;padding-bottom:6px}
+.stepm button{border:0;background:none;font-weight:600;min-width:44px;min-height:44px;padding:0 4px;cursor:pointer}
+.stepm select{flex:1;min-width:0;height:40px;border:1px solid var(--line);border-radius:10px;background:var(--paper);font:600 14px "Golos Text",system-ui,sans-serif;padding:0 10px;color:var(--ink)}}
 @media (max-width:560px){.bar.scroll{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;margin-right:-12px;padding-right:12px}.bar.scroll::-webkit-scrollbar{display:none}.bar.scroll .chip,.bar.scroll .note{flex:none}.top-in{padding:10px 12px 0}.wrap{padding:12px 12px 110px}.grid,.grid.big{grid-template-columns:1fr}h2{font-size:21px}.brand .sub{display:none}}
 </style>
 </head>
@@ -95,23 +117,24 @@ textarea{width:100%;min-height:90px;border:1px solid var(--line);border-radius:1
 <header class="top"><div class="top-in">
   <div class="brand"><h1>Конструктор видео</h1><span class="sub">Выбираешь глазами — в конце готовое сообщение для Claude</span></div>
   <nav class="steps" id="steps"></nav>
+  <div class="stepm" id="stepm"></div>
 </div></header>
 <div class="wrap">
   <main class="main" id="main"></main>
   <aside class="side" id="side"></aside>
 </div>
-<button class="fab" id="fab">Мой выбор · 0</button>
+<div class="mbar"><button class="fab" id="fab">Выбор · 0</button><button class="big-btn" id="mnext"></button></div>
 <dialog id="dlg"><button class="close" onclick="closeDlg()" aria-label="Закрыть">×</button><div class="dlg-media" id="dlgMedia"></div><div class="dlg-b" id="dlgB"></div></dialog>
 <script src="data.js"></script>
 <script src="demos.js"></script>
 <script>
 "use strict";
 const D=window.SK;
-const STEPS=[["who","Для кого"],["fam","Семейство"],["style","Стиль"],["anim","Анимации"],["look","Цвет и шрифт"],["more","Темп, звук, формат"],["done","Итог"]];
-const LS="sk-choice-v1";
+const STEPS=[["who","Для кого"],["typ","Тип стиля"],["style","Стиль"],["anim","Анимации"],["look","Цвет и шрифт"],["more","Темп и звук"],["done","Итог"]];
+const LS="sk-choice-v2";
 let S=load();
-function load(){try{return JSON.parse(localStorage.getItem(LS))||fresh()}catch(e){return fresh()}}
-function fresh(){return {step:"who",proj:null,fam:[],style:[],anim:{},pal:null,font:null,more:{},note:"",grp:null,onlyFit:true}}
+function load(){try{const s=JSON.parse(localStorage.getItem(LS));return s?Object.assign(fresh(),s):fresh()}catch(e){return fresh()}}
+function fresh(){return {step:"who",proj:null,typ:[],fam:[],style:[],anim:{},pal:null,font:null,more:{},note:"",grp:null,onlyFit:true,allChips:false}}
 function save(){try{localStorage.setItem(LS,JSON.stringify(S))}catch(e){}}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -120,84 +143,104 @@ const grpById=Object.fromEntries(D.groups.map(g=>[g.id,g]));
 const animByCode=Object.fromEntries(D.anims.map(a=>[a.code,a]));
 const styleByCode=Object.fromEntries(D.styles.map(s=>[s.code,s]));
 const projById=Object.fromEntries(D.projects.map(p=>[p.id,p]));
+const typeById=Object.fromEntries(D.types.map(t=>[t.id,t]));
+/* семейства для подбора анимаций выводятся из выбранных типов */
+function syncFam(){S.fam=[...new Set(S.typ.flatMap(t=>typeById[t]?typeById[t].fam:[]))]}
 
-/* ---------- живые превью: монтируем только видимое, не больше MAX сразу ---------- */
-const MAX=6;let live=[];
-const io=new IntersectionObserver(es=>es.forEach(e=>{const m=e.target;if(e.isIntersecting)mount(m);else unmount(m)}),{rootMargin:"120px"});
-function mount(m){if(m.dataset.on)return;
-  if(m.dataset.kind==="video"){let v=m.querySelector("video");if(!v.src){v.src=m.dataset.src}const t0=+m.dataset.t0||0,t1=+m.dataset.t1||0;
-    if(t0&&v.currentTime<t0)v.currentTime=t0;v.play().catch(()=>{});m.dataset.on=1;return}
-  if(m.dataset.kind==="demo"){const pp=m.dataset.pal&&D.palettes.find(x=>x.code===m.dataset.pal);m._stop=SKD.run(m.dataset.demo,m,pp?pp.vars:curPal());m.dataset.on=1;return}
-  if(m.dataset.kind==="hf"){live.push(m);if(live.length>MAX){unmount(live[0])}
-    const p=document.createElement("hyperframes-player");p.setAttribute("muted","");p.setAttribute("audio-locked","");p.setAttribute("loop","");p.setAttribute("autoplay","");p.setAttribute("low-power-idle","");p.setAttribute("disable-click-to-play","");p.setAttribute("assets-loading-ui","none");
-    m.appendChild(p);m.dataset.on=1;
-    fetch(m.dataset.src).then(r=>r.json()).then(j=>{if(m.dataset.on)p.setAttribute("srcdoc",j.html)}).catch(()=>{})}}
-function unmount(m){if(!m.dataset.on)return;delete m.dataset.on;
+/* ---------- превью: по умолчанию стоп-кадр; живёт только одна карточка — под курсором (на телефоне — по нажатию на картинку) ---------- */
+const HOVER=matchMedia("(hover:hover) and (pointer:fine)").matches;
+const HINT=HOVER?"Наведи курсор на картинку — она оживёт.":"Нажми на картинку — она оживёт.";
+let liveM=null,loaded=[];
+function mount(m){if(!m||m.dataset.on)return;m.dataset.on=1;
+  if(m.dataset.kind==="video"){const v=m.querySelector("video");if(!v.getAttribute("src"))v.src=m.dataset.src;
+    loaded=loaded.filter(x=>x!==v);loaded.push(v);if(loaded.length>4){const o=loaded.shift();o.removeAttribute("src");o.load()}
+    const t0=+m.dataset.t0||0;if(t0&&v.currentTime<t0)v.currentTime=t0;v.play().catch(()=>{});return}
+  if(m.dataset.kind==="demo"){const pp=m.dataset.pal&&D.palettes.find(x=>x.code===m.dataset.pal);m._stop=SKD.run(m.dataset.demo,m,pp?pp.vars:curPal());return}
+  const p=document.createElement("hyperframes-player");["muted","audio-locked","loop","autoplay","disable-click-to-play"].forEach(x=>p.setAttribute(x,""));p.setAttribute("assets-loading-ui","none");
+  p.style.opacity=0;const show=()=>{p.style.opacity=1};p.addEventListener("ready",()=>{show();try{p.play()}catch(e){}},{once:true});setTimeout(show,1500);m.appendChild(p);
+  fetch(m.dataset.src).then(r=>r.json()).then(j=>{if(m.dataset.on)p.setAttribute("srcdoc",j.html)}).catch(()=>{})}
+function unmount(m){if(!m||!m.dataset.on)return;delete m.dataset.on;
   if(m.dataset.kind==="video"){const v=m.querySelector("video");v&&v.pause();return}
   if(m.dataset.kind==="demo"){m._stop&&m._stop();m._stop=null;return}
-  const p=m.querySelector("hyperframes-player");p&&p.remove();live=live.filter(x=>x!==m)}
+  const p=m.querySelector("hyperframes-player");p&&p.remove()}
+function setLive(m){if(m===liveM)return;unmount(liveM);liveM=m||null;mount(liveM)}
+if(HOVER){document.addEventListener("mouseover",e=>{const c=e.target.closest(".card");setLive(c&&c.querySelector(".media[data-kind]"))});
+  document.documentElement.addEventListener("mouseleave",()=>setLive(null))}
+else document.addEventListener("click",e=>{const m=e.target.closest(".media[data-kind]");if(!m||m.closest("dialog"))return;e.stopPropagation();setLive(liveM===m?null:m)},true);
 function segLoop(v){v.addEventListener("timeupdate",()=>{const m=v.parentElement,t0=+m.dataset.t0||0,t1=+m.dataset.t1||0;if(t1&&v.currentTime>=t1){v.currentTime=t0}})}
-function observe(){document.querySelectorAll(".media[data-kind]").forEach(m=>{io.observe(m);const v=m.querySelector("video");if(v&&!v._seg){v._seg=1;segLoop(v)}})}
+function prep(){document.querySelectorAll(".media video").forEach(v=>{if(!v._seg){v._seg=1;segLoop(v)}})}
 function vmedia(src,poster,t0,t1){return `<div class="media" data-kind="video" data-src="${esc(src)}" data-t0="${t0||0}" data-t1="${t1||""}"><video muted loop playsinline preload="none" referrerpolicy="no-referrer" poster="${esc(poster||"")}"></video>`}
-function hfmedia(a){return a.src==="astra"?`<div class="media" data-kind="demo" data-demo="${esc(a.demo)}">`:`<div class="media" data-kind="hf" data-src="${esc(a.prev)}">`}
+function still(src){return src?`<img loading="lazy" decoding="async" alt="" src="${esc(src)}">`:""}
+function hfmedia(a){return (a.src==="astra"?`<div class="media" data-kind="demo" data-demo="${esc(a.demo)}">`:`<div class="media" data-kind="hf" data-src="${esc(a.prev)}">`)+(still(a.poster)||`<div class="ph">${esc(a.ru)}</div>`)}
 function curPal(){const p=S&&S.pal&&D.palettes.find(x=>x.code===S.pal);return p&&p.vars?p.vars:null}
 
 /* ---------- шаги ---------- */
 function stepsBar(){const i=STEPS.findIndex(x=>x[0]===S.step);
   $("#steps").innerHTML=STEPS.map(([k,v],n)=>`<button class="st ${k===S.step?"on":""} ${doneStep(k)&&k!==S.step?"done":""}" data-k="${k}"><b>${n+1}</b>${v}</button>`).join("");
-  $("#steps").onclick=e=>{const b=e.target.closest(".st");if(b)go(b.dataset.k)}}
-function doneStep(k){return {who:!!S.proj,fam:S.fam.length>0,style:S.style.length>0,anim:Object.values(S.anim).some(a=>a.length),look:!!(S.pal||S.font),more:Object.keys(S.more).length>0,done:false}[k]}
+  $("#steps").onclick=e=>{const b=e.target.closest(".st");if(b)go(b.dataset.k)};
+  const prev=STEPS[i-1];
+  $("#stepm").innerHTML=`${prev?`<button onclick="go('${prev[0]}')" aria-label="Назад">← Назад</button>`:""}<select aria-label="Шаг" onchange="go(this.value)">${STEPS.map(([k,v],n)=>`<option value="${k}" ${k===S.step?"selected":""}>Шаг ${n+1} из ${STEPS.length} · ${v}</option>`).join("")}</select>`}
+function doneStep(k){return {who:!!S.proj,typ:S.typ.length>0,style:S.style.length>0,anim:Object.values(S.anim).some(a=>a.length),look:!!(S.pal||S.font),more:Object.keys(S.more).length>0,done:false}[k]}
 function go(k){$("#side").classList.remove("open");$("#fab").dataset.open="";S.step=k;save();render();window.scrollTo({top:0,behavior:"instant"})}
-function nav(prev,next,label){return `<div class="nav">${prev?`<button class="ghost" onclick="go('${prev}')">← Назад</button>`:"<span></span>"}${next?`<button class="big-btn" onclick="go('${next}')">${label||"Дальше →"}</button>`:""}</div>`}
+const stepName=k=>(STEPS.find(x=>x[0]===k)||["",""])[1];
+function nav(prev,next,label){return `<div class="nav">${prev?`<button class="ghost" onclick="go('${prev}')">← Назад</button>`:"<span></span>"}${next?`<button class="big-btn" onclick="go('${next}')">${label||(next==="done"?"Посмотреть итог →":"Далее: "+stepName(next).toLowerCase()+" →")}</button>`:""}</div>`}
 
 /* ---------- 1. для кого ---------- */
 function viewWho(){
-  return `<h2>Для кого видео?</h2><p class="lead">Семь шагов: для кого → семейство → стиль → анимации → цвет и шрифт → темп и звук → итог. Всё, что нажимаешь, складывается в «Мой выбор». В конце — готовое сообщение, которое ты копируешь мне. От проекта зависит, что я подсвечу как подходящее; можно сразу взять готовый набор и поменять любые пункты.</p>
+  return `<h2>Для кого видео?</h2><p class="lead">Выбери проект — подсвечу подходящее. «Готовый набор» сразу заполнит все шаги, любой пункт потом можно поменять.</p>
   <div class="grid big">${D.projects.map(p=>`<div class="card pj ${S.proj===p.id?"sel":""}" data-p="${p.id}"><span class="pick">выбрано</span>
    <div class="ttl">${esc(p.ru)}</div><div class="what">${esc(p.desc)}</div>
-   <div class="tags">${p.fams.map(f=>`<span class="tag rec">${esc(famById[f]?famById[f].ru:f)}</span>`).join("")}</div>
-   ${p.preset?`<div style="margin-top:12px"><button class="ghost" data-preset="${p.id}">Взять готовый набор</button></div>`:""}</div>`).join("")}</div>
-   ${nav(null,"fam")}`}
+   <div class="tags">${(p.types||[]).slice(0,5).map(t=>`<span class="tag rec">${esc(typeById[t]?typeById[t].ru:t)}</span>`).join("")}</div>
+   ${p.preset&&p.preset.style?`<div style="margin-top:12px"><button class="ghost" data-preset="${p.id}">Применить готовый набор</button></div>`:""}</div>`).join("")}</div>
+   ${nav(null,"typ")}`}
 function bindWho(){$("#main").onclick=e=>{const pr=e.target.closest("[data-preset]");if(pr){applyPreset(pr.dataset.preset);return}
   const c=e.target.closest("[data-p]");if(!c)return;S.proj=S.proj===c.dataset.p?null:c.dataset.p;save();render()}}
 function applyPreset(id){const p=projById[id];if(!p||!p.preset)return;const x=p.preset;S.proj=id;
-  S.fam=(x.fam||[]).slice();S.style=(x.style||[]).filter(c=>styleByCode[c]);S.anim={};(x.anim||[]).forEach(c=>{const a=animByCode[c];if(a){(S.anim[a.group]=S.anim[a.group]||[]).push(c)}});
+  S.typ=(x.typ||[]).filter(t=>typeById[t]);syncFam();S.style=(x.style||[]).filter(c=>styleByCode[c]);S.anim={};(x.anim||[]).forEach(c=>{const a=animByCode[c];if(a){(S.anim[a.group]=S.anim[a.group]||[]).push(c)}});
   S.pal=x.pal||null;S.font=x.font||null;S.more=Object.assign({},x.more||{});save();go("done")}
 
-/* ---------- 2. семейство ---------- */
-function viewFam(){const rec=S.proj?projById[S.proj].fams:[];
-  const list=D.families.slice().sort((a,b)=>(rec.includes(b.id)-rec.includes(a.id)));
-  return `<h2>Какое семейство стилей?</h2><p class="lead">Семейство — общий язык картинки: интерфейсы, бумага, рисовка от руки, Япония и так далее. Можно выбрать 1–2, внутри будут конкретные стили.</p>
-  <div class="grid big">${list.map(f=>`<div class="card ${S.fam.includes(f.id)?"sel":""}" data-f="${f.id}"><span class="pick">выбрано</span>
-   ${f.cover?vmedia(f.cover.video,f.cover.poster,f.cover.t0,f.cover.t1):`<div class="media">`}<span class="code">${f.id.replace("F","Ф")}</span></div>
-   <div class="body"><div class="ttl">${esc(f.ru)}</div><div class="what">${esc(f.what)}</div><div class="when">Для чего: ${esc(f.for)}</div>
-   <div class="tags">${rec.includes(f.id)?'<span class="tag rec">советую для проекта</span>':""}<span class="tag">${D.styles.filter(s=>s.fam===f.id).length} стилей</span></div></div></div>`).join("")}</div>
+/* ---------- 2. тип стиля ---------- */
+function recTypes(){return S.proj?(projById[S.proj].types||[]):[]}
+function toggleTyp(id){S.typ=S.typ.includes(id)?S.typ.filter(x=>x!==id):S.typ.concat(id).slice(-2);syncFam()}
+function viewTyp(){const rec=recTypes();
+  const list=D.types.map((t,i)=>[t,rec.indexOf(t.id),i]).sort((a,b)=>((a[1]<0)-(b[1]<0))||(a[1]-b[1])||(a[2]-b[2])).map(x=>x[0]);
+  return `<h2>Как будет выглядеть видео?</h2><p class="lead">Выбери 1–2 типа — на следующем шаге будут конкретные примеры. ${HINT}</p>
+  <div class="grid big">${list.map(t=>`<div class="card ${S.typ.includes(t.id)?"sel":""}" data-t="${t.id}"><span class="pick">выбрано</span>
+   ${t.cover?vmedia(t.cover.video,t.cover.poster,t.cover.t0,t.cover.t1):`<div class="media">`}<span class="code">${t.code}</span></div>
+   <div class="body"><div class="ttl">${esc(t.ru)}</div><div class="what">${esc(t.what)}</div><div class="when">Для чего: ${esc(t.for)}</div>
+   <div class="tags">${rec.includes(t.id)?'<span class="tag rec">советую для проекта</span>':""}<span class="tag">${t.n} стилей</span></div></div></div>`).join("")}</div>
   ${nav("who","style")}`}
-function bindFam(){$("#main").onclick=e=>{const c=e.target.closest("[data-f]");if(!c)return;const id=c.dataset.f;
-  S.fam=S.fam.includes(id)?S.fam.filter(x=>x!==id):S.fam.concat(id).slice(-2);save();render()}}
+function bindTyp(){$("#main").onclick=e=>{const c=e.target.closest("[data-t]");if(!c)return;toggleTyp(c.dataset.t);save();render()}}
 
 /* ---------- 3. стиль ---------- */
-let styleLimit=36;
-function viewStyle(){const fams=S.fam.length?S.fam:[];
-  const list=D.styles.filter(s=>!fams.length||fams.includes(s.fam));
+let styleLimit=24;
+function typeChips(){const rec=recTypes();const on=id=>S.typ.includes(id);
+  const pri=D.types.filter(t=>on(t.id)).concat(D.types.filter(t=>!on(t.id)&&rec.includes(t.id)));
+  const all=pri.concat(D.types.filter(t=>!pri.includes(t)));const head=S.allChips?all:all.slice(0,Math.max(8,pri.length));
+  return `<div class="bar scroll">${head.map(t=>`<button class="chip ${on(t.id)?"on":""}" data-tt="${t.id}">${esc(t.ru)}<small>${t.n}</small></button>`).join("")}<button class="chip more" data-allchips="1">${S.allChips?"Свернуть":"Все типы · "+D.types.length}</button></div>`}
+function viewStyle(){const typ=S.typ;
+  const list=D.styles.filter(s=>!typ.length||typ.includes(s.type));
   const shown=list.slice(0,styleLimit);
-  return `<h2>Стиль рисовки</h2><p class="lead">${fams.length?"Стили семейства "+fams.map(f=>"«"+esc(famById[f].ru)+"»").join(" и "):"Все стили"}. Нажми на карточку — откроется большой просмотр. Выбери один главный стиль, можно добавить второй для смеси.</p>
-  <div class="bar scroll">${D.families.map(f=>`<button class="chip ${fams.includes(f.id)?"on":""}" data-ff="${f.id}">${esc(f.ru)}<small>${D.styles.filter(s=>s.fam===f.id).length}</small></button>`).join("")}</div>
-  <div class="grid">${shown.map(styleCard).join("")}</div>
-  ${list.length>styleLimit?`<button class="ghost loadmore" onclick="styleLimit+=36;render()">Показать ещё ${list.length-styleLimit}</button>`:""}
-  ${nav("fam","anim")}`}
+  return `<h2>Выбери конкретный стиль</h2><p class="lead">${typ.length?"Тип: "+typ.map(t=>"«"+esc(typeById[t].ru)+"»").join(" и ")+" · "+list.length+" стилей":"Все стили · "+list.length}. Главный стиль — первый выбранный, второй можно добавить для смеси. ${HINT}</p>
+  ${typeChips()}
+  <div class="grid two">${shown.map(styleCard).join("")}</div>
+  ${list.length>styleLimit?`<button class="ghost loadmore" onclick="styleLimit+=24;render()">Показать ещё ${list.length-styleLimit}</button>`:""}
+  ${nav("typ","anim")}`}
 function styleCard(s){const sel=S.style.includes(s.code);
   return `<div class="card ${sel?"sel":""}" data-s="${s.code}"><span class="pick">${S.style[0]===s.code?"главный":"выбрано"}</span>
   ${vmedia(s.video,s.poster,s.t0,s.t1)}<span class="code">${s.code}</span></div>
   <div class="body"><div class="ttl">${esc(s.ru)}</div><div class="what">${esc(s.what)}</div><div class="when">Для чего: ${esc(s.for)}</div>
-  <div class="tags"><span class="tag">${esc(s.render)}</span>${S.proj&&s.proj.includes(S.proj)?'<span class="tag rec">подходит проекту</span>':""}<button class="tag" data-big="${s.code}" style="border:0;cursor:pointer">смотреть крупно</button></div></div></div>`}
-function bindStyle(){$("#main").onclick=e=>{const ff=e.target.closest("[data-ff]");if(ff){const id=ff.dataset.ff;S.fam=S.fam.includes(id)?S.fam.filter(x=>x!==id):S.fam.concat(id).slice(-2);styleLimit=36;save();render();return}
+  <div class="tags"><span class="tag">${esc(s.render)}</span>${S.proj&&s.proj.includes(S.proj)?'<span class="tag rec">подходит проекту</span>':""}</div>
+  <div class="acts"><button class="see" data-big="${s.code}">Смотреть</button><button class="take">${sel?"Выбрано ✓":S.style.length?"Добавить к стилю":"Главный стиль"}</button></div></div></div>`}
+function bindStyle(){$("#main").onclick=e=>{const ff=e.target.closest("[data-tt]");if(ff){toggleTyp(ff.dataset.tt);styleLimit=24;save();render();return}
+  if(e.target.closest("[data-allchips]")){S.allChips=!S.allChips;save();render();return}
   const big=e.target.closest("[data-big]");if(big){openStyle(big.dataset.big);return}
   const c=e.target.closest("[data-s]");if(!c)return;const id=c.dataset.s;
   S.style=S.style.includes(id)?S.style.filter(x=>x!==id):S.style.concat(id).slice(-2);save();render()}}
-function openStyle(code){const s=styleByCode[code];
+function srcNote(s){return s.src==="lemo"?"Lemo-Opuscar (MIT · CC BY 4.0)":s.src==="opus"?"Галерея видео Opus 5.5 (skillry.dev) · "+s.id:s.src==="x"?"пример из X, только для ориентира":"OPUSCAR 98, LemoLab (CC BY 4.0)"}
+function openStyle(code){const s=styleByCode[code];setLive(null);
   $("#dlgMedia").innerHTML=`<video controls autoplay muted playsinline referrerpolicy="no-referrer" src="${esc(s.video)}${s.t0?"#t="+s.t0+(s.t1?","+s.t1:""):""}" poster="${esc(s.poster)}"></video>`;
-  $("#dlgB").innerHTML=`<div class="ttl" style="font-size:19px">${s.code} · ${esc(s.ru)}</div><p class="what">${esc(s.what)}</p><p class="when">Для чего: ${esc(s.for)}</p><p class="note">Источник: ${esc(s.ref||"")} · ${s.src==="lemo"?"Lemo-Opuscar (MIT · CC BY 4.0)":"OPUSCAR 98, LemoLab (CC BY 4.0)"}</p>${s.prompt?`<pre>${esc(s.prompt)}</pre>`:""}
+  $("#dlgB").innerHTML=`<div class="ttl" style="font-size:19px">${s.code} · ${esc(s.ru)}</div><p class="what">${esc(s.what)}</p><p class="when">Для чего: ${esc(s.for)}</p><p class="note">Источник: ${s.ref?esc(s.ref)+" · ":""}${srcNote(s)}</p>${s.prompt?`<pre>${esc(s.prompt)}</pre>`:""}
   <button class="big-btn" onclick="toggleStyle('${s.code}')">${S.style.includes(s.code)?"Убрать из выбора":"Беру этот стиль"}</button>`;$("#dlg").showModal()}
 function toggleStyle(c){S.style=S.style.includes(c)?S.style.filter(x=>x!==c):S.style.concat(c).slice(-2);save();closeDlg();render()}
 
@@ -211,10 +254,12 @@ function viewAnim(){const order=famOrder();const g=S.grp&&order.includes(S.grp)?
   const few=fitN<6;if(S.onlyFit&&!few)list=list.filter(fits);
   list.sort((a,b)=>(fits(b)-fits(a))||(a.slop-b.slop)||((S.proj&&b.proj.includes(S.proj))-(S.proj&&a.proj.includes(S.proj)))||((a.src==="astra"?0:1)-(b.src==="astra"?0:1))||a.code.localeCompare(b.code,"ru",{numeric:true}));
   const shown=list.slice(0,animLimit);const gg=grpById[g];
-  return `<h2>Анимации: ${esc(gg.ru)}</h2><p class="lead">${esc(gg.hint)} Отметь всё, что нравится, — лучше 1–3 в каждом разделе. Превью играют сами; нажми «крупно», чтобы посмотреть в большом окне.</p>
-  <div class="bar scroll">${order.map((id,i)=>{const n=(S.anim[id]||[]).length;const sep=i>0&&mainGroups().length&&!mainGroups().includes(id)&&mainGroups().includes(order[i-1])?'<span class="note" style="margin:0 4px">ещё:</span>':"";return sep+`<button class="chip ${id===g?"on":""}" data-g="${id}">${esc(grpById[id].ru)}<small>${grpCount(id)}</small>${n?`<small>✓${n}</small>`:""}</button>`}).join("")}</div>
-  <div class="bar"><label class="tog"><input type="checkbox" ${S.onlyFit?"checked":""} id="onlyFit"> только подходящие к выбранному семейству (${fitN} из ${D.anims.filter(a=>a.group===g).length})</label>${few&&S.fam.length?`<span class="note">подходящих мало — показываю все, подходящие первыми</span>`:""}</div>
-  <div class="grid">${shown.map(animCard).join("")}</div>
+  /* разделы: первые 6 по порядку для стиля + текущий + где уже есть выбор; остальные — по кнопке */
+  const head=S.allChips?order:order.filter((id,i)=>i<6||id===g||(S.anim[id]||[]).length);
+  return `<h2>Анимации: ${esc(gg.ru)}</h2><p class="lead">${esc(gg.hint)} Отметь, что нравится, — лучше 1–3 в каждом разделе. ${HINT}</p>
+  <div class="bar scroll">${head.map(id=>{const n=(S.anim[id]||[]).length;return `<button class="chip ${id===g?"on":""}" data-g="${id}">${esc(grpById[id].ru)}<small>${grpCount(id)}</small>${n?`<small>✓${n}</small>`:""}</button>`}).join("")}<button class="chip more" data-allchips="1">${S.allChips?"Свернуть":"Все разделы · "+order.length}</button></div>
+  <div class="bar"><label class="tog"><input type="checkbox" ${S.onlyFit?"checked":""} id="onlyFit"> Подходят к типу стиля: ${fitN} из ${D.anims.filter(a=>a.group===g).length}</label>${few&&S.typ.length?`<span class="note">подходящих мало — показываю все, подходящие первыми</span>`:""}</div>
+  <div class="grid two">${shown.map(animCard).join("")}</div>
   ${list.length>animLimit?`<button class="ghost loadmore" onclick="animLimit+=24;render()">Показать ещё ${list.length-animLimit}</button>`:""}
   <div class="nav"><button class="ghost" onclick="go('style')">← К стилям</button><span style="display:flex;gap:10px;flex-wrap:wrap">${nextGrp(order,g)?`<button class="ghost" onclick="go('look')">Хватит анимаций → цвет</button><button class="big-btn" onclick="S.grp='${nextGrp(order,g)}';animLimit=24;save();render();scrollTo(0,0)">Дальше: ${esc(grpById[nextGrp(order,g)].ru)} →</button>`:`<button class="big-btn" onclick="go('look')">Дальше: цвет и шрифт →</button>`}</span></div>`}
 function grpCount(id){const L=D.anims.filter(a=>a.group===id);if(!S.onlyFit||!S.fam.length)return L.length;const f=L.filter(a=>a.fam.some(x=>S.fam.includes(x))).length;return f<6?L.length:f}
@@ -223,23 +268,28 @@ function animCard(a){const sel=(S.anim[a.group]||[]).includes(a.code);
   return `<div class="card ${sel?"sel":""}" data-a="${a.code}"><span class="pick">выбрано</span>
   ${hfmedia(a)}<span class="code">${a.code}</span></div>
   <div class="body"><div class="ttl">${esc(a.ru)}</div><div class="what">${esc(a.what)}</div><div class="when">Когда: ${esc(a.when)}</div>
-  <div class="tags">${S.fam.length&&a.fam.some(f=>S.fam.includes(f))?'<span class="tag rec">к твоему стилю</span>':""}${S.proj&&a.proj.includes(S.proj)?'<span class="tag rec">подходит проекту</span>':""}${a.slop?'<span class="tag slop">штамп — осторожно</span>':""}<button class="tag" data-bigA="${a.code}" style="border:0;cursor:pointer">смотреть крупно</button></div></div></div>`}
+  <div class="tags">${S.fam.length&&a.fam.some(f=>S.fam.includes(f))?'<span class="tag rec">к твоему стилю</span>':""}${S.proj&&a.proj.includes(S.proj)?'<span class="tag rec">подходит проекту</span>':""}${a.slop?'<span class="tag slop">штамп — осторожно</span>':""}</div>
+  <div class="acts"><button class="see" data-bigA="${a.code}">Смотреть</button><button class="take">${sel?"Выбрано ✓":"Выбрать"}</button></div></div></div>`}
 function bindAnim(){const of=$("#onlyFit");if(of)of.onchange=()=>{S.onlyFit=of.checked;animLimit=24;save();render()};
   $("#main").onclick=e=>{const gb=e.target.closest("[data-g]");if(gb){S.grp=gb.dataset.g;animLimit=24;save();render();return}
+  if(e.target.closest("[data-allchips]")){S.allChips=!S.allChips;save();render();return}
   const big=e.target.closest("[data-biga]");if(big){openAnim(big.dataset.biga);return}
   const c=e.target.closest("[data-a]");if(!c)return;toggleAnim(c.dataset.a,false)}}
 function toggleAnim(code,fromDlg){const a=animByCode[code];const arr=S.anim[a.group]=S.anim[a.group]||[];
   const i=arr.indexOf(code);i>=0?arr.splice(i,1):arr.push(code);save();if(fromDlg)closeDlg();render()}
-function openAnim(code){const a=animByCode[code];$("#dlgMedia").innerHTML="";
-  const p=document.createElement("hyperframes-player");["muted","audio-locked","loop","autoplay","controls"].forEach(x=>p.setAttribute(x,""));$("#dlgMedia").appendChild(p);
-  fetch(a.prev).then(r=>r.json()).then(j=>p.setAttribute("srcdoc",j.html));
-  $("#dlgB").innerHTML=`<div class="ttl" style="font-size:19px">${a.code} · ${esc(a.ru)}</div><p class="what">${esc(a.what)}</p><p class="when">Когда: ${esc(a.when)}</p><p class="note">Компонент HyperFrames «${esc(a.name)}» (Apache 2.0) · ${a.dur?a.dur+" с":""}${a.slop?" · штамп, использовать точечно":""}</p>
+let dlgStop=null;
+function openAnim(code){const a=animByCode[code];setLive(null);$("#dlgMedia").innerHTML="";
+  if(a.src==="astra"){dlgStop=SKD.run(a.demo,$("#dlgMedia"),curPal())}
+  else{const p=document.createElement("hyperframes-player");["muted","audio-locked","loop","autoplay","controls"].forEach(x=>p.setAttribute(x,""));$("#dlgMedia").appendChild(p);
+  fetch(a.prev).then(r=>r.json()).then(j=>p.setAttribute("srcdoc",j.html))}
+  $("#dlgB").innerHTML=`<div class="ttl" style="font-size:19px">${a.code} · ${esc(a.ru)}</div><p class="what">${esc(a.what)}</p><p class="when">Когда: ${esc(a.when)}</p><p class="note">${a.src==="astra"?"Наша анимация по спецификации · "+esc(a.spec||""):"Компонент HyperFrames «"+esc(a.name)+"» (Apache 2.0) · "+(a.dur?a.dur+" с":"")}${a.slop?" · штамп, использовать точечно":""}</p>
   <button class="big-btn" onclick="toggleAnim('${a.code}',true)">${(S.anim[a.group]||[]).includes(a.code)?"Убрать из выбора":"Беру эту анимацию"}</button>`;$("#dlg").showModal()}
 
 /* ---------- 5. цвет и шрифт ---------- */
-function viewLook(){return `<h2>Цвет и шрифт</h2><p class="lead">Палитра задаёт настроение, шрифт — характер. Все шрифты бесплатные и с кириллицей.</p>
-  <div class="sec">Палитра</div><div class="grid">${D.palettes.map(p=>`<div class="card ${S.pal===p.code?"sel":""}" data-pal="${p.code}"><span class="pick">выбрано</span><div class="media" data-kind="demo" data-demo="PAL-DEMO" data-pal="${p.code}"></div><div class="sw" style="height:14px">${p.colors.map(c=>`<span style="background:${c}"></span>`).join("")}</div><div class="body"><div class="ttl">${p.code} · ${esc(p.ru)}</div><div class="what">${esc(p.for)}</div></div></div>`).join("")}</div>
-  <div class="sec" style="margin-top:22px">Шрифт</div><div class="grid">${D.fonts.map(f=>`<div class="card ${S.font===f.code?"sel":""}" data-font="${f.code}"><span class="pick">выбрано</span><div class="fontdemo" style="font-family:'${f.family}',sans-serif;font-weight:${f.weight||700}">${esc(f.sample||"Физика без зубрёжки")}</div><div class="body"><div class="ttl">${f.code} · ${esc(f.ru)}</div><div class="what">${esc(f.for)}</div></div></div>`).join("")}</div>
+function viewLook(){return `<h2>Цвет и шрифт</h2><p class="lead">Палитра задаёт настроение, шрифт — характер. Все шрифты бесплатные и с кириллицей. ${HINT}</p>
+  <div class="anchors"><a href="#pal">Палитра</a><a href="#fonts">Шрифт ↓</a></div>
+  <div class="sec" id="pal" style="scroll-margin-top:120px">Палитра</div><div class="grid">${D.palettes.map(p=>`<div class="card ${S.pal===p.code?"sel":""}" data-pal="${p.code}"><span class="pick">выбрано</span><div class="media" data-kind="demo" data-demo="PAL-DEMO" data-pal="${p.code}">${still(p.poster)}</div><div class="sw" style="height:14px">${p.colors.map(c=>`<span style="background:${c}"></span>`).join("")}</div><div class="body"><div class="ttl">${p.code} · ${esc(p.ru)}</div><div class="what">${esc(p.for)}</div></div></div>`).join("")}</div>
+  <div class="sec" id="fonts" style="margin-top:22px;scroll-margin-top:120px">Шрифт</div><div class="grid">${D.fonts.map(f=>`<div class="card ${S.font===f.code?"sel":""}" data-font="${f.code}"><span class="pick">выбрано</span><div class="fontdemo" style="font-family:'${f.family}',sans-serif;font-weight:${f.weight||700}">${esc(f.sample||"Физика без зубрёжки")}</div><div class="body"><div class="ttl">${f.code} · ${esc(f.ru)}</div><div class="what">${esc(f.for)}</div></div></div>`).join("")}</div>
   ${nav("anim","more")}`}
 function bindLook(){$("#fontpreview").href="https://fonts.googleapis.com/css2?"+D.fonts.map(f=>"family="+f.family.replace(/ /g,"+")+":wght@"+(f.weight||700)).join("&")+"&display=swap&subset=cyrillic";
   $("#main").onclick=e=>{const p=e.target.closest("[data-pal]");if(p){S.pal=S.pal===p.dataset.pal?null:p.dataset.pal;save();render();return}
@@ -247,9 +297,9 @@ function bindLook(){$("#fontpreview").href="https://fonts.googleapis.com/css2?"+
 
 /* ---------- 6. темп, звук, формат ---------- */
 function viewMore(){return `<h2>Темп, звук и формат</h2><p class="lead">Последние настройки. Звуки кликов можно послушать — нажми на кнопку со значком ♪.</p>
-  ${D.more.map(q=>`<div class="sec">${esc(q.ru)}</div><div class="opt">${q.opts.map(o=>`<button class="chip ${(S.more[q.id]||[]).includes(o.id)?"on":""}" data-q="${q.id}" data-o="${o.id}" ${q.multi?'data-multi="1"':""}>${esc(o.ru)}${o.snd?" ♪":""}</button>`).join("")}</div>${q.id==="tempo"?`<div class="tempo" id="tempo"></div>`:""}`).join("")}
+  ${D.more.map(q=>`<div class="sec">${esc(q.ru)}</div><div class="opt">${q.opts.map(o=>`<button class="chip ${(S.more[q.id]||[]).includes(o.id)?"on":""}" data-q="${q.id}" data-o="${o.id}" ${q.multi?'data-multi="1"':""}>${esc(o.ru)}${o.snd?" ♪":""}</button>`).join("")}</div>`).join("")}
   <div class="sec">Своими словами (необязательно)</div><textarea id="note" placeholder="Например: тема — молоток и перо на Луне; хочу, чтобы в начале был вопрос, а в конце Telegram">${esc(S.note)}</textarea>
-  ${nav("look","done","К итогу →")}`}
+  ${nav("look","done")}`}
 function bindMore(){const t=$("#note");t.oninput=()=>{S.note=t.value;save()};drawTempo();
   $("#main").onclick=e=>{const b=e.target.closest("[data-q]");if(!b)return;const q=b.dataset.q,o=b.dataset.o,multi=b.dataset.multi;
   const opt=D.more.find(x=>x.id===q).opts.find(x=>x.id===o);if(opt.snd)playSnd(opt.snd);
@@ -268,9 +318,9 @@ function message(){const L=[];const d=new Date().toLocaleDateString("ru-RU");
   const sum=[];if(S.style.length)sum.push(styleByCode[S.style[0]].ru);if(S.proj)sum.push("для «"+projById[S.proj].ru+"»");
   const pal=S.pal&&D.palettes.find(x=>x.code===S.pal);if(pal)sum.push("палитра «"+pal.ru+"»");const nA=Object.values(S.anim).reduce((n,a)=>n+a.length,0);if(nA)sum.push(nA+" анимаций");
   if(sum.length)L.push("Коротко: "+sum.join(", ")+".");
-  L.push("Каталог: konstruktor v1 · "+D.version);
+  L.push("Каталог: konstruktor v2 · "+D.version);
   if(S.proj)L.push("Для кого: "+projById[S.proj].ru);
-  if(S.fam.length)L.push("Семейство: "+S.fam.map(f=>f.replace("F","Ф")+" «"+famById[f].ru+"»").join(", "));
+  if(S.typ.length)L.push("Тип стиля: "+S.typ.map(t=>typeById[t].code+" «"+typeById[t].ru+"»").join(", "));
   if(S.style.length)L.push("Стиль: "+S.style.map((c,i)=>{const s=styleByCode[c];return c+" «"+s.ru+"» ["+s.id+"]"+(i===0&&S.style.length>1?" — главный":"")}).join("; "));
   famOrder().concat(D.groups.map(g=>g.id)).filter((v,i,a)=>a.indexOf(v)===i).forEach(g=>{const arr=S.anim[g];if(arr&&arr.length)L.push(grpById[g].ru+": "+arr.map(c=>c+" «"+animByCode[c].ru+"» ["+(animByCode[c].src==="astra"?"наш":"hf")+":"+animByCode[c].name+"]").join("; "))});
   if(S.pal){const p=D.palettes.find(x=>x.code===S.pal);L.push("Палитра: "+p.code+" «"+p.ru+"» "+p.colors.join(" "))}
@@ -279,36 +329,42 @@ function message(){const L=[];const d=new Date().toLocaleDateString("ru-RU");
   if(S.note.trim())L.push("Своими словами: "+S.note.trim());
   L.push("Ограничения: антислоп AS-01 (без эмодзи, караоке-капса, конфетти, глитча по умолчанию; субтитры ≤14 знаков в строке)");
   L.push("Ссылка: diveylaunch.github.io/show/konstruktor");return L.join("\n")}
-function viewDone(){const m=message();const n=countPicks();
-  return `<h2>Итог: сообщение для Claude</h2><p class="lead">Скопируй и пришли мне в чат. По кодам я точно пойму, что ты выбрал, и соберу видео из этих же анимаций.</p>
-  ${n?"":`<p class="note">Пока ничего не выбрано — начни с шага «Для кого» или возьми готовый набор.</p>`}
-  <div class="msg" id="msg">${esc(m)}</div>
-  <div class="nav"><button class="ghost" onclick="if(confirm('Очистить весь выбор?')){S=fresh();save();render()}">Начать заново</button><button class="big-btn" id="copy">Скопировать сообщение</button></div><p class="ok" id="copied"></p>`}
-function bindDone(){$("#copy").onclick=()=>{const m=message();(navigator.clipboard?navigator.clipboard.writeText(m):Promise.reject()).then(()=>{$("#copied").textContent="Скопировано — вставь мне в чат"}).catch(()=>{const r=document.createRange();r.selectNodeContents($("#msg"));getSelection().removeAllRanges();getSelection().addRange(r);$("#copied").textContent="Выделил текст — нажми ⌘C"})}}
-function countPicks(){return (S.proj?1:0)+S.fam.length+S.style.length+Object.values(S.anim).reduce((n,a)=>n+a.length,0)+(S.pal?1:0)+(S.font?1:0)+Object.values(S.more).reduce((n,a)=>n+a.length,0)}
+function viewDone(){const m=message();const n=countPicks();const short=(m.split("\n").find(l=>l.startsWith("Коротко: "))||"").replace("Коротко: ","");
+  return `<h2>Итог: задание для Claude</h2><p class="lead">Скопируй задание и вставь в чат Claude Code — по кодам я точно пойму выбор и соберу видео из этих же стилей и анимаций.</p>
+  ${n?`<button class="big-btn copytop" id="copy">Скопировать задание</button><p class="ok" id="copied"></p>${short?`<p class="short">${esc(short)}</p>`:""}`:`<p class="note">Пока ничего не выбрано — начни с шага «Для кого» или примени готовый набор.</p>`}
+  <div class="msg" id="msg">${esc(m.split("\n").filter(l=>!l.startsWith("Коротко: ")).join("\n"))}</div>
+  <div class="nav"><button class="ghost" onclick="if(confirm('Очистить весь выбор?')){S=fresh();save();render()}">Начать заново</button>${n?`<button class="big-btn" onclick="copyMsg()">Скопировать задание</button>`:""}</div>`}
+function copyMsg(){const m=message();const done=t=>{["#copy",".nav .big-btn","#mnext"].forEach(q=>{const b=$(q);if(b){const o=b.dataset.o||b.textContent;b.dataset.o=o;b.textContent=t;setTimeout(()=>{b.textContent=o},2000)}})};
+  (navigator.clipboard?navigator.clipboard.writeText(m):Promise.reject()).then(()=>{done("Скопировано ✓");const c=$("#copied");if(c)c.textContent="Вставь в чат Claude Code"}).catch(()=>{const r=document.createRange();r.selectNodeContents($("#msg"));getSelection().removeAllRanges();getSelection().addRange(r);const c=$("#copied");if(c)c.textContent="Выделил текст — нажми ⌘C"})}
+function bindDone(){const c=$("#copy");if(c)c.onclick=copyMsg}
+function countPicks(){return (S.proj?1:0)+S.typ.length+S.style.length+Object.values(S.anim).reduce((n,a)=>n+a.length,0)+(S.pal?1:0)+(S.font?1:0)+Object.values(S.more).reduce((n,a)=>n+a.length,0)}
 
 /* ---------- корзина ---------- */
 function side(){const rows=[];
   if(S.proj)rows.push(["Для кого",projById[S.proj].ru,"proj"]);
-  S.fam.forEach(f=>rows.push(["Семейство",f.replace("F","Ф")+" "+famById[f].ru,"fam:"+f]));
+  S.typ.forEach(t=>rows.push(["Тип стиля",typeById[t].code+" "+typeById[t].ru,"typ:"+t]));
   S.style.forEach(c=>rows.push(["Стиль",c+" "+styleByCode[c].ru,"style:"+c]));
   Object.entries(S.anim).forEach(([g,arr])=>arr.forEach(c=>rows.push([grpById[g].ru,c+" "+animByCode[c].ru,"anim:"+c])));
   if(S.pal)rows.push(["Палитра",S.pal+" "+(D.palettes.find(x=>x.code===S.pal)||{}).ru,"pal"]);if(S.font)rows.push(["Шрифт",S.font+" "+(D.fonts.find(x=>x.code===S.font)||{}).ru,"font"]);
   Object.entries(S.more).forEach(([q,a])=>{const Q=D.more.find(x=>x.id===q);a.forEach(o=>rows.push([Q.ru,Q.opts.find(x=>x.id===o).ru,"more:"+q+":"+o]))});
   $("#side").innerHTML=`<h3>Мой выбор · ${rows.length}</h3>${rows.length?rows.map(r=>`<div class="row"><div><div class="k">${esc(r[0])}</div>${esc(r[1])}</div><button class="x" data-rm="${esc(r[2])}" aria-label="убрать">×</button></div>`).join(""):'<p class="empty">Пока пусто. Нажимай на карточки — выбранное появится здесь.</p>'}
-  ${rows.length?`<div style="margin-top:12px"><button class="big-btn" style="width:100%" onclick="go('done')">К итогу</button></div>`:""}`;
-  $("#fab").textContent=$("#fab").dataset.open?"Закрыть":"Мой выбор · "+rows.length;
+  ${rows.length&&S.step!=="done"?`<div style="margin-top:12px"><button class="ghost" style="width:100%" onclick="go('done')">К итогу →</button></div>`:""}`;
+  $("#fab").textContent=$("#fab").dataset.open?"Закрыть":"Выбор · "+rows.length;
   $("#side").onclick=e=>{const b=e.target.closest("[data-rm]");if(!b)return;const [k,v,w]=b.dataset.rm.split(":");
-   if(k==="proj")S.proj=null;else if(k==="fam")S.fam=S.fam.filter(x=>x!==v);else if(k==="style")S.style=S.style.filter(x=>x!==v);
+   if(k==="proj")S.proj=null;else if(k==="typ"){S.typ=S.typ.filter(x=>x!==v);syncFam()}else if(k==="style")S.style=S.style.filter(x=>x!==v);
    else if(k==="anim"){const g=animByCode[v].group;S.anim[g]=S.anim[g].filter(x=>x!==v)}else if(k==="pal")S.pal=null;else if(k==="font")S.font=null;
    else if(k==="more"){S.more[v]=S.more[v].filter(x=>x!==w);if(!S.more[v].length)delete S.more[v]}save();render()}}
 $("#fab").onclick=()=>{const o=$("#side").classList.toggle("open");$("#fab").dataset.open=o?1:"";side()};
 function closeDlg(){$("#dlg").close()}
-$("#dlg").addEventListener("close",()=>{$("#dlgMedia").innerHTML=""});
+$("#dlg").addEventListener("close",()=>{if(dlgStop){dlgStop();dlgStop=null}$("#dlgMedia").innerHTML=""});
 
-const VIEWS={who:[viewWho,bindWho],fam:[viewFam,bindFam],style:[viewStyle,bindStyle],anim:[viewAnim,bindAnim],look:[viewLook,bindLook],more:[viewMore,bindMore],done:[viewDone,bindDone]};
-function render(){live.forEach(m=>{const p=m.querySelector("hyperframes-player");p&&p.remove()});live=[];io.disconnect();
-  stepsBar();const [v,b]=VIEWS[S.step]||VIEWS.who;$("#main").innerHTML=v();b();side();observe()}
+const VIEWS={who:[viewWho,bindWho],typ:[viewTyp,bindTyp],style:[viewStyle,bindStyle],anim:[viewAnim,bindAnim],look:[viewLook,bindLook],more:[viewMore,bindMore],done:[viewDone,bindDone]};
+function render(){unmount(liveM);liveM=null;loaded=[];if(!VIEWS[S.step])S.step="who";
+  stepsBar();const [v,b]=VIEWS[S.step];$("#main").innerHTML=v();b();side();prep();mbar()}
+/* нижняя панель на телефоне повторяет главную кнопку шага */
+function mbar(){const n=$("#mnext"),b=[...document.querySelectorAll("#main .nav .big-btn")].pop();
+  if(S.step==="done"){n.textContent=countPicks()?"Скопировать задание":"Начать выбор";n.onclick=countPicks()?copyMsg:()=>go("who");return}
+  n.textContent=b?b.textContent:"";n.style.visibility=b?"visible":"hidden";n.onclick=()=>b&&b.click()}
 render();
 </script>
 </body>
