@@ -58,10 +58,11 @@
       /* покадровый цикл: fn(t мс от старта) → true чтобы продолжать; длится dur мс */
       tick(dur, fn) {
         return new Promise((res, rej) => {
-          const t0 = performance.now();
+          let t0 = null; // отсчёт от первой метки кадра rAF: performance.now() бывает позже неё → отрицательное t
           const step = (now) => {
             if (stopped) return rej(STOP);
-            const t = Math.min(dur, now - t0);
+            if (t0 === null) t0 = now;
+            const t = Math.max(0, Math.min(dur, now - t0));
             fn(t, t / dur);
             if (t >= dur) return res();
             const id = requestAnimationFrame(step); raf.add(id);
@@ -1101,7 +1102,7 @@ SKD.add({
   /* зернистая фактура бумаги: слой SVG-прямоугольника с шумом цвета fill; a — прозрачность слоя */
   function grain(c, parent, o) {
     o = Object.assign({ x: 0, y: 0, w: 480, h: 270, a: 0.5, f: 0.9, seed: 5, fill: "var(--fg)", blend: "multiply", k: 1.15, b: -0.52, oct: 3, z: "" }, o || {});
-    const { svg, defs } = layer(c, "pointer-events:none;" + o.z, parent);
+    const { svg, defs } = layer(c, "pointer-events:none;" + o.z, parent, o.vb);
     const id = uid();
     const fl = c.sv(defs, "filter", { id, filterUnits: "userSpaceOnUse", x: o.x, y: o.y, width: o.w, height: o.h, "color-interpolation-filters": "sRGB" });
     c.sv(fl, "feTurbulence", { type: "fractalNoise", baseFrequency: o.f, numOctaves: o.oct, seed: o.seed, result: "n" });
@@ -1636,8 +1637,8 @@ SKD.add({
       const mkPanel = (x, z) => {
         const d = c.el("div", `position:absolute;left:${x}px;top:0;width:240px;height:270px;overflow:hidden;z-index:${z};box-shadow:0 0 22px rgba(0,0,0,.28);will-change:transform`);
         washi(c, d, 240, 270, "var(--sf)");
-        grain(c, d, { w: 240, h: 270, fill: "var(--mu)", a: 0.5, f: 0.6, seed: 9 });
-        fibers(c, d, { w: 240, h: 270, fill: "var(--mu)", a: 0.25, seed: 4 });
+        grain(c, d, { w: 240, h: 270, vb: "0 0 240 270", fill: "var(--mu)", a: 0.5, f: 0.6, seed: 9 });
+        fibers(c, d, { w: 240, h: 270, vb: "0 0 240 270", fill: "var(--mu)", a: 0.12, seed: 4 });
         const s = c.svg("0 0 240 270", "", d); lattice(c, s, 240, 270);
         return d;
       };
@@ -1663,7 +1664,7 @@ SKD.add({
       const bgE = sv(c, gl, "ellipse", { cx: 264, cy: 108, rx: 144, ry: 108 }, "fill:var(--bg);opacity:0");
       const acE = sv(c, gl, "ellipse", { cx: 264, cy: 112, rx: 120, ry: 90 }, "fill:var(--ac);opacity:0");
       grain(c, null, { fill: "var(--mu)", a: 0.55, f: 0.6, seed: 9 });
-      fibers(c, null, { fill: "var(--mu)", a: 0.25, seed: 4 });
+      fibers(c, null, { fill: "var(--mu)", a: 0.12, seed: 4 });
       const s2 = layer(c); lattice(c, s2.svg, 480, 270);
       await c.tick(1800, (t, p) => {
         const e = EF.E1(p);
@@ -1687,7 +1688,7 @@ SKD.add({
       sv(c, svg, "rect", { width: 480, height: 270 }, `fill:url(#${lg})`);
       const bl = fBlur(c, defs, 4.2, 120);
       const fig = sv(c, svg, "g", { filter: `url(#${bl.id})` });
-      const man = sv(c, fig, "g", {}, "opacity:.38");
+      const man = sv(c, fig, "g", {}, "opacity:.46");
       sv(c, man, "path", { d: "M-33 -52L0 -81L33 -52Q0 -59 -33 -52Z" }, "fill:var(--fg)");
       sv(c, man, "ellipse", { cx: 0, cy: -48, rx: 9, ry: 10 }, "fill:var(--fg)");
       sv(c, man, "path", { d: "M-17 -40C-22 -18 -26 22 -29 78L29 78C26 22 22 -18 17 -40Q0 -46 -17 -40Z" }, "fill:var(--fg)");
@@ -1696,7 +1697,7 @@ SKD.add({
       sv(c, man, "ellipse", { cx: -12, cy: 80, rx: 12, ry: 4 }, "fill:var(--fg)"); sv(c, man, "ellipse", { cx: 13, cy: 80, rx: 12, ry: 4 }, "fill:var(--fg)");
       const veil = sv(c, svg, "rect", { width: 480, height: 270 }, "fill:var(--sf);opacity:.45");
       grain(c, null, { fill: "var(--mu)", a: 0.45, f: 0.6, seed: 9 });
-      fibers(c, null, { fill: "var(--mu)", a: 0.22, seed: 4 });
+      fibers(c, null, { fill: "var(--mu)", a: 0.12, seed: 4 });
       const s2 = layer(c); lattice(c, s2.svg, 480, 270);
       await c.tick(2400, (t, p) => { fig.setAttribute("transform", `translate(${f1(lerp(-72, 552, EF.E0(p)))} 162)`); });
     },
@@ -1870,7 +1871,7 @@ SKD.add({
     what: "На бумагу сёдзи ложится мягкая тень ветки сакуры, а решётка и текст остаются чёткими.",
     when: "Тихая пауза перед репликой",
     fam: JP_FAM, proj: JP_PROJ, hold: 1300,
-    spec: "D=2200 мс, E1; силуэт ветки α 0→0.14 и x +40→0 px, blur 12; клип по бумаге; решётка и текст выше тени.",
+    spec: "D=2200 мс, E1; силуэт ветки α 0→0.14 (в демо 0.20 для читаемости) и x +40→0 px, blur 12 (σ 4); клип по бумаге; решётка и текст выше тени.",
     async play(c) {
       const { svg, defs } = layer(c);
       sv(c, svg, "rect", { width: 480, height: 270 }, "fill:var(--sf)");
@@ -1878,18 +1879,2703 @@ SKD.add({
       sv(c, rg, "stop", { offset: 0, "stop-opacity": 0 }, "stop-color:var(--bg)"); sv(c, rg, "stop", { offset: 1, "stop-opacity": 0.8 }, "stop-color:var(--bg)");
       sv(c, svg, "rect", { width: 480, height: 270 }, `fill:url(#${lg})`);
       const cid = uid(), cp = c.sv(defs, "clipPath", { id: cid }); c.sv(cp, "rect", { width: 480, height: 270 });
-      const bl = fBlur(c, defs, 6, 120);
+      const bl = fBlur(c, defs, 4, 120);
       const sh = sv(c, svg, "g", { "clip-path": `url(#${cid})`, filter: `url(#${bl.id})` }, "opacity:0");
       const mv = sv(c, sh, "g");
-      sakura(c, mv, { mono: "var(--fg)", x: -150, y: -6, k: 1.62 });
+      sakura(c, mv, { mono: "var(--fg)", x: -300, y: -4, k: 1.9 });
       grain(c, null, { fill: "var(--mu)", a: 0.45, f: 0.6, seed: 9 });
-      fibers(c, null, { fill: "var(--mu)", a: 0.22, seed: 4 });
+      fibers(c, null, { fill: "var(--mu)", a: 0.12, seed: 4 });
       const s2 = layer(c); lattice(c, s2.svg, 480, 270);
       c.el("div", "position:absolute;left:0;right:0;top:186px;text-align:center;z-index:60", null, '<span style="display:inline-block;padding:6px 14px;border-radius:7px;background:color-mix(in srgb,var(--bg) 94%,transparent);color:var(--fg);font-weight:600;font-size:17px;letter-spacing:.01em;box-shadow:0 1px 0 rgba(0,0,0,.08)">Тише… слышишь ветер?</span>');
       await c.tick(2200, (t, p) => {
         const e = EF.E1(p);
-        sh.style.opacity = f1(0.14 * e); mv.setAttribute("transform", `translate(${f1(40 * (1 - e))} 0)`);
+        sh.style.opacity = f1(0.2 * e); mv.setAttribute("transform", `translate(${f1(40 * (1 - e))} 0)`);
       });
+    },
+  });
+  /* ===================== PP — бумага, сгиб, коллаж ===================== */
+  const PP_FAM = ["F02", "F14"];
+  const SHP = "0 8px 16px rgba(0,0,0,.12)";            // тень бумаги по умолчанию: чёрная α 0.12, (0,8), blur 16
+  const CARDBG = "color-mix(in srgb,var(--mu) 24%,var(--bg))";
+
+  /* стол: бумага + мелкая сетка-коврик для резки */
+  function desk(c) {
+    grain(c, null, { a: 0.5, seed: 7 });
+    const { svg } = layer(c);
+    let d = "";
+    for (let x = 0; x <= 480; x += 24) d += `M${x} 0V270`;
+    for (let y = 0; y <= 270; y += 24) d += `M0 ${y}H480`;
+    sv(c, svg, "path", { d, fill: "none" }, "stroke:var(--mu);stroke-width:1;opacity:.16");
+    let d2 = "";
+    for (let x = 0; x <= 480; x += 120) d2 += `M${x} 0V270`;
+    for (let y = 0; y <= 270; y += 120) d2 += `M0 ${y}H480`;
+    sv(c, svg, "path", { d: d2, fill: "none" }, "stroke:var(--mu);stroke-width:1.4;opacity:.22");
+  }
+  /* бумага с фактурой: волокна и крупа в локальных координатах листа */
+  function sheetTex(c, parent, w, h, a) {
+    grain(c, parent, { w, h, vb: `0 0 ${w} ${h}`, fill: "var(--mu)", a: a == null ? 0.5 : a, f: 0.6, seed: 9 });
+    fibers(c, parent, { w, h, vb: `0 0 ${w} ${h}`, fill: "var(--mu)", a: 0.1, seed: 4 });
+  }
+  /* скотч: полупрозрачная полоса с зубчатыми краями */
+  function tape(c, parent, x, y, w, h, rot) {
+    return c.el("div", `position:absolute;left:${x}px;top:${y}px;width:${w}px;height:${h}px;transform:rotate(${rot}deg);background:color-mix(in srgb,var(--ac) 78%,transparent);clip-path:polygon(0 0,100% 0,97% 12%,100% 25%,97% 38%,100% 50%,97% 62%,100% 75%,97% 88%,100% 100%,0 100%,3% 88%,0 75%,3% 62%,0 50%,3% 38%,0 25%,3% 12%);box-shadow:0 2px 3px rgba(0,0,0,.12);z-index:5`, parent,
+      `<i style="position:absolute;left:0;right:0;top:35%;height:22%;background:#fff;opacity:.22"></i>`);
+  }
+  /* ---- иллюстрации (статичные SVG-строки) ---- */
+  const photoArt = (w, h) => { const k = uid(); return `<svg viewBox="0 0 180 118" width="${w}" height="${h}" preserveAspectRatio="xMidYMid slice" style="display:block"><defs><linearGradient id="${k}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--bg)"/><stop offset="1" style="stop-color:color-mix(in srgb,var(--ac) 22%,var(--bg))"/></linearGradient></defs><rect width="180" height="118" fill="url(#${k})"/><circle cx="124" cy="56" r="22" style="fill:var(--ac)"/><path d="M0 86L34 58L58 76L92 42L130 80L160 62L180 74V118H0Z" style="fill:color-mix(in srgb,var(--mu) 62%,var(--bg))"/><path d="M0 98C30 82 60 92 90 86C120 80 150 94 180 88V118H0Z" style="fill:color-mix(in srgb,var(--fg) 90%,var(--bg))"/><path d="M30 30q4-6 8 0q4-6 8 0M52 40q3-5 6 0q3-5 6 0" fill="none" style="stroke:var(--fg);stroke-width:1.4"/></svg>`; };
+  const linesArt = (w, h, o) => {
+    o = o || {};
+    let s = `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="position:absolute;left:0;top:0;display:block">`;
+    for (let y = o.y0 || 26; y < h - 6; y += 16) s += `<path d="M${o.x0 == null ? 10 : o.x0} ${y}H${w - 10}" style="stroke:var(--mu);stroke-width:1;opacity:.35"/>`;
+    if (o.margin !== false) s += `<path d="M26 0V${h}" style="stroke:var(--ac);stroke-width:1.2;opacity:.45"/>`;
+    return s + (o.extra || "") + "</svg>";
+  };
+  const bar = (x, y, w, o) => `<rect x="${x}" y="${y}" width="${w}" height="${o && o.h || 4}" rx="2" style="fill:${o && o.c || "var(--fg)"};opacity:${o && o.o || 0.55}"/>`;
+  const houseSil = "M6 58L70 10L134 58L122 58V114H18V58Z";
+  const houseArt = (w, h) => `<svg viewBox="0 0 140 120" width="${w}" height="${h}" style="display:block;overflow:visible;filter:drop-shadow(0 2px 3px rgba(0,0,0,.18))"><path d="${houseSil}" style="fill:var(--sf);stroke:var(--sf);stroke-width:12;stroke-linejoin:round"/><rect x="96" y="12" width="20" height="30" style="fill:var(--sf);stroke:var(--sf);stroke-width:10;stroke-linejoin:round"/><rect x="98" y="14" width="16" height="30" style="fill:var(--mu)"/><rect x="95" y="11" width="22" height="6" style="fill:var(--fg);opacity:.75"/><rect x="18" y="58" width="104" height="56" style="fill:var(--sf)"/><path d="M6 58L70 10L134 58Z" style="fill:var(--ac)"/><path d="M26 54L70 22L114 54M44 54L70 34L96 54" fill="none" style="stroke:var(--sf);stroke-width:1.6;opacity:.45"/><rect x="58" y="76" width="26" height="38" rx="2" style="fill:var(--fg)"/><circle cx="78" cy="96" r="2" style="fill:var(--sf)"/><rect x="28" y="70" width="22" height="22" style="fill:var(--bg);stroke:var(--fg);stroke-width:2"/><path d="M39 70V92M28 81H50" style="stroke:var(--fg);stroke-width:1.6"/><rect x="92" y="70" width="22" height="22" style="fill:var(--bg);stroke:var(--fg);stroke-width:2"/><path d="M103 70V92M92 81H114" style="stroke:var(--fg);stroke-width:1.6"/></svg>`;
+
+  /* ---- PP-01 Лист на стол ---- */
+  SKD.add({
+    code: "PP-01", group: "paper", ru: "Лист на стол",
+    what: "Вырезка со скотчем опускается на стол, тень сжимается и густеет.",
+    when: "Влог, фото, новая карточка заметок",
+    fam: PP_FAM, proj: ["arseniy", "serial"], hold: 1300,
+    spec: "D=650 мс, E2; y −100→0 px, rotateZ −8°→−2°, α 0→1; тень: смещение y 28→8 px, blur 36→16 px, α 0.04→0.12.",
+    async play(c) {
+      desk(c);
+      const note = c.el("div", `position:absolute;left:46px;top:116px;width:184px;height:122px;background:var(--sf);box-shadow:${SHP};transform:rotate(4deg);overflow:hidden`, null,
+        linesArt(184, 122, { extra: bar(34, 12, 80, { h: 6, o: 0.7 }) + bar(34, 38, 120) + bar(34, 54, 96) + bar(34, 70, 110, { c: "var(--ac)", o: 0.6 }) + bar(34, 86, 70) }));
+      sheetTex(c, note, 184, 122, 0.4);
+      const wrap = c.el("div", "position:absolute;left:156px;top:40px;width:196px;height:172px;opacity:0;filter:drop-shadow(0 28px 36px rgba(0,0,0,.04))");
+      const sheet = c.el("div", "position:absolute;inset:0;background:var(--sf);transform:rotate(-8deg)", wrap);
+      c.el("div", "position:absolute;left:8px;top:8px;width:180px;height:128px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)", sheet, photoArt(180, 128));
+      c.el("div", "position:absolute;left:12px;right:12px;bottom:6px;height:28px", sheet, `<svg viewBox="0 0 172 28" width="172" height="28"><path d="M4 16Q16 6 30 16T58 16T86 14T118 16" fill="none" style="stroke:var(--fg);stroke-width:2.2;stroke-linecap:round;opacity:.7"/><path d="M128 20h40" style="stroke:var(--ac);stroke-width:2.4;stroke-linecap:round"/></svg>`);
+      sheetTex(c, sheet, 196, 172, 0.45);
+      tape(c, sheet, 64, -9, 70, 20, -4);
+      await c.all(
+        c.a(wrap, [{ opacity: 0, transform: "translateY(-100px)", filter: "drop-shadow(0px 28px 36px rgba(0,0,0,.04))" }, { opacity: 1, transform: "translateY(0)", filter: "drop-shadow(0px 8px 16px rgba(0,0,0,.12))" }], { duration: 650, easing: c.E.E2 }),
+        c.a(sheet, [{ transform: "rotate(-8deg)" }, { transform: "rotate(-2deg)" }], { duration: 650, easing: c.E.E2 }));
+    },
+  });
+
+  /* ---- PP-02 Подъём поп-апа ---- */
+  SKD.add({
+    code: "PP-02", group: "paper", ru: "Подъём поп-апа",
+    what: "Бумажный домик поднимается вокруг нижнего сгиба открытки, под ним сжимается тень.",
+    when: "Дом, дерево или герой бумажной сцены",
+    fam: PP_FAM, proj: ["arseniy", "serial"], hold: 1300,
+    spec: "D=800 мс, E2; шарнир — нижний край, rotateX 90°→0° (перспектива 1200); тень плоским силуэтом: sy 1→0.25, α 0.08→0.18, blur 16.",
+    async play(c) {
+      desk(c);
+      const st = c.el("div", "position:absolute;inset:0;perspective:1200px;perspective-origin:50% -420px");
+      const back = c.el("div", `position:absolute;left:100px;top:30px;width:280px;height:158px;background:var(--sf);box-shadow:${SHP};overflow:hidden`, st, photoArt(280, 158));
+      sheetTex(c, back, 280, 158, 0.35);
+      c.el("div", `position:absolute;left:80px;top:188px;width:320px;height:62px;background:${CARDBG};clip-path:polygon(6% 0,94% 0,100% 100%,0 100%);box-shadow:${SHP}`, st);
+      const fold = layer(c, "", st);
+      sv(c, fold.svg, "path", { d: "M98 188H382", fill: "none" }, "stroke:var(--fg);stroke-width:1.4;opacity:.35");
+      sv(c, fold.svg, "path", { d: "M104 224H376", fill: "none" }, "stroke:var(--fg);stroke-width:1.4;stroke-dasharray:6 5;opacity:.45");
+      const shadow = c.el("div", "position:absolute;left:176px;top:224px;width:128px;height:84px;opacity:.08;transform-origin:50% 0;filter:blur(7px)", st,
+        `<svg viewBox="0 0 140 120" width="128" height="84" preserveAspectRatio="none"><path d="${houseSil}" transform="translate(0 120) scale(1 -1)" style="fill:var(--fg)"/></svg>`);
+      const house = c.el("div", "position:absolute;left:170px;top:104px;width:140px;height:120px;transform-origin:50% 100%;transform:rotateX(90deg)", st, houseArt(140, 120));
+      await c.wait(350);
+      await c.all(
+        c.a(house, [{ transform: "rotateX(90deg)" }, { transform: "rotateX(0deg)" }], { duration: 800, easing: c.E.E2 }),
+        c.a(shadow, [{ transform: "scaleY(1)", opacity: 0.08 }, { transform: "scaleY(0.25)", opacity: 0.18 }], { duration: 800, easing: c.E.E2 }));
+    },
+  });
+
+  /* ---- PP-03 Перелистывание страницы ---- */
+  SKD.add({
+    code: "PP-03", group: "paper", ru: "Перелистывание страницы",
+    what: "Правая страница тетради переворачивается влево вокруг корешка, вдоль сгиба ложится тень.",
+    when: "Новая глава или страница конспекта",
+    fam: PP_FAM, proj: ["arseniy"], hold: 1200,
+    spec: "D=1100 мс, E1; шарнир — левый край листа, rotateY 0→−180°; следующий лист неподвижен; тень вдоль шарнира 40 px α 0→0.2→0 за 550/550 мс.",
+    async play(c) {
+      desk(c);
+      const PW = 190, PH = 232, X = 50, Y = 19;
+      const book = c.el("div", `position:absolute;left:${X - 8}px;top:${Y - 8}px;width:${PW * 2 + 16}px;height:${PH + 16}px;border-radius:5px;background:color-mix(in srgb,var(--fg) 68%,var(--ac) 14%);box-shadow:0 12px 22px rgba(0,0,0,.2)`);
+      const gut = (right) => `<div style="position:absolute;top:0;bottom:0;${right ? "left" : "right"}:0;width:26px;background:linear-gradient(${right ? "90deg" : "270deg"},rgba(0,0,0,.2),rgba(0,0,0,0))"></div>`;
+      const page = (parent, left, html, right, extra) => {
+        const p = c.el("div", `position:absolute;left:${left}px;top:8px;width:${PW}px;height:${PH}px;background:var(--sf);overflow:hidden;${extra || ""}`, parent, html + gut(right));
+        return p;
+      };
+      const head = (t) => `<div style="position:absolute;left:34px;top:12px;font-weight:700;font-size:19px;color:var(--fg)">${t}</div>`;
+      const pA = linesArt(PW, PH, { y0: 54 }) + head("Глава 1") + `<svg viewBox="0 0 ${PW} ${PH}" width="${PW}" height="${PH}" style="position:absolute;left:0;top:0">${bar(34, 72, 120) + bar(34, 88, 100) + bar(34, 104, 128) + bar(34, 120, 84)}<path d="M54 196L96 142L138 196Z" fill="none" style="stroke:var(--fg);stroke-width:2"/><path d="M96 142V196M54 196H138" style="stroke:var(--ac);stroke-width:2;stroke-dasharray:4 3"/></svg>`;
+      const pB = linesArt(PW, PH, { y0: 54 }) + head("Глава 2") + `<svg viewBox="0 0 ${PW} ${PH}" width="${PW}" height="${PH}" style="position:absolute;left:0;top:0"><ellipse cx="102" cy="150" rx="62" ry="26" fill="none" style="stroke:var(--mu);stroke-width:1.6;stroke-dasharray:5 4"/><circle cx="102" cy="150" r="14" style="fill:var(--ac)"/><circle cx="160" cy="142" r="5" style="fill:var(--fg)"/>${bar(34, 72, 110) + bar(34, 88, 126) + bar(34, 104, 70)}</svg>`;
+      const pC = linesArt(PW, PH, { y0: 54 }) + `<svg viewBox="0 0 ${PW} ${PH}" width="${PW}" height="${PH}" style="position:absolute;left:0;top:0">${bar(34, 22, 90, { h: 6, o: 0.7 }) + bar(34, 72, 118) + bar(34, 88, 90) + bar(34, 104, 124)}<circle cx="46" cy="160" r="4" style="fill:var(--ac)"/>${bar(58, 158, 90, { o: 0.45 })}<circle cx="46" cy="180" r="4" style="fill:var(--ac)"/>${bar(58, 178, 70, { o: 0.45 })}</svg>`;
+      const pD = `<div style="position:absolute;left:34px;top:16px;width:136px;height:92px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.1)">${photoArt(136, 92)}</div>` + linesArt(PW, PH, { y0: 128 }) + `<svg viewBox="0 0 ${PW} ${PH}" width="${PW}" height="${PH}" style="position:absolute;left:0;top:0">${bar(34, 124, 100, { o: 0.5 }) + bar(34, 148, 120) + bar(34, 164, 84)}</svg>`;
+      page(book, 8, pC, false);                           // левая страница (будет закрыта)
+      const next = page(book, 8 + PW, pB, true);         // следующая, неподвижна под листом
+      const hs = c.el("div", "position:absolute;left:0;top:0;bottom:0;width:40px;opacity:0;background:linear-gradient(90deg,rgba(0,0,0,.9),rgba(0,0,0,0))", next);
+      const stg = c.el("div", `position:absolute;left:${X - 8}px;top:${Y - 8}px;width:${PW * 2 + 16}px;height:${PH + 16}px;perspective:1200px;perspective-origin:50% 50%`);
+      const leaf = c.el("div", `position:absolute;left:${8 + PW}px;top:8px;width:${PW}px;height:${PH}px;transform-style:preserve-3d;transform-origin:0 50%`, stg);
+      const f = c.el("div", `position:absolute;inset:0;background:var(--sf);backface-visibility:hidden;overflow:hidden`, leaf, pA + gut(true));
+      const fs = c.el("div", "position:absolute;inset:0;background:#000;opacity:0", f);
+      const b = c.el("div", `position:absolute;inset:0;background:var(--sf);backface-visibility:hidden;overflow:hidden;transform:rotateY(180deg)`, leaf, pD + gut(false));
+      const bs = c.el("div", "position:absolute;inset:0;background:#000;opacity:.2", b);
+      sheetTex(c, f, PW, PH, 0.35); sheetTex(c, b, PW, PH, 0.35);
+      await c.wait(300);
+      await c.all(
+        c.a(leaf, [{ transform: "rotateY(0deg)" }, { transform: "rotateY(-180deg)" }], { duration: 1100, easing: c.E.E1 }),
+        c.a(hs, [{ opacity: 0, easing: c.E.E1 }, { opacity: 0.2, easing: c.E.E1 }, { opacity: 0 }], { duration: 1100 }),
+        c.a(fs, [{ opacity: 0 }, { opacity: 0.22 }], { duration: 550, easing: c.E.E1 }),
+        c.a(bs, [{ opacity: 0.22 }, { opacity: 0 }], { duration: 550, delay: 550, easing: c.E.E1, fill: "both" }));
+    },
+  });
+
+  /* ---- PP-04 Разрыв по шву ---- */
+  SKD.add({
+    code: "PP-04", group: "paper", ru: "Разрыв по шву",
+    what: "Лист рвётся посередине: половины расходятся и показывают солнечный нижний слой.",
+    when: "Сюжетное раскрытие или смена условия",
+    fam: PP_FAM, proj: ["arseniy", "serial"], hold: 1300,
+    spec: "D=800 мс, E1; рваная граница по x=w/2, зубцы шаг 16 px глубина 6 px; левая половина x 0→−0.55w, угол 0→−6°, правая x 0→+0.55w, угол 0→+6°; клип по каждой половине.",
+    async play(c) {
+      desk(c);
+      const w = 220, h = 172, x0 = 130, y0 = 49, cx = x0 + w / 2;
+      /* нижний слой: солнце на светлом листе */
+      const under = c.el("div", `position:absolute;left:${x0 - 12}px;top:${y0 - 8}px;width:${w + 24}px;height:${h + 16}px;background:var(--sf);box-shadow:${SHP};overflow:hidden`);
+      c.el("div", "position:absolute;inset:0;transform:scale(1)", under, `<svg viewBox="0 0 244 188" width="244" height="188"><defs><radialGradient id="ppg"><stop offset="0" style="stop-color:var(--ac);stop-opacity:.35"/><stop offset="1" style="stop-color:var(--ac);stop-opacity:0"/></radialGradient></defs><rect width="244" height="188" style="fill:var(--bg)"/><circle cx="122" cy="94" r="84" fill="url(#ppg)"/><g style="stroke:var(--ac);stroke-width:5;stroke-linecap:round">${Array.from({ length: 12 }, (_, i) => { const a = (i * 30 * Math.PI) / 180; return `<path d="M${f1(122 + Math.cos(a) * 52)} ${f1(94 + Math.sin(a) * 52)}L${f1(122 + Math.cos(a) * 68)} ${f1(94 + Math.sin(a) * 68)}"/>`; }).join("")}</g><circle cx="122" cy="94" r="36" style="fill:var(--ac)"/><path d="M104 88q5-6 10 0M130 88q5-6 10 0M106 104q16 14 32 0" fill="none" style="stroke:var(--sf);stroke-width:3;stroke-linecap:round"/><path d="M0 160C40 140 80 168 122 156S200 142 244 160V188H0Z" style="fill:var(--mu);opacity:.5"/></svg>`);
+      sheetTex(c, under, w + 24, h + 16, 0.4);
+      /* рваный шов: зубцы шаг 16, глубина 6, фиксированные (seed) */
+      const zig = []; for (let y = 0; y <= h; y += 16) zig.push([cx + (Math.round(y / 16) % 2 ? 6 : -6) * (0.55 + c.rnd() * 0.45) + (c.rnd() - 0.5) * 2, y0 + y]);
+      zig[0][1] = y0; zig[zig.length - 1][1] = y0 + h;
+      const rim = zig.map(([x, y], i) => [x, y, 2.2 + c.rnd() * 2.6]);
+      const half = (side) => {
+        const { svg, defs } = layer(c, "pointer-events:none");
+        const sx = side === "L" ? x0 : x0 + w, ex = side === "L" ? 1 : -1;
+        const poly = (off) => `M${sx} ${y0}L${zig.map(([x, y], i) => f1(x + ex * off(i)) + " " + y).join("L")}L${sx} ${y0 + h}Z`;
+        const cid = uid(), cp = c.sv(defs, "clipPath", { id: cid }); c.sv(cp, "path", { d: poly(() => 0) });
+        const g = sv(c, svg, "g", {}, "filter:drop-shadow(0 6px 9px rgba(0,0,0,.2))");
+        sv(c, g, "path", { d: poly((i) => rim[i][2]) }, "fill:var(--sf)");                       // белая бумажная кромка
+        const pic = sv(c, g, "g", { "clip-path": `url(#${cid})` });
+        sv(c, pic, "rect", { x: x0, y: y0, width: w, height: h }, `fill:color-mix(in srgb,var(--mu) 40%,var(--bg))`);
+        /* туча с дождём поперёк шва */
+        sv(c, pic, "path", { d: `M${cx - 78} ${y0 + 86}C${cx - 96} ${y0 + 84} ${cx - 94} ${y0 + 56} ${cx - 70} ${y0 + 58}C${cx - 66} ${y0 + 36} ${cx - 34} ${y0 + 30} ${cx - 22} ${y0 + 48}C${cx - 8} ${y0 + 28} ${cx + 28} ${y0 + 30} ${cx + 34} ${y0 + 54}C${cx + 62} ${y0 + 46} ${cx + 82} ${y0 + 74} ${cx + 62} ${y0 + 86}Z` }, "fill:var(--sf);stroke:var(--fg);stroke-width:2;stroke-linejoin:round");
+        [-56, -36, -16, 6, 26, 48].forEach((dx, i) => sv(c, pic, "path", { d: `M${cx + dx} ${y0 + 100 + (i % 2) * 8}l-5 14M${cx + dx + 8} ${y0 + 126 - (i % 2) * 6}l-5 14`, fill: "none" }, "stroke:var(--fg);stroke-width:2;stroke-linecap:round;opacity:.55"));
+        sv(c, pic, "path", { d: `M${cx - 24} ${y0 + 68}q6 6 12 0M${cx + 12} ${y0 + 68}q6 6 12 0M${cx - 12} ${y0 + 78}q12 -8 24 0`, fill: "none" }, "stroke:var(--fg);stroke-width:2;stroke-linecap:round");
+        grain(c, pic, { x: x0, y: y0, w, h, fill: "var(--mu)", a: 0.4, f: 0.6, seed: 9 });
+        svg.style.transformOrigin = `${side === "L" ? x0 + w / 4 : x0 + (3 * w) / 4}px ${y0 + h / 2}px`;
+        return svg;
+      };
+      const L = half("L"), R = half("R");
+      await c.wait(450);
+      await c.all(
+        c.a(L, [{ transform: "translateX(0) rotate(0deg)" }, { transform: `translateX(${-0.55 * w}px) rotate(-6deg)` }], { duration: 800, easing: c.E.E1 }),
+        c.a(R, [{ transform: "translateX(0) rotate(0deg)" }, { transform: `translateX(${0.55 * w}px) rotate(6deg)` }], { duration: 800, easing: c.E.E1 }));
+    },
+  });
+
+  /* ---- PP-05 Наклейка с угла ---- */
+  SKD.add({
+    code: "PP-05", group: "paper", ru: "Наклейка с угла",
+    what: "Наклейка приклеивается слева направо, впереди бежит приподнятый загнутый край.",
+    when: "Короткая пометка или подпись на коллаже",
+    fam: PP_FAM, proj: ["arseniy", "ecs"], hold: 1300,
+    spec: "D=700 мс, E2; маска ширины 0→w; впереди загнутый край 24 px, rotateY −45°→0° за последние 200 мс E1; тень края α 0.2→0 за те же 200 мс E0.",
+    async play(c) {
+      desk(c);
+      /* коллаж-подложка */
+      const base = c.el("div", `position:absolute;left:62px;top:36px;width:356px;height:204px;background:var(--sf);box-shadow:${SHP};transform:rotate(-1.5deg);overflow:hidden`);
+      sheetTex(c, base, 356, 204, 0.4);
+      c.el("div", "position:absolute;left:24px;top:22px;width:150px;height:104px;background:var(--sf);box-shadow:0 5px 10px rgba(0,0,0,.14);transform:rotate(-3deg);padding:6px;box-sizing:border-box", base, `<div style="width:138px;height:92px;overflow:hidden">${photoArt(138, 92)}</div>`);
+      c.el("div", "position:absolute;left:196px;top:30px;width:120px;height:118px;background:color-mix(in srgb,var(--mu) 40%,var(--bg));clip-path:polygon(2% 6%,38% 0,70% 5%,100% 0,96% 38%,100% 70%,94% 100%,52% 94%,0 100%,6% 52%);transform:rotate(3deg)", base);
+      c.el("div", "position:absolute;left:30px;top:150px;width:300px;height:40px", base, `<svg viewBox="0 0 300 40" width="300" height="40">${bar(0, 8, 220, { o: 0.4 }) + bar(0, 22, 160, { o: 0.3 })}</svg>`);
+      const Wd = 232, Hd = 112, SX = 124, SY = 80;
+      const mk = (parent) => c.el("div", `position:absolute;left:0;top:0;width:${Wd}px;height:${Hd}px`, parent,
+        `<svg viewBox="0 0 ${Wd} ${Hd}" width="${Wd}" height="${Hd}" style="position:absolute;inset:0;overflow:visible"><path d="M24 6H208Q226 6 226 24V88Q226 106 208 106H24Q6 106 6 88V24Q6 6 24 6Z" style="fill:var(--sf);stroke:var(--sf);stroke-width:8;stroke-linejoin:round"/><path d="M24 12H208Q220 12 220 24V88Q220 100 208 100H24Q12 100 12 88V24Q12 12 24 12Z" style="fill:var(--ac)"/><path d="M24 17H208Q215 17 215 24" fill="none" style="stroke:var(--sf);stroke-width:1.6;opacity:.35"/><circle cx="46" cy="56" r="20" style="fill:var(--sf)"/><rect x="43.5" y="40" width="5" height="19" rx="2.5" style="fill:var(--ac)"/><circle cx="46" cy="68" r="3" style="fill:var(--ac)"/><text x="76" y="68" style="font:800 34px/1 'Golos Text',system-ui,sans-serif;fill:var(--sf);letter-spacing:.5px">ВАЖНО</text></svg>`);
+      const grp = c.el("div", `position:absolute;left:${SX}px;top:${SY}px;width:${Wd}px;height:${Hd}px;transform:rotate(-3deg)`);
+      const stk = c.el("div", `position:absolute;inset:0;filter:drop-shadow(0 4px 5px rgba(0,0,0,.2));clip-path:inset(-20px ${Wd}px -20px -20px)`, grp);
+      mk(stk);
+      const strip = c.el("div", `position:absolute;left:0;top:0;width:24px;height:${Hd}px;overflow:hidden;transform-origin:0 50%;transform:perspective(1200px) rotateY(-45deg);z-index:8;filter:drop-shadow(2px 3px 3px rgba(0,0,0,.25))`, grp);
+      const sc = mk(strip);
+      const sh = c.el("div", "position:absolute;inset:0;background:linear-gradient(90deg,rgba(0,0,0,0),rgba(0,0,0,1));opacity:.2", strip);
+      const D = 700;
+      await c.tick(D, (t, p) => {
+        const e = EF.E2(p), m = e * Wd, k = seg(t, D - 200, D), a = lerp(-45, 0, EF.E1(k));
+        stk.style.clipPath = `inset(-20px ${f1((1 - e) * Wd)}px -20px -20px)`;
+        const sw = clamp(Wd - m, 0, 24);
+        strip.style.width = f1(sw) + "px"; strip.style.left = f1(m) + "px";
+        strip.style.transform = `perspective(1200px) rotateY(${f1(a)}deg)`;
+        strip.style.filter = `drop-shadow(2px 3px 3px rgba(0,0,0,${f1(lerp(0.25, 0, k))}))`;
+        sc.style.left = f1(-m) + "px";
+        sh.style.opacity = f1(lerp(0.2, 0, k));
+        strip.style.opacity = sw <= 0.5 ? 0 : 1;
+      });
+    },
+  });
+
+  /* ---- PP-06 Ступенчатая перекладка ---- */
+  SKD.add({
+    code: "PP-06", group: "paper", ru: "Ступенчатая перекладка",
+    what: "Карточка с самолётиком перекладывается рывками, как в бумажном стоп-моушне.",
+    when: "Бумажный стоп-моушн",
+    fam: PP_FAM, proj: ["arseniy", "serial"], hold: 1300,
+    spec: "D=667 мс, E5 steps(8); центр A→B, угол −4°→+2°, без blur и промежуточного fade; каждый шаг удерживается, текстура следует за карточкой.",
+    async play(c) {
+      desk(c);
+      const A = { x: 132, y: 170 }, B = { x: 350, y: 112 }, cw = 112, ch = 140;
+      const { svg } = layer(c);
+      /* карандашные метки девяти положений */
+      for (let k = 0; k <= 8; k++) { const x = lerp(A.x, B.x, k / 8), y = lerp(A.y, B.y, k / 8) + ch / 2 + 14; sv(c, svg, "path", { d: `M${f1(x - 4)} ${f1(y)}H${f1(x + 4)}M${f1(x)} ${f1(y - 4)}V${f1(y + 4)}`, fill: "none" }, "stroke:var(--mu);stroke-width:1.4;opacity:.7"); }
+      const card = c.el("div", `position:absolute;left:${A.x - cw / 2}px;top:${A.y - ch / 2}px;width:${cw}px;height:${ch}px;background:var(--sf);box-shadow:${SHP};transform:rotate(-4deg)`);
+      c.el("div", "position:absolute;left:7px;top:7px;width:98px;height:100px;overflow:hidden;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08)", card, `<svg viewBox="0 0 98 100" width="98" height="100"><rect width="98" height="100" style="fill:var(--bg)"/><path d="M6 78C24 66 38 72 50 62S82 54 94 58" fill="none" style="stroke:var(--mu);stroke-width:1.6;stroke-dasharray:4 3"/><path d="M12 62L88 28L58 78L48 60Z" style="fill:var(--ac)"/><path d="M48 60L58 78L52 66Z" style="fill:var(--fg);opacity:.45"/><path d="M48 60L88 28L52 66Z" style="fill:color-mix(in srgb,var(--ac) 65%,var(--fg))"/><path d="M14 20q5-6 10 0q5-6 10 0M64 86q4-5 8 0q4-5 8 0" fill="none" style="stroke:var(--fg);stroke-width:1.4"/></svg>`);
+      c.el("div", "position:absolute;left:8px;right:8px;bottom:8px;height:20px", card, `<svg viewBox="0 0 96 20" width="96" height="20">${bar(2, 4, 70, { o: 0.6 }) + bar(2, 12, 44, { o: 0.4, c: "var(--ac)" })}</svg>`);
+      sheetTex(c, card, cw, ch, 0.45);
+      tape(c, card, 28, -8, 54, 16, 3);
+      const dx = B.x - A.x, dy = B.y - A.y;
+      await c.wait(400);
+      await c.a(card, [{ transform: "translate(0px,0px) rotate(-4deg)" }, { transform: `translate(${dx}px,${dy}px) rotate(2deg)` }], { duration: 667, easing: c.E.steps(8) });
+    },
+  });
+
+  /* ---- PP-07 Сложение гармошкой ---- */
+  SKD.add({
+    code: "PP-07", group: "paper", ru: "Сложение гармошкой",
+    what: "Четыре полосы карты раскрываются из сложенной гармошки в один лист.",
+    when: "Карта пути, план комнаты, лист инструкции",
+    fam: PP_FAM, proj: ["arseniy", "ecs"], hold: 1300,
+    spec: "D=1000 мс, E2; 4 равные вертикальные полосы, цепочка шарниров по левым краям, rotateY +80/−160/+160/−160° → 0; первая полоса закреплена левым краем; обе стороны нарисованы.",
+    async play(c) {
+      desk(c);
+      const SW = 80, SH = 184, X0 = 80, Y0 = 43, ang = [80, -160, 160, -160];
+      const mapArt = () => {
+        const k = uid();
+        return `<svg viewBox="0 0 320 184" width="320" height="184" style="position:absolute;top:0;display:block"><rect width="320" height="184" style="fill:var(--sf)"/><rect width="320" height="184" style="fill:var(--bg);opacity:.5"/>` +
+          [[10, 12, 70, 40], [96, 12, 50, 56], [160, 14, 60, 34], [236, 12, 74, 44], [10, 70, 56, 46], [86, 84, 62, 40], [170, 70, 52, 48], [240, 82, 70, 38], [14, 136, 80, 40], [112, 140, 54, 36], [186, 132, 62, 46], [256, 136, 52, 38]].map(([x, y, w, h], i) => `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="5" style="fill:var(--mu);opacity:${i % 3 ? 0.18 : 0.3}"/>`).join("") +
+          `<path d="M-6 118C40 92 84 140 140 112S220 70 326 96" fill="none" style="stroke:var(--mu);stroke-width:16;opacity:.45"/><path d="M-6 118C40 92 84 140 140 112S220 70 326 96" fill="none" style="stroke:var(--sf);stroke-width:8;opacity:.8"/>` +
+          `<path d="M80 0V184M160 0V184M240 0V184" style="stroke:var(--fg);stroke-width:1;opacity:.1"/><circle cx="206" cy="38" r="14" style="fill:var(--mu);opacity:.35"/><circle cx="60" cy="158" r="12" style="fill:var(--mu);opacity:.35"/>` +
+          `<path d="M26 160C60 136 70 100 112 96S170 120 196 84S252 70 270 40" fill="none" style="stroke:var(--ac);stroke-width:3;stroke-dasharray:2 7;stroke-linecap:round"/>` +
+          `<circle cx="26" cy="160" r="6" style="fill:var(--fg)"/><circle cx="270" cy="38" r="9" style="fill:var(--ac)"/><circle cx="270" cy="38" r="3.5" style="fill:var(--sf)"/></svg>`;
+      };
+      const st = c.el("div", "position:absolute;inset:0;perspective:1200px;filter:drop-shadow(0 8px 12px rgba(0,0,0,.16))");
+      let parent = st; const strips = [], shades = [];
+      for (let i = 0; i < 4; i++) {
+        const s = c.el("div", `position:absolute;left:${i === 0 ? X0 : SW}px;top:${i === 0 ? Y0 : 0}px;width:${SW}px;height:${SH}px;transform-style:preserve-3d;transform-origin:0 50%;transform:rotateY(${ang[i]}deg)`, parent);
+        const f = c.el("div", "position:absolute;inset:0;overflow:hidden;backface-visibility:hidden", s, mapArt());
+        f.firstChild.style.left = -SW * i + "px";
+        const sh = c.el("div", "position:absolute;inset:0;background:#000;opacity:.28", f);
+        const b = c.el("div", "position:absolute;inset:0;overflow:hidden;backface-visibility:hidden;transform:rotateY(180deg);background:var(--sf)", s, `<svg viewBox="0 0 80 184" width="80" height="184">${bar(10, 20, 54, { h: 6, o: 0.6 }) + bar(10, 44, 60, { o: 0.35 }) + bar(10, 58, 46, { o: 0.35 }) + bar(10, 72, 56, { o: 0.35 }) + bar(10, 100, 40, { c: "var(--ac)", o: 0.6 })}<rect x="10" y="124" width="50" height="40" rx="3" style="fill:var(--mu);opacity:.22"/></svg>`);
+        strips.push(s); shades.push(sh); parent = s;
+      }
+      await c.wait(400);
+      await c.all(...strips.map((s, i) => c.a(s, [{ transform: `rotateY(${ang[i]}deg)` }, { transform: "rotateY(0deg)" }], { duration: 1000, easing: c.E.E2 })), ...shades.map((s) => c.a(s, [{ opacity: 0.28 }, { opacity: 0 }], { duration: 1000, easing: c.E.E2 })));
+    },
+  });
+
+  /* ---- PP-08 Вытягивание карточки ---- */
+  SKD.add({
+    code: "PP-08", group: "paper", ru: "Вытягивание карточки",
+    what: "Карточка выезжает вверх из бумажного конверта и останавливается на 0.6 своей высоты.",
+    when: "Документ, письмо, обещанный материал",
+    fam: PP_FAM, proj: ["arseniy", "ecs"], hold: 1300,
+    spec: "D=900 мс, E2; конверт неподвижен, передняя стенка выше карточки; карточка y +0.6h→0, клип под стенкой; конечный выступ над конвертом 0.6h, угол 0°.",
+    async play(c) {
+      desk(c);
+      const EX = 120, EY = 128, EW = 240, EH = 124, CW = 176, CH = 112, CX = EX + (EW - CW) / 2;
+      const kraft = "color-mix(in srgb,var(--mu) 40%,var(--bg))", kraft2 = "color-mix(in srgb,var(--mu) 24%,var(--sf))";
+      const flap = c.el("div", `position:absolute;left:${EX}px;top:${EY - 92}px;width:${EW}px;height:92px;background:color-mix(in srgb,var(--mu) 60%,var(--bg));clip-path:polygon(0 100%,50% 0,100% 100%);filter:drop-shadow(0 -2px 3px rgba(0,0,0,.1))`);
+      const back = c.el("div", `position:absolute;left:${EX}px;top:${EY}px;width:${EW}px;height:${EH}px;background:${kraft};box-shadow:${SHP}`);
+      sheetTex(c, back, EW, EH, 0.35);
+      const card = c.el("div", `position:absolute;left:${CX}px;top:${EY - 0.6 * CH}px;width:${CW}px;height:${CH}px;background:var(--sf);box-shadow:0 2px 6px rgba(0,0,0,.14);transform:translateY(${0.6 * CH}px)`);
+      c.el("div", "position:absolute;inset:0", card, `<svg viewBox="0 0 ${CW} ${CH}" width="${CW}" height="${CH}"><rect x="14" y="14" width="64" height="10" rx="2" style="fill:var(--ac)"/>${bar(14, 36, 140) + bar(14, 50, 120) + bar(14, 64, 132) + bar(14, 78, 90)}<g transform="rotate(-10 140 84)"><rect x="112" y="68" width="46" height="30" rx="3" fill="none" style="stroke:var(--ac);stroke-width:2.4"/><path d="M122 84l7 7l14-14" fill="none" style="stroke:var(--ac);stroke-width:3;stroke-linecap:round;stroke-linejoin:round"/></g></svg>`);
+      sheetTex(c, card, CW, CH, 0.4);
+      /* передняя стенка выше карточки */
+      const front = c.el("div", `position:absolute;left:${EX}px;top:${EY}px;width:${EW}px;height:${EH}px;background:${kraft2};clip-path:polygon(0 0,100% 0,100% 100%,0 100%);z-index:6;box-shadow:inset 0 10px 8px -8px rgba(0,0,0,.18)`);
+      c.el("div", "position:absolute;inset:0", front, `<svg viewBox="0 0 ${EW} ${EH}" width="${EW}" height="${EH}"><path d="M0 ${EH}L${EW / 2} 56L${EW} ${EH}" fill="none" style="stroke:var(--fg);stroke-width:1.2;opacity:.22"/><path d="M0 0L${EW / 2} 56L${EW} 0" fill="none" style="stroke:var(--fg);stroke-width:1.2;opacity:.14"/>${bar(18, 86, 70, { o: 0.4 }) + bar(18, 98, 54, { o: 0.3 })}<rect x="${EW - 52}" y="12" width="36" height="42" style="fill:var(--sf)"/><rect x="${EW - 48}" y="16" width="28" height="34" style="fill:var(--ac);opacity:.85"/><path d="M${EW - 52} 12h36v42h-36z" fill="none" style="stroke:var(--mu);stroke-width:1;stroke-dasharray:2 2"/></svg>`);
+      sheetTex(c, front, EW, EH, 0.35);
+      const clip = c.el("div", `position:absolute;left:0;top:0;width:480px;height:${EY + EH}px;overflow:hidden;z-index:3;pointer-events:none`);
+      clip.appendChild(card);
+      await c.wait(350);
+      await c.a(card, [{ transform: `translateY(${0.6 * CH}px)` }, { transform: "translateY(0)" }], { duration: 900, easing: c.E.E2 });
+      await c.wait(0);
+    },
+  });
+})();
+
+;
+/* OB (предметы и композиция), CH (персонаж и актёрское действие), DR (чертёж, физика и схемы).
+   24 живые сцены 480×270 по спецификации Astra (ASTRA_TAXONOMY.md, 2.13 / 2.14 / 2.20).
+   Темы: молоток и перо на Луне, маятник, векторы сил, графики движения; плоский герой для сериала.
+   Цвета только var(--bg|--fg|--ac|--sf|--mu). Случайности нет, всё детерминировано. */
+(function () {
+  const SW = 3;
+  const cl = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+  const win = (t, a, b) => cl((t - a) / (b - a));
+  const lerp = (a, b, p) => a + (b - a) * p;
+  const fmt = (n, d) => n.toFixed(d == null ? 1 : d).replace(".", ",");
+
+  /* кубические кривые E1–E4 для покадровых сцен (те же числа, что в c.E) */
+  function cb(x1, y1, x2, y2) {
+    const bx = (t) => 3 * x1 * t * (1 - t) * (1 - t) + 3 * x2 * t * t * (1 - t) + t * t * t;
+    const by = (t) => 3 * y1 * t * (1 - t) * (1 - t) + 3 * y2 * t * t * (1 - t) + t * t * t;
+    return (x) => {
+      if (x <= 0) return 0;
+      if (x >= 1) return 1;
+      let lo = 0, hi = 1, t = x;
+      for (let i = 0; i < 26; i++) { if (bx(t) < x) lo = t; else hi = t; t = (lo + hi) / 2; }
+      return by(t);
+    };
+  }
+
+  /* покадровый цикл по меткам rAF: t≥0 всегда, не зависит от performance.now() */
+  function tk(c, dur, fn) {
+    return new Promise((res, rej) => {
+      let t0 = null;
+      const step = (now) => {
+        if (c.stopped()) return rej("skd-stop");
+        if (t0 == null) t0 = now;
+        const t = cl(now - t0, 0, dur);
+        fn(t, t / dur);
+        if (t >= dur) return res();
+        requestAnimationFrame(step);
+      };
+      requestAnimationFrame(step);
+    });
+  }
+
+  const EF = { E0: (p) => p, E1: cb(0.33, 0, 0.67, 1), E2: cb(0.22, 1, 0.36, 1), E3: cb(0.4, 0, 1, 1), E4: cb(0.16, 1.25, 0.3, 1) };
+
+  /* ---------- SVG-хелперы ---------- */
+  const G = (c, p, a) => c.sv(p, "g", a || {});
+  const piv = (c, p, x, y) => { const o = G(c, p, { transform: `translate(${x},${y})` }); return G(c, o, {}); };
+  const R = (c, p, x, y, w, h, st, rx) => c.sv(p, "rect", { x, y, width: w, height: h, rx: rx || 0, style: st });
+  const C = (c, p, cx, cy, r, st) => c.sv(p, "circle", { cx, cy, r, style: st });
+  const L = (c, p, x1, y1, x2, y2, st) => c.sv(p, "line", { x1, y1, x2, y2, style: st });
+  const PA = (c, p, d, st) => c.sv(p, "path", { d, style: st });
+  const SFS = `fill:var(--sf);stroke:var(--fg);stroke-width:${SW};stroke-linejoin:round`;
+  const LN = (col, w) => `stroke:var(${col || "--fg"});stroke-width:${w || SW};stroke-linecap:round;fill:none`;
+  function TX(c, p, x, y, str, o) {
+    o = o || {};
+    const t = c.sv(p, "text", { x, y, "text-anchor": o.a || "middle", style: `fill:var(${o.c || "--fg"});font-size:${o.s || 20}px;font-weight:${o.w || 600};${o.st || ""}` });
+    t.textContent = str;
+    return t;
+  }
+  const fadeIn = (c, el, ms, delay) => c.a(el, [{ opacity: 0 }, { opacity: 1 }], { duration: ms, delay: delay || 0, easing: "linear", fill: "both" });
+
+  /* стрелка с наконечником: тело + треугольник; setArrow двигает оба конца */
+  function mkArrow(c, p, col, w, hl, hw) {
+    const g = G(c, p);
+    const ln = c.sv(g, "line", { x1: 0, y1: 0, x2: 0, y2: 0, style: `stroke:var(${col});stroke-width:${w};stroke-linecap:butt` });
+    const hd = c.sv(g, "polygon", { points: "0,0 0,0 0,0", style: `fill:var(${col})` });
+    return { g, ln, hd, hl: hl || 12, hw: hw || 6 };
+  }
+  function setArrow(a, ax, ay, bx, by) {
+    const len = Math.hypot(bx - ax, by - ay);
+    if (len < 0.5) { a.g.style.opacity = 0; return; }
+    a.g.style.opacity = 1;
+    const ang = Math.atan2(by - ay, bx - ax), k = Math.min(1, len / a.hl), h = a.hl * k, w = a.hw * k;
+    const ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux;
+    const sx = bx - ux * h, sy = by - uy * h;
+    a.ln.setAttribute("x1", ax); a.ln.setAttribute("y1", ay);
+    a.ln.setAttribute("x2", sx); a.ln.setAttribute("y2", sy);
+    a.hd.setAttribute("points", `${bx},${by} ${sx + nx * w},${sy + ny * w} ${sx - nx * w},${sy - ny * w}`);
+  }
+  function headPts(x, y, ang, len, wid) {
+    const ux = Math.cos(ang), uy = Math.sin(ang), nx = -uy, ny = ux, bx = x - ux * len, by = y - uy * len;
+    return `${x},${y} ${bx + nx * wid},${by + ny * wid} ${bx - nx * wid},${by - ny * wid}`;
+  }
+  function ground(c, s, y) {
+    R(c, s, 0, y, 480, 270 - y, "fill:var(--mu);opacity:.22");
+    L(c, s, 0, y, 480, y, "stroke:var(--mu);stroke-width:3");
+  }
+  function floorLine(c, s, y) {
+    R(c, s, 0, y, 480, 270 - y, "fill:var(--mu);opacity:.14");
+    L(c, s, 0, y, 480, y, "stroke:var(--mu);stroke-width:3");
+  }
+
+  /* ---------- предметы ---------- */
+  function hammerG(c, p) {
+    const g = G(c, p);
+    R(c, g, -56, -5, 86, 10, SFS, 4);
+    R(c, g, -52, -5, 16, 10, "fill:var(--ac)", 0);
+    R(c, g, 22, -19, 36, 38, "fill:var(--fg)", 6);
+    return g;
+  }
+  function featherG(c, p) {
+    const g = G(c, p);
+    PA(c, g, "M-52,5 C-30,-24 22,-30 58,-14 C34,10 -14,22 -52,5 Z", SFS);
+    [0.22, 0.42, 0.62, 0.8].forEach((u) => {
+      const x = -64 + 118 * u, y = 11 - 24 * u;
+      L(c, g, x, y, x + 10, y - 11, "stroke:var(--mu);stroke-width:2;stroke-linecap:round");
+    });
+    L(c, g, -66, 12, 54, -13, "stroke:var(--fg);stroke-width:2.6;stroke-linecap:round");
+    return g;
+  }
+
+  /* =====================================================================
+     OB — предметы и композиция
+     ===================================================================== */
+  const FO = ["F05", "F02", "F03"];
+
+  SKD.add({
+    code: "OB-01", group: "obj", ru: "Приход на место",
+    what: "Молоток выезжает из левого поля и тормозит рядом с пером.",
+    when: "Добавить один инструмент или участника схемы.",
+    fam: FO, proj: ["arseniy", "democrm", "serial"], hold: 1300,
+    spec: "D=500 мс, E2; центр B+(−160,0)→B, α 0→1, s=1; после D предмет стоит.",
+    async play(c) {
+      const s = c.svg();
+      ground(c, s, 214);
+      TX(c, s, 240, 40, "Луна: g = 1,6 м/с²", { s: 22 });
+      const f = G(c, s, { transform: "translate(104,196) rotate(-6)" }); featherG(c, f);
+      TX(c, s, 104, 246, "перо", { s: 19 });
+      const B = { x: 336, y: 194 };
+      const outer = G(c, s, { transform: `translate(${B.x},${B.y})` });
+      const inner = G(c, outer, { style: "opacity:0" });
+      hammerG(c, inner);
+      TX(c, inner, 0, 52, "молоток", { s: 19 });
+      await c.wait(350);
+      await c.a(inner, [{ transform: "translate(-160px,0)", opacity: 0 }, { transform: "translate(0,0)", opacity: 1 }], { duration: 500, easing: c.E.E2 });
+    },
+  });
+
+  SKD.add({
+    code: "OB-02", group: "obj", ru: "Бросок по дуге",
+    what: "Перо пролетает дугу над Луной и мягко садится; тень растёт.",
+    when: "Иллюстративный гэг с лёгким предметом.",
+    fam: FO, proj: ["arseniy", "serial"], hold: 1200,
+    spec: "D=700 мс, E0 по времени; центр=(1−p)A+pB+(0,−4·140·p(1−p)), угол −20°→0° E2; тень w×0.15h, s 0.7→1, α 0.08→0.18 E1.",
+    async play(c) {
+      const s = c.svg();
+      ground(c, s, 214);
+      TX(c, s, 240, 248, "Луна: воздуха нет, траектория — парабола", { s: 17 });
+      const A = { x: 96, y: 196 }, B = { x: 384, y: 196 }, H = 140;
+      let d = "";
+      for (let i = 0; i <= 40; i++) { const p = i / 40; d += (i ? "L" : "M") + (A.x + (B.x - A.x) * p).toFixed(1) + "," + (A.y - 4 * H * p * (1 - p)).toFixed(1); }
+      PA(c, s, d, "fill:none;stroke:var(--mu);stroke-width:2;stroke-dasharray:3 7;stroke-linecap:round");
+      const sh = c.sv(s, "ellipse", { cx: A.x, cy: 214, rx: 42, ry: 6, style: "fill:var(--fg);opacity:.08;filter:blur(5px)" });
+      const ob = G(c, s, { transform: `translate(${A.x},${A.y}) rotate(-20)` });
+      featherG(c, ob);
+      await c.wait(300);
+      await tk(c, 700, (t, p) => {
+        const x = lerp(A.x, B.x, p), y = A.y - 4 * H * p * (1 - p);
+        const ang = lerp(-20, 0, EF.E2(p)), q = EF.E1(p);
+        ob.setAttribute("transform", `translate(${x},${y}) rotate(${ang})`);
+        sh.setAttribute("cx", x); sh.setAttribute("rx", 60 * lerp(0.7, 1, q));
+        sh.style.opacity = lerp(0.08, 0.18, q);
+      });
+    },
+  });
+
+  SKD.add({
+    code: "OB-03", group: "obj", ru: "Карточка с оборотом",
+    what: "Плашка с вопросом переворачивается и показывает ответ.",
+    when: "Вопрос на лицевой стороне, ответ на обороте.",
+    fam: FO, proj: ["arseniy", "serial"], hold: 1300,
+    spec: "D=600 мс, E1; rotateY 0→180°, perspective 1200 px, шарнир по вертикальному центру; backface скрыт, содержимое не зеркалится.",
+    async play(c) {
+      const wrap = c.el("div", "position:absolute;left:110px;top:55px;width:260px;height:160px;perspective:1200px");
+      const card = c.el("div", "position:absolute;inset:0;transform-style:preserve-3d", wrap);
+      const face = "position:absolute;inset:0;border-radius:14px;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;text-align:center;backface-visibility:hidden;-webkit-backface-visibility:hidden;border:3px solid var(--fg);";
+      c.el("div", face + "background:var(--sf);color:var(--fg)", card,
+        '<div style="font-size:27px;font-weight:700;line-height:1.15">Что упадёт<br>быстрее?</div><div style="font-size:18px;font-weight:600;opacity:.7">молоток или перо на Луне</div>');
+      c.el("div", face + "background:var(--ac);color:var(--sf);transform:rotateY(180deg)", card,
+        '<div style="font-size:34px;font-weight:700">Одинаково</div><div style="font-size:22px;font-weight:600">a = g = 1,6 м/с²</div>');
+      await c.wait(500);
+      await c.a(card, [{ transform: "rotateY(0deg)" }, { transform: "rotateY(180deg)" }], { duration: 600, easing: c.E.E1 });
+    },
+  });
+
+  SKD.add({
+    code: "OB-04", group: "obj", ru: "Сборка из деталей",
+    what: "Пять деталей сходятся в нитяной маятник на штативе.",
+    when: "Устройство прибора или продукта.",
+    fam: FO, proj: ["arseniy", "democrm"], hold: 1300,
+    spec: "Деталь 500 мс, задержка 70i мс, D=500+70(n−1); E2; старт в 120 px от места по углу 360i/n°; α 0→1, угол постоянен.",
+    async play(c) {
+      const s = c.svg();
+      const parts = [
+        { cx: 200, cy: 228, d: (g) => R(c, g, -90, -7, 180, 14, SFS, 3) },
+        { cx: 130, cy: 141, d: (g) => R(c, g, -6, -80, 12, 160, SFS, 2) },
+        { cx: 212, cy: 67, d: (g) => R(c, g, -88, -6, 176, 12, SFS, 2) },
+        { cx: 290, cy: 122, d: (g) => R(c, g, -1.5, -49, 3, 98, "fill:var(--fg)") },
+        { cx: 290, cy: 188, d: (g) => C(c, g, 0, 0, 17, `fill:var(--ac);stroke:var(--fg);stroke-width:${SW}`) },
+      ];
+      const n = parts.length;
+      const t1 = TX(c, s, 392, 112, "T = 2π√(L/g)", { s: 26, st: "opacity:0" });
+      const t2 = TX(c, s, 392, 84, "нитяной маятник", { s: 18, c: "--mu", st: "opacity:0" });
+      const anims = parts.map((pt, i) => {
+        const outer = G(c, s, { transform: `translate(${pt.cx},${pt.cy})` });
+        const inner = G(c, outer, { style: "opacity:0" });
+        pt.d(inner);
+        const th = (2 * Math.PI * i) / n, dx = 120 * Math.cos(th), dy = 120 * Math.sin(th);
+        return c.a(inner, [{ transform: `translate(${dx}px,${dy}px)`, opacity: 0 }, { transform: "translate(0,0)", opacity: 1 }], { duration: 500, delay: 70 * i, easing: c.E.E2, fill: "both" });
+      });
+      await c.all(...anims);
+      await c.all(fadeIn(c, t1, 300), fadeIn(c, t2, 300));
+    },
+  });
+
+  SKD.add({
+    code: "OB-05", group: "obj", ru: "Разнесённый разбор",
+    what: "Пружинный маятник разъезжается на опору, пружину и груз с подписями.",
+    when: "Показать компоненты и их назначение.",
+    fam: FO, proj: ["arseniy", "democrm", "serial"], hold: 1300,
+    spec: "D=700 мс, E1; деталь i смещается на (i−(n−1)/2)·100 px по x; подписи α 0→1 на 500–700 мс E0.",
+    async play(c) {
+      const s = c.svg();
+      TX(c, s, 240, 40, "Пружинный маятник", { s: 24 });
+      const cy = 125;
+      const mk = (cx, i, draw, label, lx) => {
+        const o = G(c, s, { transform: `translate(${cx},${cy})` });
+        const g = G(c, o, {});
+        draw(g);
+        const lb = TX(c, s, lx, cy + 76, label, { s: 19, st: "opacity:0" });
+        return { g, lb, dx: (i - 1) * 100 };
+      };
+      const items = [
+        mk(150, 0, (g) => { R(c, g, -15, -45, 30, 90, SFS, 2); for (let k = -3; k <= 3; k++) L(c, g, -15, k * 13 + 6, -3, k * 13 - 6, "stroke:var(--mu);stroke-width:2"); }, "опора", 50),
+        mk(225, 1, (g) => PA(c, g, "M-60,0 L-48,0 L-42,-18 L-30,18 L-18,-18 L-6,18 L6,-18 L18,18 L30,-18 L42,18 L48,0 L60,0", `fill:none;stroke:var(--fg);stroke-width:${SW};stroke-linejoin:round;stroke-linecap:round`), "пружина, k", 225),
+        mk(315, 2, (g) => { R(c, g, -30, -28, 60, 56, `fill:var(--ac);stroke:var(--fg);stroke-width:${SW};stroke-linejoin:round`, 5); TX(c, g, 0, 9, "m", { s: 26, c: "--sf" }); }, "груз, m", 415),
+      ];
+      await c.wait(500);
+      await c.all(
+        ...items.map((it) => c.a(it.g, [{ transform: "translate(0,0)" }, { transform: `translate(${it.dx}px,0)` }], { duration: 700, easing: c.E.E1 })),
+        ...items.map((it) => fadeIn(c, it.lb, 200, 500)),
+      );
+    },
+  });
+
+  /* контуры для OB-06: молоток и перо, одинаковое число вершин и направление обхода */
+  function resample(pts, N) {
+    const n = pts.length, d = [0];
+    for (let i = 0; i < n; i++) { const a = pts[i], b = pts[(i + 1) % n]; d.push(d[i] + Math.hypot(b[0] - a[0], b[1] - a[1])); }
+    const tot = d[n], out = [];
+    let j = 0;
+    for (let k = 0; k < N; k++) {
+      const t = (k * tot) / N;
+      while (d[j + 1] < t) j++;
+      const a = pts[j], b = pts[(j + 1) % n], u = (t - d[j]) / (d[j + 1] - d[j] || 1);
+      out.push([a[0] + (b[0] - a[0]) * u, a[1] + (b[1] - a[1]) * u]);
+    }
+    return out;
+  }
+  function featherOutline() {
+    const right = [], left = [], M = 60;
+    for (let i = 0; i <= M; i++) {
+      const sx = i / M, y = -100 + 200 * sx;
+      const u = Math.min(sx / 0.8, 1), env = u >= 1 ? 0 : Math.sin(Math.PI * Math.pow(u, 0.75));
+      const tooth = u > 0.1 && u < 0.92 ? (i % 2 ? 1 : 0.8) : 1;
+      const wr = Math.max(3, 36 * env * tooth), wl = Math.max(3, 27 * env * (i % 2 ? 0.8 : 1));
+      const cx = 16 * Math.sin(Math.PI * sx * 0.95) - 8 * sx;
+      right.push([cx + wr, y]); left.push([cx - wl, y]);
+    }
+    left.reverse(); left.pop();
+    return right.concat(left);
+  }
+  const HAMMER = [[0, -95], [45, -95], [45, -55], [8, -55], [8, 95], [-8, 95], [-8, -55], [-45, -55], [-45, -95]];
+
+  SKD.add({
+    code: "OB-06", group: "obj", ru: "Превращение контура",
+    what: "Силуэт молотка плавно перетекает в силуэт пера без растворения.",
+    when: "Визуальная метафора или изменение геометрии.",
+    fam: FO, proj: ["arseniy", "serial"], hold: 1200,
+    spec: "D=800 мс, E1; вершины Pi→Qi, одинаковые число и порядок, обход по часовой; заливка SF постоянна, штрих FG 3 px.",
+    async play(c) {
+      const s = c.svg();
+      const N = 120, P = resample(HAMMER, N), Q = resample(featherOutline(), N);
+      const cx = 240, cy = 122;
+      const path = PA(c, s, "", SFS);
+      const dOf = (q) => { let d = ""; for (let i = 0; i < N; i++) d += (i ? "L" : "M") + (cx + lerp(P[i][0], Q[i][0], q)).toFixed(1) + "," + (cy + lerp(P[i][1], Q[i][1], q)).toFixed(1); return d + "Z"; };
+      path.setAttribute("d", dOf(0));
+      const a = TX(c, s, 240, 258, "молоток", { s: 20 });
+      const b = TX(c, s, 240, 258, "перо", { s: 20, st: "opacity:0" });
+      await c.wait(450);
+      await tk(c, 800, (t, p) => { const q = EF.E1(p); path.setAttribute("d", dOf(q)); a.style.opacity = 1 - win(p, 0, 0.5); b.style.opacity = win(p, 0.5, 1); });
+    },
+  });
+
+  SKD.add({
+    code: "OB-07", group: "obj", ru: "Один маятник",
+    what: "Табличка с «g = 9,8 м/с²» делает одно затухающее качание.",
+    when: "Иллюстративная реакция таблички или лампы.",
+    fam: FO, proj: ["arseniy", "serial"], hold: 1100,
+    spec: "D=1200 мс; опора — верхний центр; угол на 0/300/600/900/1200 мс: −12°/+8°/−4°/+2°/0°; E1 между парами.",
+    async play(c) {
+      const s = c.svg();
+      R(c, s, 150, 24, 180, 8, "fill:var(--mu)", 2);
+      const outer = G(c, s, { transform: "translate(240,36)" });
+      const sw = G(c, outer, { style: "transform:rotate(-12deg)" });
+      L(c, sw, -62, 70, 0, 0, "stroke:var(--fg);stroke-width:2.5;stroke-linecap:round");
+      L(c, sw, 62, 70, 0, 0, "stroke:var(--fg);stroke-width:2.5;stroke-linecap:round");
+      R(c, sw, -86, 66, 172, 72, SFS, 8);
+      TX(c, sw, 0, 112, "g = 9,8 м/с²", { s: 25 });
+      C(c, s, 240, 36, 5, "fill:var(--fg)");
+      await c.wait(250);
+      const E1 = c.E.E1;
+      await c.a(sw, [
+        { transform: "rotate(-12deg)", offset: 0, easing: E1 }, { transform: "rotate(8deg)", offset: 0.25, easing: E1 },
+        { transform: "rotate(-4deg)", offset: 0.5, easing: E1 }, { transform: "rotate(2deg)", offset: 0.75, easing: E1 },
+        { transform: "rotate(0deg)", offset: 1 },
+      ], { duration: 1200, easing: "linear" });
+    },
+  });
+
+  SKD.add({
+    code: "OB-08", group: "obj", ru: "Обход центра",
+    what: "Мяч на верёвке один раз обходит столб за T = 2 с: то за ним, то перед ним.",
+    when: "Цикл процесса или условная орбита.",
+    fam: FO, proj: ["arseniy", "democrm", "serial"], hold: 900,
+    spec: "D=2000 мс, E0; центр=T+(180cosθ,100sinθ), θ −90°→270°; при sinθ<0 предмет ниже по z, при sinθ≥0 выше.",
+    async play(c) {
+      const s = c.svg();
+      const T = { x: 240, y: 135 };
+      c.sv(s, "ellipse", { cx: T.x, cy: T.y, rx: 180, ry: 100, style: "fill:none;stroke:var(--mu);stroke-width:2;stroke-dasharray:8 6" });
+      TX(c, s, 14, 30, "один оборот", { a: "start", s: 18, c: "--mu" });
+      TX(c, s, 14, 56, "T = 2 с", { a: "start", s: 26 });
+      const layer = G(c, s);
+      const pole = G(c, layer);
+      R(c, pole, T.x - 7, 38, 14, 196, SFS, 5);
+      c.sv(pole, "ellipse", { cx: T.x, cy: 236, rx: 34, ry: 7, style: SFS });
+      const mover = G(c, layer);
+      const rope = L(c, mover, T.x, T.y, T.x, T.y, "stroke:var(--fg);stroke-width:2.5");
+      const ball = C(c, mover, 0, 0, 15, `fill:var(--ac);stroke:var(--fg);stroke-width:${SW}`);
+      let back = null;
+      await tk(c, 2000, (t, p) => {
+        const th = (-90 + 360 * p) * Math.PI / 180;
+        const x = T.x + 180 * Math.cos(th), y = T.y + 100 * Math.sin(th);
+        ball.setAttribute("cx", x); ball.setAttribute("cy", y);
+        rope.setAttribute("x2", x); rope.setAttribute("y2", y);
+        const nb = Math.sin(th) < 0;
+        if (nb !== back) { back = nb; if (nb) layer.insertBefore(mover, pole); else layer.appendChild(mover); }
+      });
+    },
+  });
+
+  /* =====================================================================
+     CH — персонаж и актёрское действие
+     Плоский герой: голова-круг, тело-капсула, руки-линии с суставами.
+     Рост ≈205 ед.; амплитуды спецификации (рост героя 480 px) пересчитаны ×0.43,
+     мелкие (зрачки, рот) чуть увеличены, чтобы читались на карточке 300 px.
+     ===================================================================== */
+  const FC = ["F07", "F02"];
+  const JOINT = `fill:var(--sf);stroke:var(--fg);stroke-width:2.5`;
+
+  function hero(c, parent, x, y, S, o) {
+    o = o || {};
+    const root = G(c, parent);
+    root.style.transform = `translate(${x}px,${y}px) scale(${S})`;
+    const H = { root, S };
+    H.sh = c.sv(root, "ellipse", { cx: 0, cy: 0, rx: 32, ry: 5.5, style: "fill:var(--fg);opacity:.13" });
+    const body = G(c, root); H.body = body;
+    const drop = o.drop || 0;
+    const limb = "fill:none;stroke:var(--fg);stroke-width:9;stroke-linecap:round;stroke-linejoin:round";
+    if (!o.ik) {
+      [-1, 1].forEach((sd) => {
+        const leg = piv(c, body, sd * 10, -73);
+        L(c, leg, 0, 0, 0, 73, limb.replace("9", "10"));
+        c.sv(leg, "ellipse", { cx: 5, cy: 73, rx: 12, ry: 5, style: "fill:var(--fg)" });
+        H[sd < 0 ? "legL" : "legR"] = leg;
+      });
+    } else {
+      const lg = G(c, body);
+      const legs = [-1, 1].map((sd) => {
+        const pth = PA(c, lg, "M0,0", limb.replace("9", "10"));
+        const knee = C(c, lg, 0, 0, 5.5, JOINT);
+        const foot = c.sv(lg, "ellipse", { cx: 0, cy: 0, rx: 12, ry: 5, style: "fill:var(--fg)" });
+        return { sd, pth, knee, foot };
+      });
+      const A = 40, B = 38, hipY = -76 + drop;
+      H.setLegs = (dx) => legs.forEach((l) => {
+        const hx = l.sd * 10 + dx, hy = hipY, fx = l.sd * 15, fy = -1;
+        const d = Math.hypot(fx - hx, fy - hy), dd = Math.min(d, A + B - 0.05), base = Math.atan2(fy - hy, fx - hx);
+        const ang = base + (l.sd < 0 ? 1 : -1) * Math.acos(cl((A * A + dd * dd - B * B) / (2 * A * dd), -1, 1));
+        const kx = hx + A * Math.cos(ang), ky = hy + A * Math.sin(ang);
+        l.pth.setAttribute("d", `M${hx},${hy} L${kx},${ky} L${fx},${fy}`);
+        l.knee.setAttribute("cx", kx); l.knee.setAttribute("cy", ky);
+        l.foot.setAttribute("cx", fx + 5); l.foot.setAttribute("cy", fy + 1);
+      });
+      H.setLegs(0);
+    }
+    const up = G(c, body, drop ? { transform: `translate(0,${drop})` } : {});
+    const torso = piv(c, up, 0, -76); H.torso = torso;
+    R(c, torso, -19, -76, 38, 80, `fill:var(--ac);stroke:var(--fg);stroke-width:${SW}`, 19);
+    [-1, 1].forEach((sd) => {
+      const arm = piv(c, torso, sd * 20, -62);
+      L(c, arm, 0, 0, 0, 36, limb);
+      C(c, arm, 0, 0, 6, JOINT);
+      const fore = piv(c, arm, 0, 36);
+      L(c, fore, 0, 0, 0, 34, limb);
+      C(c, fore, 0, 0, 5.5, JOINT);
+      const hand = C(c, fore, 0, 34, 7, JOINT);
+      arm.style.transform = `rotate(${-sd * 7}deg)`;
+      const k = sd < 0 ? "L" : "R";
+      H["arm" + k] = arm; H["fore" + k] = fore; H["hand" + k] = hand;
+    });
+    const head = piv(c, torso, 0, -76); H.head = head;
+    C(c, head, 0, -26, 27, SFS);
+    PA(c, head, "M-27,-26 A27,27 0 0 1 27,-26 Q14,-41 -4,-37 Q-18,-34 -27,-26 Z", "fill:var(--fg)");
+    const face = G(c, head); H.face = face;
+    const eye = "fill:var(--sf);stroke:var(--fg);stroke-width:2";
+    H.eL = C(c, face, -9, -24, 6.5, eye); H.eR = C(c, face, 9, -24, 6.5, eye);
+    H.pL = C(c, face, -9, -24, 3.2, "fill:var(--fg)"); H.pR = C(c, face, 9, -24, 3.2, "fill:var(--fg)");
+    const brow = "fill:none;stroke:var(--fg);stroke-width:2.5;stroke-linecap:round";
+    H.bL = PA(c, face, "M-15,-34 L-4,-35", brow); H.bR = PA(c, face, "M4,-35 L15,-34", brow);
+    H.mo = PA(c, face, "M-6,-10 Q0,-7 6,-10", brow);
+    H.mO = c.sv(face, "ellipse", { cx: 0, cy: -9, rx: 5, ry: 6.5, style: "fill:var(--fg);opacity:0" });
+    return H;
+  }
+  function mood(H, m) {
+    const smile = m === "smile", wow = m === "wow", by = wow ? -5 : 0;
+    H.mo.setAttribute("d", smile ? "M-8,-12 Q0,-3 8,-12" : "M-6,-10 Q0,-7 6,-10");
+    H.mo.style.opacity = wow ? 0 : 1; H.mO.style.opacity = wow ? 1 : 0;
+    H.bL.setAttribute("d", `M-15,${-34 + by} L-4,${-35 + by}`); H.bR.setAttribute("d", `M4,${-35 + by} L15,${-34 + by}`);
+    H.eL.setAttribute("r", wow ? 8 : 6.5); H.eR.setAttribute("r", wow ? 8 : 6.5);
+    H.pL.setAttribute("r", wow ? 2.6 : 3.2); H.pR.setAttribute("r", wow ? 2.6 : 3.2);
+  }
+  function bubble(c, p, x, y, w, h, tip, lines, sz) {
+    const g = G(c, p);
+    R(c, g, x, y, w, h, `fill:var(--sf);stroke:var(--fg);stroke-width:${SW}`, 12);
+    const dir = tip.x < x ? -1 : 1, bx = dir < 0 ? x : x + w, a = y + h * 0.5, b = y + h * 0.8;
+    c.sv(g, "polygon", { points: `${bx - dir * 1.5},${a} ${bx - dir * 1.5},${b} ${tip.x},${tip.y}`, style: "fill:var(--sf)" });
+    L(c, g, bx, a, tip.x, tip.y, `stroke:var(--fg);stroke-width:${SW};stroke-linecap:round`);
+    L(c, g, bx, b, tip.x, tip.y, `stroke:var(--fg);stroke-width:${SW};stroke-linecap:round`);
+    lines.forEach((t, i) => TX(c, g, x + w / 2, y + (h / (lines.length + 1)) * (i + 1) + sz * 0.35, t, { s: sz }));
+    return g;
+  }
+
+  SKD.add({
+    code: "CH-01", group: "char", ru: "Взгляд на предмет",
+    what: "Падает яблоко: сначала сдвигаются зрачки, затем голова поворачивается к нему.",
+    when: "Герой замечает событие.",
+    fam: FC, proj: ["serial", "arseniy"], hold: 1100,
+    spec: "D=500 мс; зрачки 0→+5 за 0–120 мс E2; голова вокруг шеи 0→+8° на 120–500 мс E1; корень неподвижен; цель справа.",
+    async play(c) {
+      const s = c.svg();
+      floorLine(c, s, 238);
+      PA(c, s, "M492,20 Q424,30 346,42", "fill:none;stroke:var(--mu);stroke-width:7;stroke-linecap:round");
+      L(c, s, 372, 36, 372, 50, "stroke:var(--mu);stroke-width:3;stroke-linecap:round");
+      const ap = G(c, s, { transform: "translate(372,64)" });
+      C(c, ap, 0, 0, 12, `fill:var(--ac);stroke:var(--fg);stroke-width:${SW}`);
+      L(c, ap, 0, -12, 2, -19, "stroke:var(--fg);stroke-width:2.5;stroke-linecap:round");
+      const H = hero(c, s, 170, 238, 0.92);
+      mood(H, "n");
+      const fall = tk(c, 820, (t) => { ap.setAttribute("transform", `translate(372,${Math.min(226, 64 + 0.5 * 512 * Math.pow(t / 1000, 2))})`); });
+      const eyes = [H.pL, H.pR].map((p) => c.a(p, [{ transform: "translateX(0)" }, { transform: "translateX(3px)" }], { duration: 120, easing: c.E.E2 }));
+      const turn = c.a(H.head, [{ transform: "rotate(0deg)" }, { transform: "rotate(8deg)" }], { duration: 380, delay: 120, easing: c.E.E1, fill: "both" });
+      const brows = c.wait(120).then(() => { H.bL.setAttribute("d", "M-15,-37 L-4,-38"); H.bR.setAttribute("d", "M4,-38 L15,-37"); });
+      await c.all(fall, ...eyes, turn, brows);
+    },
+  });
+
+  SKD.add({
+    code: "CH-02", group: "char", ru: "Короткий кивок",
+    what: "Голова один раз опускается и возвращается; на карточке появляется галочка.",
+    when: "Согласие или подтверждение.",
+    fam: FC, proj: ["serial", "arseniy"], hold: 1100,
+    spec: "D=600 мс; вокруг шеи 0→+10° на 0–220 мс E1, +10°→0 на 220–600 мс E2; остальной риг стоит.",
+    async play(c) {
+      const s = c.svg();
+      floorLine(c, s, 238);
+      const H = hero(c, s, 160, 238, 0.92);
+      mood(H, "n");
+      R(c, s, 290, 80, 160, 90, SFS, 10);
+      TX(c, s, 370, 148, "a = F/m", { s: 32 });
+      const ck = PA(c, s, "M388,100 L402,112 L428,90", "fill:none;stroke:var(--ac);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1 2;stroke-dashoffset:1");
+      ck.setAttribute("pathLength", "1");
+      const E1 = c.E.E1, E2 = c.E.E2, o = 220 / 600;
+      const nod = c.a(H.head, [
+        { transform: "rotate(0deg)", offset: 0, easing: E1 }, { transform: "rotate(10deg)", offset: o, easing: E2 }, { transform: "rotate(0deg)", offset: 1 },
+      ], { duration: 600, easing: "linear" });
+      const pitch = c.a(H.face, [
+        { transform: "translateY(0)", offset: 0, easing: E1 }, { transform: "translateY(3px)", offset: o, easing: E2 }, { transform: "translateY(0)", offset: 1 },
+      ], { duration: 600, easing: "linear" });
+      const sm = c.wait(220).then(() => mood(H, "smile"));
+      await c.all(nod, pitch, sm);
+      await c.a(ck, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 300, easing: "linear" });
+    },
+  });
+
+  SKD.add({
+    code: "CH-03", group: "char", ru: "Указание рукой",
+    what: "Герой поднимает руку к доске справа, на кисти появляется указательный палец.",
+    when: "Герой объясняет деталь справа.",
+    fam: FC, proj: ["serial", "arseniy"], hold: 1100,
+    spec: "D=700 мс; плечо rotateZ 0→−55° за 500 мс E2, предплечье 0→+20° E2; указательная кисть вместо нейтральной в 400 мс E6; 500–700 мс удержание.",
+    async play(c) {
+      const s = c.svg();
+      floorLine(c, s, 238);
+      R(c, s, 290, 62, 160, 120, SFS, 10);
+      TX(c, s, 370, 112, "F = 5 Н", { s: 32 });
+      L(c, s, 330, 148, 400, 148, "stroke:var(--ac);stroke-width:4");
+      c.sv(s, "polygon", { points: headPts(410, 148, 0, 12, 6), style: "fill:var(--ac)" });
+      const H = hero(c, s, 150, 238, 0.92);
+      mood(H, "n");
+      H.foreR.style.transform = "rotate(-50deg)";
+      const fing = L(c, H.foreR, 0, 38, 0, 54, "stroke:var(--fg);stroke-width:5;stroke-linecap:round;opacity:0");
+      const E2 = c.E.E2;
+      await c.all(
+        c.a(H.armR, [{ transform: "rotate(-7deg)" }, { transform: "rotate(-62deg)" }], { duration: 500, easing: E2 }),
+        c.a(H.foreR, [{ transform: "rotate(-50deg)" }, { transform: "rotate(-30deg)" }], { duration: 500, easing: E2 }),
+        c.a(fing, [{ opacity: 0 }, { opacity: 1 }], { duration: 1, delay: 400, easing: "linear", fill: "both" }),
+        c.wait(700),
+      );
+    },
+  });
+
+  SKD.add({
+    code: "CH-04", group: "char", ru: "Два шага",
+    what: "Герой делает два шага к флажку; руки качаются в противофазе с ногами.",
+    when: "Короткий проход в ограниченной анимации.",
+    fam: FC, proj: ["serial"], hold: 1100,
+    spec: "D=800 мс; корень A→B E0; ноги −20/+20/−20/+20/0° и +20/−20/+20/−20/0° по 200 мс, E1; руки в противофазе ±12°; корень y 0/−6/0/−6/0.",
+    async play(c) {
+      const s = c.svg();
+      floorLine(c, s, 238);
+      L(c, s, 414, 238, 414, 146, "stroke:var(--fg);stroke-width:4;stroke-linecap:round");
+      c.sv(s, "polygon", { points: "414,146 454,162 414,178", style: `fill:var(--ac);stroke:var(--fg);stroke-width:${SW};stroke-linejoin:round` });
+      const S = 0.92, H = hero(c, s, 96, 238, S);
+      mood(H, "smile");
+      const E1 = c.E.E1, off = [0, 0.25, 0.5, 0.75, 1];
+      const seq = (el, base, vals) => c.a(el, vals.map((v, i) => ({ transform: `rotate(${base + v}deg)`, offset: off[i], easing: i < 4 ? E1 : "linear" })), { duration: 800, easing: "linear" });
+      await c.all(
+        c.a(H.root, [{ transform: `translate(96px,238px) scale(${S})` }, { transform: `translate(278px,238px) scale(${S})` }], { duration: 800, easing: "linear" }),
+        seq(H.legL, 0, [-20, 20, -20, 20, 0]), seq(H.legR, 0, [20, -20, 20, -20, 0]),
+        seq(H.armL, 7, [12, -12, 12, -12, 0]), seq(H.armR, -7, [-12, 12, -12, 12, 0]),
+        c.a(H.body, [0, -3, 0, -3, 0].map((v, i) => ({ transform: `translateY(${v}px)`, offset: off[i], easing: i < 4 ? E1 : "linear" })), { duration: 800, easing: "linear" }),
+      );
+    },
+  });
+
+  SKD.add({
+    code: "CH-05", group: "char", ru: "Прыжок от неожиданности",
+    what: "Герой сжимается, подпрыгивает с поднятыми руками и приземляется; тень сжимается.",
+    when: "Один сюжетный сюрприз.",
+    fam: FC, proj: ["serial"], hold: 1100,
+    spec: "D=900 мс; 0–120 мс sy 1→0.9, sx 1→1.08 E1; 120–420 y→−80 E2; 420–720 y→0 E3; 720–800 sy→0.94 E1; 800–900 sy→1 E2.",
+    async play(c) {
+      const s = c.svg();
+      floorLine(c, s, 240);
+      const S = 0.85, H = hero(c, s, 240, 240, S);
+      mood(H, "n");
+      const bang = TX(c, s, 292, 70, "!", { s: 50, c: "--ac", w: 800, st: "opacity:0" });
+      const E1 = c.E.E1, E2 = c.E.E2, E3 = c.E.E3, A = 44;
+      const tf = (y, sx, sy) => `translateY(${y}px) scale(${sx},${sy})`;
+      const sw = c.wait(120).then(() => { mood(H, "wow"); return c.a(bang, [{ opacity: 0, transform: "scale(.6)" }, { opacity: 1, transform: "scale(1)" }], { duration: 200, easing: c.E.E4, fill: "both" }); });
+      await c.all(
+        c.a(H.body, [
+          { transform: tf(0, 1, 1), offset: 0, easing: E1 }, { transform: tf(0, 1.08, 0.9), offset: 120 / 900, easing: E2 },
+          { transform: tf(-A, 1, 1), offset: 420 / 900, easing: E3 }, { transform: tf(0, 1, 1), offset: 720 / 900, easing: E1 },
+          { transform: tf(0, 1, 0.94), offset: 800 / 900, easing: E2 }, { transform: tf(0, 1, 1), offset: 1 },
+        ], { duration: 900, easing: "linear" }),
+        c.a(H.sh, [{ transform: "scale(1)", offset: 0 }, { transform: "scale(1)", offset: 120 / 900, easing: E2 }, { transform: "scale(.62)", offset: 420 / 900, easing: E3 }, { transform: "scale(1)", offset: 720 / 900 }, { transform: "scale(1)", offset: 1 }], { duration: 900, easing: "linear" }),
+        c.a(H.armL, [{ transform: "rotate(7deg)", offset: 0 }, { transform: "rotate(7deg)", offset: 120 / 900, easing: E2 }, { transform: "rotate(150deg)", offset: 420 / 900, easing: E1 }, { transform: "rotate(30deg)", offset: 1 }], { duration: 900, easing: "linear" }),
+        c.a(H.armR, [{ transform: "rotate(-7deg)", offset: 0 }, { transform: "rotate(-7deg)", offset: 120 / 900, easing: E2 }, { transform: "rotate(-150deg)", offset: 420 / 900, easing: E1 }, { transform: "rotate(-30deg)", offset: 1 }], { duration: 900, easing: "linear" }),
+        sw,
+      );
+    },
+  });
+
+  SKD.add({
+    code: "CH-06", group: "char", ru: "Перенос веса",
+    what: "Стопы стоят, таз уходит вправо, колени сгибаются; затем герой начинает реплику.",
+    when: "Спокойный диалог без постоянного покачивания.",
+    fam: FC, proj: ["serial", "arseniy"], hold: 1200,
+    spec: "D=1000 мс, E1; таз x 0→+14 px, торс rotateZ 0→−3°, голова +3°; стопы закреплены, кости постоянной длины (IK).",
+    async play(c) {
+      const s = c.svg();
+      floorLine(c, s, 238);
+      const H = hero(c, s, 140, 238, 0.92, { ik: true, drop: 2 });
+      mood(H, "n");
+      const bub = bubble(c, s, 236, 56, 190, 78, { x: 206, y: 112 }, ["Смотри:", "g = 9,8 м/с²"], 24);
+      bub.style.opacity = 0;
+      const DX = 11;
+      await tk(c, 1000, (t, p) => {
+        const q = EF.E1(p);
+        H.setLegs(q * DX);
+        H.torso.style.transform = `translate(${q * DX}px,0) rotate(${-3 * q}deg)`;
+        H.head.style.transform = `rotate(${3 * q}deg)`;
+      });
+      await c.a(bub, [{ opacity: 0, transform: "scale(.85)" }, { opacity: 1, transform: "scale(1)" }], { duration: 300, easing: c.E.E4, fill: "both" });
+    },
+  });
+
+  SKD.add({
+    code: "CH-07", group: "char", ru: "Реплика ртом",
+    what: "Крупный план: рот открывается и закрывается в такт реплике, лицо и корпус стоят.",
+    when: "Предпросмотр речи; в финале — по аудио.",
+    fam: FC, proj: ["serial", "arseniy"], hold: 1100,
+    spec: "D=960 мс; раскрытие на 0/120/…/960 мс: 0/8/3/10/0/6/3/8/0; E1 между точками; ширина 28 px постоянна.",
+    async play(c) {
+      const s = c.svg();
+      const H = hero(c, s, 130, 470, 2.0, { noShadow: true });
+      mood(H, "n");
+      H.mo.style.opacity = 0;
+      const mg = G(c, H.face, { transform: "translate(0,-9)" });
+      const mt = G(c, mg, { style: "transform:scaleY(.14)" });
+      c.sv(mt, "ellipse", { cx: 0, cy: 0, rx: 6.5, ry: 5, style: "fill:var(--fg);stroke:var(--fg);stroke-width:2.5;vector-effect:non-scaling-stroke" });
+      bubble(c, s, 252, 40, 212, 108, { x: 214, y: 118 }, ["В вакууме все тела", "падают одинаково."], 21);
+      const vals = [0, 8, 3, 10, 0, 6, 3, 8, 0];
+      await c.a(mt, vals.map((v, i) => ({ transform: `scaleY(${Math.max(0.14, (v * 0.77) / 10)})`, offset: i / 8, easing: i < 8 ? c.E.E1 : "linear" })), { duration: 960, easing: "linear" });
+    },
+  });
+
+  SKD.add({
+    code: "CH-08", group: "char", ru: "Три ключевые позы",
+    what: "Забиваем гвоздь: подготовка, удар, результат — три позы без промежуточных кадров.",
+    when: "Аниме, бумажный герой и ограниченная анимация.",
+    fam: FC, proj: ["serial"], hold: 1100,
+    spec: "D=900 мс; «подготовка» 0–300 мс, «действие» 300–500 мс, «результат» 500–900 мс; E6 на 300/500 мс; корень и стопы совпадают.",
+    async play(c) {
+      const s = c.svg();
+      floorLine(c, s, 238);
+      const nail = G(c, s, {});
+      R(c, nail, 252, 166, 4, 14, "fill:var(--fg)", 1.5);
+      R(c, nail, 256, 171.5, 70, 3, "fill:var(--fg)");
+      R(c, s, 296, 98, 48, 140, SFS, 3);
+      for (let k = 0; k < 4; k++) L(c, s, 306 + k * 10, 108, 306 + k * 10, 228, "stroke:var(--mu);stroke-width:1.5;opacity:.6");
+      const H = hero(c, s, 142, 238, 0.88);
+      const hm = G(c, H.foreR);
+      L(c, hm, 0, 30, 0, 76, "stroke:var(--fg);stroke-width:5;stroke-linecap:round");
+      R(c, hm, -18, 72, 36, 16, "fill:var(--fg)", 4);
+      R(c, hm, -18, 72, 36, 5, "fill:var(--ac)", 0);
+      const fx = G(c, s, { style: "opacity:0" });
+      [-14, 0, 14].forEach((dy) => L(c, fx, 236, 174 + dy, 224 - Math.abs(dy) * 0.4, 174 + dy * 1.4, "stroke:var(--ac);stroke-width:3.5;stroke-linecap:round"));
+      const sp = G(c, s, { style: "opacity:0" });
+      [[286, 160, 296, 150], [288, 172, 302, 172], [286, 184, 296, 194]].forEach((l) => L(c, sp, l[0], l[1], l[2], l[3], "stroke:var(--ac);stroke-width:3.5;stroke-linecap:round"));
+      const chips = ["подготовка", "удар", "результат"].map((t, i) => {
+        const w = [112, 62, 100][i], x = [10, 128, 196][i];
+        const r = R(c, s, x, 246, w, 22, "fill:var(--sf);stroke:var(--mu);stroke-width:2", 11);
+        const tt = TX(c, s, x + w / 2, 262, t, { s: 15, c: "--mu" });
+        return { r, tt };
+      });
+      const POSE = [
+        { aR: -150, fR: -48, aL: 40, fL: 10, to: -6, hd: -4, m: "n", nailX: 0, sp: 0, fx: 0 },
+        { aR: -80, fR: 43, aL: 25, fL: 5, to: 11, hd: 6, m: "wow", nailX: 0, sp: 0, fx: 1 },
+        { aR: -14, fR: 12, aL: 8, fL: 4, to: 0, hd: 3, m: "smile", nailX: 38, sp: 1, fx: 0 },
+      ];
+      const set = (i) => {
+        const P = POSE[i];
+        H.armR.style.transform = `rotate(${P.aR}deg)`; H.foreR.style.transform = `rotate(${P.fR}deg)`;
+        H.armL.style.transform = `rotate(${P.aL}deg)`; H.foreL.style.transform = `rotate(${P.fL}deg)`;
+        H.torso.style.transform = `rotate(${P.to}deg)`; H.head.style.transform = `rotate(${P.hd}deg)`;
+        mood(H, P.m);
+        nail.style.transform = `translateX(${P.nailX}px)`; sp.style.opacity = P.sp; fx.style.opacity = P.fx;
+        chips.forEach((ch, k) => {
+          ch.r.style.fill = k === i ? "var(--ac)" : "var(--sf)"; ch.r.style.stroke = k === i ? "var(--fg)" : "var(--mu)";
+          ch.tt.style.fill = k === i ? "var(--sf)" : "var(--mu)";
+        });
+      };
+      set(0);
+      await c.wait(300); set(1);
+      await c.wait(200); set(2);
+      await c.wait(400);
+    },
+  });
+
+  /* =====================================================================
+     DR — чертёж, физика и схемы
+     ===================================================================== */
+  const FD = ["F05", "F03", "F09", "F04"];
+
+  SKD.add({
+    code: "DR-01", group: "draw", ru: "Построение контура",
+    what: "Наклонная плоскость и брусок прорисовываются одной линией, затем появляется угол α.",
+    when: "Фигура, прибор, план комнаты.",
+    fam: FD, proj: ["arseniy", "democrm"], hold: 1200,
+    spec: "D=1200 мс, E0; длина пути 0→100%; при n путях время делится пропорционально длинам без пауз.",
+    async play(c) {
+      const s = c.svg();
+      const O = { x: 90, y: 232 };
+      const tri = `M${O.x},${O.y} L390,${O.y} L390,${(O.y - 300 * Math.tan(Math.PI / 6)).toFixed(1)} Z`;
+      const d = { x: Math.cos(Math.PI / 6), y: -0.5 }, n = { x: -0.5, y: -Math.cos(Math.PI / 6) };
+      const P0 = { x: O.x + 120 * d.x, y: O.y + 120 * d.y };
+      const q = [[0, 0], [50, 0], [50, 30], [0, 30]].map(([a, b]) => `${(P0.x + a * d.x + b * n.x).toFixed(1)},${(P0.y + a * d.y + b * n.y).toFixed(1)}`);
+      const blk = `M${q[0]} L${q[1]} L${q[2]} L${q[3]} Z`;
+      const stl = `fill:none;stroke:var(--fg);stroke-width:${SW};stroke-linejoin:round`;
+      const paths = [PA(c, s, tri, stl), PA(c, s, blk, stl)];
+      const lens = paths.map((p) => p.getTotalLength()), tot = lens[0] + lens[1];
+      paths.forEach((p, i) => { p.style.strokeDasharray = lens[i]; p.style.strokeDashoffset = lens[i]; });
+      const arc = PA(c, s, `M${O.x + 52},${O.y} A52,52 0 0 0 ${(O.x + 52 * Math.cos(Math.PI / 6)).toFixed(1)},${(O.y - 26).toFixed(1)}`, "fill:none;stroke:var(--ac);stroke-width:3;stroke-linecap:round;opacity:0");
+      const lab = TX(c, s, 156, 224, "α = 30°", { a: "start", s: 22, c: "--ac", st: "opacity:0" });
+      await tk(c, 1200, (t, p) => {
+        let done = p * tot;
+        paths.forEach((pa, i) => { const k = cl(done / lens[i]); pa.style.strokeDashoffset = lens[i] * (1 - k); done -= lens[i]; });
+      });
+      await c.all(fadeIn(c, arc, 250), fadeIn(c, lab, 250));
+    },
+  });
+
+  SKD.add({
+    code: "DR-02", group: "draw", ru: "Размерная выноска",
+    what: "Над бруском ставятся выносные линии, размерная линия и значение «l = 24 см».",
+    when: "Замер или геометрическая величина.",
+    fam: FD, proj: ["arseniy", "democrm"], hold: 1200,
+    spec: "D=900 мс; выносные от A/B+(0,40) к A/B 0–240 мс E0; линия A→B 240–650 мс E0, наконечники 8 px; значение α 0→1 на 650–900 мс.",
+    async play(c) {
+      const s = c.svg();
+      const A = { x: 120, y: 112 }, B = { x: 360, y: 112 };
+      R(c, s, A.x, A.y + 40, B.x - A.x, 34, SFS, 3);
+      TX(c, s, 240, A.y + 63, "брусок", { s: 18, c: "--mu" });
+      const ext = [A, B].map((P) => L(c, s, P.x, A.y + 40, P.x, A.y + 40, `stroke:var(--fg);stroke-width:2.5`));
+      const dl = mkArrow(c, s, "--ac", SW, 8, 4);
+      const aEnd = c.sv(s, "polygon", { points: headPts(A.x, A.y, Math.PI, 8, 4), style: "fill:var(--ac);opacity:0" });
+      const box = G(c, s, { style: "opacity:0" });
+      R(c, box, 240 - 62, A.y - 16 - 34, 124, 34, `fill:var(--sf);stroke:var(--fg);stroke-width:2.5`, 7);
+      TX(c, box, 240, A.y - 16 - 34 + 24, "l = 24 см", { s: 22 });
+      await tk(c, 900, (t) => {
+        const e = EF.E0(win(t, 0, 240));
+        ext.forEach((l, i) => l.setAttribute("y2", A.y + 40 - 40 * e));
+        const q = win(t, 240, 650);
+        if (q > 0) { aEnd.style.opacity = 1; setArrow(dl, A.x + 7 * 0, A.y, lerp(A.x, B.x, q), A.y); }
+        box.style.opacity = win(t, 650, 900);
+      });
+    },
+  });
+
+  SKD.add({
+    code: "DR-03", group: "draw", ru: "Вектор из точки",
+    what: "Из центра шара вырастает вектор g вниз с подписью «g = 9,8 м/с²».",
+    when: "Сила, скорость, смещение с верным направлением.",
+    fam: FD, proj: ["arseniy", "serial"], hold: 1200,
+    spec: "D=700 мс, E2; основание A неподвижно, конец A→B; наконечник 12 px; подпись α 0→1 на 500–700 мс E0.",
+    async play(c) {
+      const s = c.svg();
+      L(c, s, 130, 214, 350, 214, "stroke:var(--mu);stroke-width:3;stroke-linecap:round");
+      const A = { x: 240, y: 56 }, B = { x: 240, y: 154 };
+      C(c, s, A.x, A.y, 17, SFS);
+      const v = mkArrow(c, s, "--ac", 4, 12, 6.5);
+      const lb = TX(c, s, 264, 118, "g = 9,8 м/с²", { a: "start", s: 24, c: "--ac", st: "opacity:0" });
+      const sub = TX(c, s, 264, 144, "свободное падение", { a: "start", s: 15, c: "--mu", st: "opacity:0" });
+      await tk(c, 700, (t, p) => {
+        const q = EF.E2(p);
+        setArrow(v, A.x, A.y, lerp(A.x, B.x, q), lerp(A.y, B.y, q));
+        lb.style.opacity = sub.style.opacity = win(t, 500, 700);
+      });
+    },
+  });
+
+  SKD.add({
+    code: "DR-04", group: "draw", ru: "Оси и шкала",
+    what: "Собираются оси v(t) и шкала: сначала t, затем v, потом деления с единицами.",
+    when: "Подготовить график физической зависимости.",
+    fam: FD, proj: ["arseniy"], hold: 1200,
+    spec: "D=1000 мс; ось X от O 0–400 мс E0; ось Y 200–600 мс E0; деления и подписи α 0→1 на 600–1000 мс E0.",
+    async play(c) {
+      const s = c.svg();
+      const O = { x: 80, y: 218 }, XE = { x: 425, y: 218 }, YE = { x: 80, y: 34 };
+      const ax = mkArrow(c, s, "--fg", SW, 10, 5), ay = mkArrow(c, s, "--fg", SW, 10, 5);
+      const ticks = G(c, s, { style: "opacity:0" });
+      [1, 2, 3, 4].forEach((k) => { const x = O.x + 80 * k; L(c, ticks, x, O.y - 6, x, O.y + 6, "stroke:var(--fg);stroke-width:2.5"); TX(c, ticks, x, O.y + 27, String(k), { s: 19 }); });
+      [10, 20, 30].forEach((k) => { const y = O.y - 5 * k; L(c, ticks, O.x - 6, y, O.x + 6, y, "stroke:var(--fg);stroke-width:2.5"); TX(c, ticks, O.x - 14, y + 6, String(k), { a: "end", s: 19 }); });
+      TX(c, ticks, O.x - 14, O.y + 6, "0", { a: "end", s: 19 });
+      TX(c, ticks, XE.x + 12, XE.y + 6, "t, с", { a: "start", s: 21, c: "--ac" });
+      TX(c, ticks, YE.x + 14, YE.y + 8, "v, м/с", { a: "start", s: 21, c: "--ac" });
+      await tk(c, 1000, (t) => {
+        setArrow(ax, O.x, O.y, lerp(O.x, XE.x, win(t, 0, 400)), O.y);
+        setArrow(ay, O.x, O.y, O.x, lerp(O.y, YE.y, win(t, 200, 600)));
+        ticks.style.opacity = win(t, 600, 1000);
+      });
+    },
+  });
+
+  SKD.add({
+    code: "DR-05", group: "draw", ru: "Активный маршрут",
+    what: "По цепочке F → a → v → s подряд загораются связи с формулами.",
+    when: "Заявка → замер → монтаж в DemoCRM.",
+    fam: FD.concat(["F01"]), proj: ["democrm", "arseniy"], hold: 1100,
+    spec: "Для n рёбер D=450n мс; ребро i открывает AC-накладку по длине 350 мс с t=450i, E0; пауза 100 мс; линии MU остаются.",
+    async play(c) {
+      const s = c.svg();
+      const nodes = [["F", "сила"], ["a", "ускорение"], ["v", "скорость"], ["s", "путь"]], xs = [70, 190, 310, 430], y = 122;
+      const frm = ["a = F/m", "v = a·t", "s = v·t/2"];
+      const lit = nodes.map(([k, w], i) => {
+        R(c, s, xs[i] - 30, y - 30, 60, 60, SFS, 10);
+        TX(c, s, xs[i], y + 11, k, { s: 32 });
+        TX(c, s, xs[i], y - 42, w, { s: 16, c: "--mu" });
+        return R(c, s, xs[i] - 30, y - 30, 60, 60, `fill:none;stroke:var(--ac);stroke-width:4;opacity:${i === 0 ? 1 : 0}`, 10);
+      });
+      const tasks = [];
+      for (let i = 0; i < 3; i++) {
+        const x1 = xs[i] + 31, x2 = xs[i + 1] - 31, hx = x2 - 2;
+        L(c, s, x1, y, hx - 10, y, "stroke:var(--mu);stroke-width:3");
+        c.sv(s, "polygon", { points: headPts(hx, y, 0, 11, 5.5), style: "fill:var(--mu)" });
+        TX(c, s, (x1 + x2) / 2, 184, frm[i], { s: 19, c: "--mu" });
+        const ov = PA(c, s, `M${x1},${y} L${hx - 10},${y}`, "fill:none;stroke:var(--ac);stroke-width:3.5;stroke-dasharray:1 2;stroke-dashoffset:1");
+        ov.setAttribute("pathLength", "1");
+        const oh = c.sv(s, "polygon", { points: headPts(hx, y, 0, 11, 5.5), style: "fill:var(--ac);opacity:0" });
+        const ot = TX(c, s, (x1 + x2) / 2, 184, frm[i], { s: 19, c: "--ac", st: "opacity:0" });
+        tasks.push(
+          c.a(ov, [{ strokeDashoffset: 1 }, { strokeDashoffset: 0 }], { duration: 350, delay: 450 * i, easing: "linear", fill: "both" }),
+          c.a(oh, [{ opacity: 0 }, { opacity: 1 }], { duration: 1, delay: 450 * i + 300, easing: "linear", fill: "both" }),
+          c.a(ot, [{ opacity: 0 }, { opacity: 1 }], { duration: 1, delay: 450 * i, easing: "linear", fill: "both" }),
+          c.a(lit[i + 1], [{ opacity: 0 }, { opacity: 1 }], { duration: 1, delay: 450 * i + 350, easing: "linear", fill: "both" }),
+        );
+      }
+      await c.all(...tasks);
+    },
+  });
+
+  SKD.add({
+    code: "DR-06", group: "draw", ru: "Сумма векторов",
+    what: "Вектор F₂ переносится к концу F₁, затем строится равнодействующая 3 Н и 4 Н — 5 Н.",
+    when: "Геометрическое сложение заданных векторов.",
+    fam: FD, proj: ["arseniy"], hold: 1200,
+    spec: "D=1400 мс; 0–700 мс второй вектор целиком смещается на B−A, E1; 700–1400 мс результирующая A→B+C−A открывается по длине E0.",
+    async play(c) {
+      const s = c.svg();
+      const A = { x: 110, y: 222 }, B = { x: 230, y: 222 }, Cc = { x: 110, y: 62 };
+      const dx = B.x - A.x, dy = B.y - A.y;
+      L(c, s, Cc.x, Cc.y, A.x, A.y, "stroke:var(--mu);stroke-width:2.5;stroke-dasharray:8 6;opacity:.7");
+      const v1 = mkArrow(c, s, "--fg", SW, 12, 6), v2 = mkArrow(c, s, "--fg", SW, 12, 6), vr = mkArrow(c, s, "--ac", 4, 14, 7);
+      setArrow(v1, A.x, A.y, B.x, B.y); setArrow(v2, A.x, A.y, Cc.x, Cc.y);
+      C(c, s, A.x, A.y, 5, "fill:var(--fg)");
+      TX(c, s, (A.x + B.x) / 2, 250, "F₁ = 3 Н", { s: 21 });
+      const l2 = TX(c, s, 98, 150, "F₂ = 4 Н", { a: "end", s: 21 });
+      const l2b = TX(c, s, 244, 150, "F₂ = 4 Н", { a: "start", s: 21, st: "opacity:0" });
+      const lr = TX(c, s, 198, 96, "F = 5 Н", { a: "end", s: 24, c: "--ac", st: "opacity:0" });
+      await tk(c, 1400, (t) => {
+        const q = EF.E1(win(t, 0, 700));
+        setArrow(v2, A.x + dx * q, A.y + dy * q, Cc.x + dx * q, Cc.y + dy * q);
+        l2.style.opacity = 1 - q; l2b.style.opacity = q >= 1 ? 1 : 0;
+        const r = win(t, 700, 1400);
+        if (r > 0) setArrow(vr, A.x, A.y, lerp(A.x, Cc.x + dx, r), lerp(A.y, Cc.y + dy, r));
+        lr.style.opacity = r >= 1 ? 1 : 0;
+      });
+    },
+  });
+
+  SKD.add({
+    code: "DR-07", group: "draw", ru: "Узел с пояснением",
+    what: "Резистор отделяется от цепи, уходит вверх и получает подпись «R = 20 Ом».",
+    when: "Объяснить компонент, не теряя его места в схеме.",
+    fam: FD.concat(["F01"]), proj: ["democrm", "arseniy"], hold: 1200,
+    spec: "D=800 мс; копия узла A→B за 600 мс E2; исходный узел MU α=0.4; пунктир A→B открывается E0; подпись у B α 0→1 на 600–800 мс.",
+    async play(c) {
+      const s = c.svg();
+      const A = { x: 190, y: 204 }, B = { x: 290, y: 78 };
+      PA(c, s, "M70,226 V256 H310 V226", "fill:none;stroke:var(--mu);stroke-width:3;stroke-linejoin:round");
+      L(c, s, 100, 204, 160, 204, "stroke:var(--mu);stroke-width:3");
+      L(c, s, 220, 204, 280, 204, "stroke:var(--mu);stroke-width:3");
+      const node = (parent, x, y, k, st, col) => { R(c, parent, x - 30, y - 22, 60, 44, st, 9); TX(c, parent, x, y + 9, k, { s: 25, c: col }); };
+      node(s, 70, 204, "ε", SFS, "--fg");
+      node(s, 310, 204, "A", SFS, "--fg");
+      const orig = G(c, s, { style: "opacity:.4" });
+      node(orig, A.x, A.y, "R", `fill:var(--sf);stroke:var(--mu);stroke-width:${SW}`, "--mu");
+      const link = L(c, s, A.x, A.y - 22, A.x, A.y - 22, "stroke:var(--ac);stroke-width:2.5;stroke-dasharray:8 6");
+      const cp = G(c, s, {});
+      node(cp, 0, 0, "R", `fill:var(--sf);stroke:var(--ac);stroke-width:${SW}`, "--ac");
+      cp.setAttribute("transform", `translate(${A.x},${A.y})`);
+      const l1 = TX(c, s, 336, 76, "R = 20 Ом", { a: "start", s: 24, st: "opacity:0" });
+      const l2 = TX(c, s, 336, 102, "I = U / R", { a: "start", s: 19, c: "--mu", st: "opacity:0" });
+      await tk(c, 800, (t) => {
+        const q = EF.E2(win(t, 0, 600)), lin = win(t, 0, 600);
+        cp.setAttribute("transform", `translate(${lerp(A.x, B.x, q)},${lerp(A.y, B.y, q)})`);
+        link.setAttribute("x2", lerp(A.x, B.x, lin)); link.setAttribute("y2", lerp(A.y - 22, B.y + 22, lin));
+        l1.style.opacity = l2.style.opacity = win(t, 600, 800);
+      });
+    },
+  });
+
+  SKD.add({
+    code: "DR-08", group: "draw", ru: "Отслеживание точки",
+    what: "Брошенное тело идёт по параболе; проекции на оси и числа t, x, h бегут за ним.",
+    when: "Чтение координат и параметрической зависимости.",
+    fam: FD, proj: ["arseniy"], hold: 1100,
+    spec: "D=1800 мс, E0 по u=0→1; x=60+350u, y=76+150u² px (x=v₀t, h=h₀−gt²/2: v₀=20 м/с, h₀=15 м, t=1,75u с); штриховые проекции.",
+    async play(c) {
+      const s = c.svg();
+      const O = { x: 60, y: 226 };
+      const ax = mkArrow(c, s, "--fg", SW, 10, 5), ay = mkArrow(c, s, "--fg", SW, 10, 5);
+      setArrow(ax, O.x, O.y, 452, O.y); setArrow(ay, O.x, O.y, O.x, 34);
+      [10, 20, 30].forEach((k) => { const x = O.x + 10 * k; L(c, s, x, O.y - 5, x, O.y + 5, "stroke:var(--fg);stroke-width:2.5"); TX(c, s, x, O.y + 24, String(k), { s: 17 }); });
+      [5, 10, 15].forEach((k) => { const y = O.y - 10 * k; L(c, s, O.x - 5, y, O.x + 5, y, "stroke:var(--fg);stroke-width:2.5"); TX(c, s, O.x - 11, y + 6, String(k), { a: "end", s: 17 }); });
+      TX(c, s, 448, 252, "x, м", { a: "end", s: 18, c: "--mu" });
+      TX(c, s, 74, 30, "h, м", { a: "start", s: 18, c: "--mu" });
+      let d = "";
+      for (let i = 0; i <= 40; i++) { const u = i / 40; d += (i ? "L" : "M") + (60 + 350 * u).toFixed(1) + "," + (76 + 150 * u * u).toFixed(1); }
+      PA(c, s, d, "fill:none;stroke:var(--mu);stroke-width:2;stroke-dasharray:3 7;stroke-linecap:round");
+      const px = L(c, s, 60, 76, 60, 226, "stroke:var(--ac);stroke-width:2.5;stroke-dasharray:8 6");
+      const py = L(c, s, 60, 76, 60, 76, "stroke:var(--ac);stroke-width:2.5;stroke-dasharray:8 6");
+      const dot = C(c, s, 60, 76, 6, "fill:var(--ac);stroke:var(--fg);stroke-width:2");
+      TX(c, s, 296, 40, "v₀ = 20 м/с", { a: "start", s: 19, c: "--mu" });
+      const t1 = TX(c, s, 296, 66, "", { a: "start", s: 21 });
+      const t2 = TX(c, s, 296, 92, "", { a: "start", s: 21 });
+      const t3 = TX(c, s, 296, 118, "", { a: "start", s: 21 });
+      const upd = (u) => {
+        const x = 60 + 350 * u, y = 76 + 150 * u * u, tt = 1.75 * u;
+        dot.setAttribute("cx", x); dot.setAttribute("cy", y);
+        px.setAttribute("x1", x); px.setAttribute("x2", x); px.setAttribute("y1", y);
+        py.setAttribute("x2", x); py.setAttribute("y1", y); py.setAttribute("y2", y);
+        t1.textContent = "t = " + fmt(tt, 2) + " с"; t2.textContent = "x = " + fmt(20 * tt, 1) + " м"; t3.textContent = "h = " + fmt(Math.max(0, 15 - 4.9 * tt * tt), 1) + " м";
+      };
+      upd(0);
+      await c.wait(250);
+      await tk(c, 1800, (t, p) => upd(p));
+    },
+  });
+})();
+
+;
+/* Модуль 40: PX (пиксель и ретроэкран), VG (объём, свет, пространство), FX (печать, фактура, материал).
+   Спецификации: research/ASTRA_TAXONOMY.md, разделы 2.1, 2.18–2.21 и 5. Сцена 480×270, цвета только из переменных сцены.
+   Правила слоя «не включать»: без глитча и RGB-разъезда, без мерцания, без «кипящей» фактуры — маски зерна и текстуры
+   считаются один раз по seed=17 и приклеены к предмету. Файл ничего не трогает в document при загрузке. */
+(function () {
+  "use strict";
+  /* ===================== общие помощники ===================== */
+  const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+  const lerp = (a, b, t) => a + (b - a) * t;
+  const seg = (t, a, b) => clamp((t - a) / (b - a));
+  const r1 = (v) => Math.round(v * 10) / 10;
+  let UID = 0;
+  const uid = () => "pvf" + ++UID;
+
+  /* cubic-bezier решатель: покадровые сцены идут по тем же кривым E1–E4, что и Web Animations */
+  function bez(x1, y1, x2, y2) {
+    const cx = 3 * x1, bx = 3 * (x2 - x1) - cx, ax = 1 - cx - bx;
+    const cy = 3 * y1, by = 3 * (y2 - y1) - cy, ay = 1 - cy - by;
+    const X = (t) => ((ax * t + bx) * t + cx) * t, Y = (t) => ((ay * t + by) * t + cy) * t;
+    return (x) => {
+      if (x <= 0) return 0; if (x >= 1) return 1;
+      let lo = 0, hi = 1, t = x;
+      for (let i = 0; i < 24; i++) { const v = X(t); if (Math.abs(v - x) < 1e-6) break; if (v < x) lo = t; else hi = t; t = (lo + hi) / 2; }
+      return Y(t);
+    };
+  }
+  const EF = { E0: (x) => x, E1: bez(0.33, 0, 0.67, 1), E2: bez(0.22, 1, 0.36, 1), E3: bez(0.4, 0, 1, 1), E4: bez(0.16, 1.25, 0.3, 1) };
+  /* E5: steps(N,end) — индекс шага 0…N, p=1 даёт N */
+  const stepK = (p, N) => Math.min(N, Math.floor(p * N + 1e-9));
+
+  /* ---- цвет: переменные сцены → массивы [r,g,b] ---- */
+  let _cx = null;
+  function parseCol(str) {
+    str = String(str).trim();
+    let m;
+    if ((m = /^#([0-9a-f]{6})$/i.exec(str))) return [parseInt(m[1].slice(0, 2), 16), parseInt(m[1].slice(2, 4), 16), parseInt(m[1].slice(4, 6), 16)];
+    if ((m = /^#([0-9a-f]{3})$/i.exec(str))) return [parseInt(m[1][0] + m[1][0], 16), parseInt(m[1][1] + m[1][1], 16), parseInt(m[1][2] + m[1][2], 16)];
+    if ((m = /^rgba?\(([^)]+)\)/i.exec(str))) { const a = m[1].split(/[ ,\/]+/).map(parseFloat); return [a[0], a[1], a[2]]; }
+    if (!_cx) _cx = document.createElement("canvas").getContext("2d", { willReadFrequently: true });
+    _cx.clearRect(0, 0, 1, 1); _cx.fillStyle = "#000"; _cx.fillStyle = str; _cx.fillRect(0, 0, 1, 1);
+    const d = _cx.getImageData(0, 0, 1, 1).data; return [d[0], d[1], d[2]];
+  }
+  const mix = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  const S = (a, al) => (al == null || al >= 1 ? `rgb(${Math.round(a[0])},${Math.round(a[1])},${Math.round(a[2])})` : `rgba(${Math.round(a[0])},${Math.round(a[1])},${Math.round(a[2])},${r1(al * 1000) / 1000})`);
+  const lum = (a) => (0.2126 * a[0] + 0.7152 * a[1] + 0.0722 * a[2]) / 255;
+  /* палитра сцены: массивы raw + строки; lt/dk — самый светлый и самый тёмный из bg/fg (в любой теме) */
+  function PAL(c) {
+    const cs = getComputedStyle(c.stage), g = (n) => parseCol(cs.getPropertyValue("--" + n));
+    const p = { bg: g("bg"), fg: g("fg"), ac: g("ac"), sf: g("sf"), mu: g("mu") };
+    const light = lum(p.bg) >= lum(p.fg);
+    const o = { raw: p, light };
+    for (const k of ["bg", "fg", "ac", "sf", "mu"]) o[k] = S(p[k]);
+    o.lt = light ? o.bg : o.fg; o.dk = light ? o.fg : o.bg;
+    p.lt = light ? p.bg : p.fg; p.dk = light ? p.fg : p.bg;
+    return o;
+  }
+
+  /* ---- SVG-помощники ---- */
+  function sv(c, parent, tag, attrs, css) {
+    const e = c.sv(parent, tag, attrs || {});
+    if (css) e.setAttribute("style", css);
+    return e;
+  }
+  function layer(c, css, parent, vb) {
+    const svg = c.svg(vb || "0 0 480 270", css || "", parent);
+    const defs = c.sv(svg, "defs", {});
+    return { svg, defs };
+  }
+
+  /* ===================== пиксельный холст ===================== */
+  /* логический холст 96×54 lp, 1 lp = 5 px сцены (демо-масштаб: в ролике холст 240×135, ×8); сглаживания нет нигде */
+  const LP = 5, GW = 96, GH = 54;
+  const B4 = [[0, 8, 2, 10], [12, 4, 14, 6], [3, 11, 1, 9], [15, 7, 13, 5]]; // матрица порогов из PX-07
+  function pxCanvas(c, parent, W, H) {
+    W = W || GW; H = H || GH;
+    const cv = document.createElement("canvas");
+    cv.width = W; cv.height = H;
+    cv.style.cssText = `position:absolute;left:0;top:0;width:${W * LP}px;height:${H * LP}px;image-rendering:crisp-edges;image-rendering:pixelated`;
+    (parent || c.stage).appendChild(cv);
+    const x = cv.getContext("2d"); x.imageSmoothingEnabled = false;
+    const g = {
+      cv, x, W, H,
+      r(a, b, w, h, col) { x.fillStyle = col; x.fillRect(Math.round(a), Math.round(b), w, h); },
+      px(a, b, col) { x.fillStyle = col; x.fillRect(Math.round(a), Math.round(b), 1, 1); },
+      disc(cx, cy, rad, col) { x.fillStyle = col; for (let dy = -rad; dy <= rad; dy++) { const w = Math.floor(Math.sqrt(rad * rad + 0.5 - dy * dy)); x.fillRect(Math.round(cx - w), Math.round(cy + dy), w * 2 + 1, 1); } },
+      /* спрайт из строк: символы → цвета (map), '.' прозрачно; k — целый масштаб; ol — цвет контура 1 lp */
+      spr(rows, a, b, map, k, ol) {
+        k = k || 1;
+        if (ol) { x.fillStyle = ol; rows.forEach((row, j) => { for (let i = 0; i < row.length; i++) if (row[i] !== ".") {
+          [[-1, 0], [1, 0], [0, -1], [0, 1]].forEach(([dx, dy]) => { const ii = i + dx, jj = j + dy; const on = jj >= 0 && jj < rows.length && ii >= 0 && ii < rows[jj].length && rows[jj][ii] !== "."; if (!on) x.fillRect(a + ii * k, b + jj * k, k, k); }); } }); }
+        rows.forEach((row, j) => { for (let i = 0; i < row.length; i++) { const ch = row[i]; if (ch !== "." && map[ch]) { x.fillStyle = map[ch]; x.fillRect(a + i * k, b + j * k, k, k); } } });
+      },
+    };
+    return g;
+  }
+  /* матричное смешение двух цветов: пиксель получает c2, если порог < lvl (0…16) */
+  function dith(g, x0, y0, w, h, c1, c2, lvl) {
+    for (let y = y0; y < y0 + h; y++) for (let x = x0; x < x0 + w; x++) {
+      if (x < 0 || y < 0 || x >= g.W || y >= g.H) continue;
+      if (B4[y & 3][x & 3] < lvl) g.px(x, y, c2); else if (c1) g.px(x, y, c1);
+    }
+  }
+  function ridge(g, peaks, base, col) {
+    for (let x = 0; x < g.W; x++) {
+      let hh = 0;
+      for (const [px, h, sl] of peaks) hh = Math.max(hh, h - Math.round(Math.abs(x - px) * (sl || 1)));
+      if (hh > 0) g.r(x, base - hh, 1, hh + 1, col);
+    }
+  }
+  function pine(g, x, y, h, col, trunk) {
+    for (let i = 0; i < h; i++) { const w = 1 + 2 * Math.floor(i * 1.0 / 2 + 0.5); g.r(x - (w >> 1), y - h + i, w, 1, col); }
+    g.r(x, y, 1, 2, trunk);
+  }
+
+  /* ---- пиксельный шрифт 5×7, кириллица и цифры ---- */
+  const FONT = {
+    "А": ".###.|#...#|#...#|#####|#...#|#...#|#...#", "Б": "#####|#....|#....|####.|#...#|#...#|####.", "В": "####.|#...#|#...#|####.|#...#|#...#|####.",
+    "Г": "#####|#....|#....|#....|#....|#....|#....", "Д": ".####|.#..#|.#..#|.#..#|.#..#|#####|#...#", "Е": "#####|#....|#....|####.|#....|#....|#####",
+    "Ж": "#.#.#|#.#.#|.###.|..#..|.###.|#.#.#|#.#.#", "З": ".###.|#...#|....#|..##.|....#|#...#|.###.", "И": "#...#|#..##|#.#.#|##..#|#...#|#...#|#...#",
+    "К": "#...#|#..#.|#.#..|##...|#.#..|#..#.|#...#", "Л": "..###|.#..#|.#..#|.#..#|.#..#|#...#|#...#", "М": "#...#|##.##|#.#.#|#.#.#|#...#|#...#|#...#",
+    "Н": "#...#|#...#|#...#|#####|#...#|#...#|#...#", "О": ".###.|#...#|#...#|#...#|#...#|#...#|.###.", "П": "#####|#...#|#...#|#...#|#...#|#...#|#...#",
+    "Р": "####.|#...#|#...#|####.|#....|#....|#....", "С": ".###.|#...#|#....|#....|#....|#...#|.###.", "Т": "#####|..#..|..#..|..#..|..#..|..#..|..#..",
+    "У": "#...#|#...#|#...#|.####|....#|#...#|.###.", "Ф": ".###.|#.#.#|#.#.#|#.#.#|.###.|..#..|..#..", "Х": "#...#|#...#|.#.#.|..#..|.#.#.|#...#|#...#",
+    "Ц": "#..#.|#..#.|#..#.|#..#.|#..#.|#####|....#", "Ч": "#...#|#...#|#...#|.####|....#|....#|....#", "Ш": "#.#.#|#.#.#|#.#.#|#.#.#|#.#.#|#.#.#|#####",
+    "Ь": "#....|#....|#....|####.|#...#|#...#|####.", "Я": ".####|#...#|#...#|.####|..#.#|.#..#|#...#", "Э": ".###.|#...#|....#|..###|....#|#...#|.###.",
+    "0": ".###.|#...#|#..##|#.#.#|##..#|#...#|.###.", "1": "..#..|.##..|..#..|..#..|..#..|..#..|.###.", "2": ".###.|#...#|....#|...#.|..#..|.#...|#####",
+    "3": "####.|....#|....#|.###.|....#|....#|####.", "4": "...#.|..##.|.#.#.|#..#.|#####|...#.|...#.", "5": "#####|#....|####.|....#|....#|#...#|.###.",
+    "6": ".###.|#....|#....|####.|#...#|#...#|.###.", "7": "#####|....#|...#.|..#..|.#...|.#...|.#...", "8": ".###.|#...#|#...#|.###.|#...#|#...#|.###.",
+    "9": ".###.|#...#|#...#|.####|....#|....#|.###.", "×": ".....|#...#|.#.#.|..#..|.#.#.|#...#|.....", ":": ".....|..#..|..#..|.....|..#..|..#..|.....",
+    ".": ".....|.....|.....|.....|.....|.....|..#..", "%": "##..#|##..#|...#.|..#..|.#...|#..##|#..##", "!": "..#..|..#..|..#..|..#..|..#..|.....|..#..",
+    "-": ".....|.....|.....|#####|.....|.....|.....", " ": ".....|.....|.....|.....|.....|.....|.....", "/": "....#|....#|...#.|..#..|.#...|#....|#....",
+  };
+  const FG_ = {};
+  Object.keys(FONT).forEach((ch) => { FG_[ch] = FONT[ch].split("|"); });
+  function ptext(g, s, x, y, col, k) {
+    k = k || 1; let cx = x;
+    for (const ch of s) {
+      const gl = FG_[ch] || FG_[" "];
+      for (let j = 0; j < 7; j++) for (let i = 0; i < 5; i++) if (gl[j][i] === "#") g.r(cx + i * k, y + j * k, k, k, col);
+      cx += 6 * k;
+    }
+    return cx - x - k;
+  }
+  const pwidth = (s, k) => s.length * 6 * (k || 1) - (k || 1);
+
+  /* ===================== PX — пиксель и ретроэкран ===================== */
+  /* Общее: холст 96×54 lp, 1 lp = 5 px сцены (демо-масштаб: в ролике 240×135, ×8). Всё рисуется целыми lp, без сглаживания.
+     Роли цвета: bg/sf/mu/fg/ac — палитра; lt/dk — самый светлый и самый тёмный из bg/fg (чтобы космос и ночь были тёмными в любой теме). */
+  const pxSetup = (c) => ({ P: PAL(c), g: pxCanvas(c) });
+  /* «нет сигнала»: редкая точка fg по bg — пустой кадр, на котором видно, как открывается сцена */
+  function blankFrame(g, Q) { g.r(0, 0, g.W, g.H, Q.bg); dith(g, 0, 0, g.W, g.H, null, Q.fg, 2); }
+  /* рисует art в скрытый холст и возвращает его как источник для drawImage */
+  function renderArt(c, art, Q, a1, a2, w, h) {
+    const g = pxCanvas(c, document.createElement("div"), w, h);
+    art(g, Q, a1, a2);
+    return g.cv;
+  }
+  const grid = (rows) => rows.map((r) => r.join ? r.join("") : r);
+  const bar = (g, x, y, w, h, Q) => { g.r(x, y, w, h, Q.bg); g.r(x, y, w, 1, Q.fg); g.r(x, y + h - 1, w, 1, Q.fg); g.r(x, y, 1, h, Q.fg); g.r(x + w - 1, y, 1, h, Q.fg); };
+
+  /* ----- картины ----- */
+  function artLand(g, Q, title) {
+    const W = g.W, H = g.H;
+    g.r(0, 0, W, H, Q.bg);
+    [[17, 3], [20, 6], [23, 9], [26, 12], [29, 16]].forEach(([y, l]) => dith(g, 0, y, W, 3, null, Q.sf, l));
+    const sx = 70, sy = 15;
+    for (let y = sy - 11; y <= sy + 11; y++) for (let x = sx - 11; x <= sx + 11; x++) { const d = Math.hypot(x - sx, y - sy); if (d > 5.5 && d <= 10.5 && B4[y & 3][x & 3] < 6) g.px(x, y, Q.sf); }
+    g.disc(sx, sy, 5, Q.ac);
+    const cloud = (x, y) => { g.r(x + 2, y, 7, 1, Q.sf); g.r(x, y + 1, 11, 2, Q.sf); g.r(x + 4, y - 1, 3, 1, Q.sf); };
+    cloud(30, 10); cloud(8, 22);
+    ridge(g, [[10, 15], [32, 11], [58, 14], [86, 12]], 36, Q.sf);
+    ridge(g, [[24, 10], [50, 12], [78, 9]], 39, Q.mu);
+    for (let x = 0; x < W; x++) { const top = 39 + Math.round(1.2 * Math.sin(x * 0.22)); g.r(x, top, 1, H - top, Q.fg); }
+    for (let x = 1; x < W; x += 3) if ((x * 7 + 3) % 5 < 2) g.px(x, 41 + (x * 5) % 11, Q.mu);
+    pine(g, 82, 47, 9, Q.mu, Q.bg); pine(g, 89, 49, 7, Q.mu, Q.bg); pine(g, 75, 49, 6, Q.mu, Q.bg);
+    for (let i = 0; i < 6; i++) { const hw = 1 + 2 * i; g.r(23 - hw, 36 + i, 2 * hw + 1, 1, Q.ac); }
+    g.r(28, 33, 2, 4, Q.mu);
+    g.r(14, 42, 19, 10, Q.bg); g.r(14, 42, 19, 1, Q.sf); g.r(32, 42, 1, 10, Q.sf);
+    g.r(21, 47, 4, 5, Q.fg);
+    g.r(16, 44, 4, 4, Q.sf); g.r(27, 44, 4, 4, Q.sf); g.r(16, 46, 4, 1, Q.mu); g.r(27, 46, 4, 1, Q.mu);
+    if (title) ptext(g, title, 4, 4, Q.fg, 1);
+  }
+  function artCity(g, Q) {
+    const W = g.W;
+    g.r(0, 0, W, g.H, Q.dk);
+    [[34, 2], [37, 4], [40, 7], [43, 10]].forEach(([y, l]) => dith(g, 0, y, W, 3, null, Q.ac, l));
+    for (let i = 0; i < 26; i++) g.px((i * 37 + 11) % W, (i * 17 + 5) % 26, i % 3 ? Q.mu : Q.lt);
+    g.disc(72, 12, 6, Q.lt); g.px(70, 10, Q.mu); g.px(74, 13, Q.mu); g.px(71, 14, Q.mu); g.px(73, 9, Q.mu);
+    const far = [[0, 10], [9, 16], [17, 12], [27, 19], [36, 14], [46, 17], [55, 11], [64, 18], [74, 13], [84, 16]];
+    far.forEach(([x, h], i) => { const w = (far[i + 1] ? far[i + 1][0] : W) - x; dith(g, x, 46 - h, w, h, Q.dk, Q.mu, 9); });
+    const near = [[0, 18], [10, 26], [21, 20], [31, 30], [42, 22], [52, 28], [63, 19], [72, 25], [83, 21]];
+    near.forEach(([x, h], i) => {
+      const w = (near[i + 1] ? near[i + 1][0] : W) - x - 1;
+      g.r(x, 48 - h, w, h, Q.dk); g.r(x, 48 - h, w, 1, Q.mu);
+      for (let yy = 48 - h + 3; yy < 46; yy += 3) for (let xx = x + 2; xx < x + w - 1; xx += 3) { const v = (xx * 13 + yy * 7 + i * 5) % 7; if (v < 3) g.px(xx, yy, v === 0 ? Q.lt : Q.ac); }
+    });
+    g.r(0, 48, W, 6, Q.dk); g.r(0, 48, W, 1, Q.mu);
+    for (let x = 2; x < W; x += 8) g.r(x, 51, 4, 1, Q.mu);
+  }
+  const ROCKET = [
+    ".....nn.....", "....nnnn....", "...nnnnnn...", "...nnnnnn...", "..########..", "..########..",
+    "..##wwww##..", "..##wwww##..", "..##wwww##..", "..########..", "..########..", "..#mmmmmm#..", "..########..", "..########..", "..###mm###..",
+    ".f########f.", "ff########ff", "ff########ff", "ff##mmmm##ff", "f..######..f", "....mmmm....",
+    "....aaaa....", "....aaaa....", ".....aa.....", ".....aa.....",
+  ];
+  function artRocket(g, Q) {
+    const W = g.W, H = g.H;
+    g.r(0, 0, W, H, Q.dk);
+    for (let i = 0; i < 34; i++) g.px((i * 29 + 7) % (W - 2) + 1, (i * 13 + 11) % (H - 14) + 9, i % 4 ? Q.mu : Q.lt);
+    g.disc(72, 38, 12, Q.mu);
+    for (let y = 26; y <= 50; y++) for (let x = 60; x <= 84; x++) if (Math.hypot(x - 72, y - 38) <= 12 && (x + y) % 4 === 0 && x < 68) g.px(x, y, Q.sf);
+    for (let x = 56; x <= 88; x++) { const yy = 38 + Math.round((x - 72) * 0.28); g.px(x, yy, Q.sf); g.px(x, yy + 1, Q.lt); }
+    g.spr(ROCKET, 26, 12, { n: Q.ac, "#": Q.lt, w: Q.dk, m: Q.mu, f: Q.ac, a: Q.ac }, 1, Q.dk);
+    g.r(31, 37, 2, 2, Q.lt);
+    for (let i = 0; i < 4; i++) g.px(29 + (i % 2) * 5, 44 + i * 2, i % 2 ? Q.mu : Q.sf);
+  }
+  function artWindow(g, Q) {
+    g.r(0, 0, g.W, g.H, Q.dk);
+    const sub = pxCanvas({ stage: null }, document.createElement("div"), g.W, g.H - 9);
+    artRocket(sub, Q);
+    g.x.drawImage(sub.cv, 0, 9);
+    g.r(0, 0, g.W, 9, Q.mu);
+    [3, 8, 13].forEach((x) => g.r(x, 3, 3, 3, Q.dk));
+    ptext(g, "ЗАГРУЗКА", 28, 1, Q.dk, 1);
+    g.r(0, 8, g.W, 1, Q.dk);
+    g.r(0, 9, 1, g.H - 9, Q.mu); g.r(g.W - 1, 9, 1, g.H - 9, Q.mu); g.r(0, g.H - 1, g.W, 1, Q.mu);
+  }
+  function artTitle(g, Q) {
+    blankFrame(g, Q);
+    const word = "ЗАПУСК", wd = pwidth(word, 2), x = Math.round((g.W - wd) / 2);
+    bar(g, x - 5, 14, wd + 10, 18, Q);
+    ptext(g, word, x, 18, Q.fg, 2);
+    bar(g, 24, 38, 48, 5, Q);
+    g.r(26, 39, 12, 3, Q.ac);
+  }
+
+  /* ----- PX-01 ----- */
+  SKD.add({
+    code: "PX-01", group: "pix", ru: "Плиточное открытие",
+    what: "Кадр собирается квадратами построчно.",
+    when: "Пиксельный вход в игровую сцену.",
+    fam: ["F09"], proj: ["skilaxy", "serial"],
+    spec: "D=800 мс, E5, N=число плиток; квадраты слева направо, сверху вниз, доля 0→100%. Демо: плитка 6×6 lp (в ролике 8×8), 144 плитки, 1 lp = 5 px.",
+    hold: 1300,
+    async play(c) {
+      const { P, g } = pxSetup(c);
+      const art = renderArt(c, artLand, P, "УРОВЕНЬ 1");
+      const T = 6, cols = GW / T, rows = Math.ceil(GH / T), N = cols * rows;
+      const draw = (k) => {
+        blankFrame(g, P);
+        const full = Math.floor(k / cols), part = k % cols;
+        if (full > 0) g.x.drawImage(art, 0, 0, GW, Math.min(GH, full * T), 0, 0, GW, Math.min(GH, full * T));
+        if (part > 0) g.x.drawImage(art, 0, full * T, part * T, T, 0, full * T, part * T, T);
+        if (k < N) g.r(part * T, full * T, T, T, P.ac);
+      };
+      draw(0);
+      await c.wait(350);
+      await c.tick(800, (t, p) => draw(stepK(p, N)));
+      draw(N);
+    },
+  });
+
+  /* ----- PX-02 ----- */
+  const STAR = [
+    ".......#.......", ".......#.......", "......###......", "......###......", ".....#####.....", "###############", ".#############.", "..###########..".slice(0, 15),
+    "...#########...", "...#########...", "..####...####..", "..###.....###..", ".###.......###.", ".##.........##.", ".#...........#.",
+  ];
+  SKD.add({
+    code: "PX-02", group: "pix", ru: "Шаги спрайта",
+    what: "Предмет перемещается через десять чётких положений.",
+    when: "Передвижение иконки или игрового предмета.",
+    fam: ["F09"], proj: ["skilaxy", "serial"],
+    spec: "D=1000 мс, E5, N=10; центр A→B на сетке lp, угол и α постоянны. Демо: A=(14,29), B=(82,29) lp, посты положений и счётчик шага.",
+    hold: 1200,
+    async play(c) {
+      const { P, g } = pxSetup(c);
+      const A = 14, B = 82, Y = 28, N = 10;
+      const xs = []; for (let k = 0; k <= N; k++) xs.push(Math.round(A + (B - A) * k / N));
+      const draw = (k) => {
+        g.r(0, 0, GW, GH, P.bg);
+        dith(g, 0, 33, GW, 3, null, P.sf, 6); dith(g, 0, 36, GW, 3, null, P.sf, 11);
+        g.r(0, 40, GW, 14, P.fg);
+        for (let x = 0; x < GW; x += 5) g.r(x, 40, 3, 1, P.mu);
+        xs.forEach((x, i) => { const on = i === k; g.r(x, 43, 1, on ? 4 : 3, on ? P.ac : (i < k ? P.lt : P.mu)); if (on) g.r(x - 1, 47, 3, 1, P.ac); });
+        g.r(xs[k] - 4, 39, 9, 1, P.mu);
+        g.spr(STAR, xs[k] - 7, Y - 8, { "#": P.ac }, 1, P.dk);
+        g.r(xs[k] - 3, Y - 2, 2, 1, P.lt); g.r(xs[k] - 2, Y - 4, 2, 1, P.lt); g.px(xs[k] - 5, Y - 3, P.lt); g.px(xs[k] - 1, Y - 6, P.lt);
+        ptext(g, "ШАГ", 4, 4, P.fg, 1);
+        ptext(g, String(k).padStart(2, "0"), 28, 4, P.ac, 1);
+      };
+      draw(0);
+      await c.wait(350);
+      await c.tick(1000, (t, p) => draw(stepK(p, N)));
+      draw(N);
+    },
+  });
+
+  /* ----- PX-03: герой 14×22, вид спереди, 4 позы ----- */
+  function walkerRows(pose) {
+    const M = Array.from({ length: 22 }, () => Array(14).fill("."));
+    const R = (x, y, w, h, ch) => { for (let j = 0; j < h; j++) for (let i = 0; i < w; i++) { const xx = x + i, yy = y + j; if (xx >= 0 && xx < 14 && yy >= 0 && yy < 22) M[yy][xx] = ch; } };
+    const up = pose === 2 ? 1 : 0, Y = (y) => y - up;
+    R(4, Y(0), 6, 1, "h"); R(3, Y(1), 8, 2, "h");
+    R(3, Y(3), 1, 3, "h"); R(10, Y(3), 1, 3, "h"); R(4, Y(3), 6, 3, "f");
+    R(5, Y(4), 1, 1, "e"); R(8, Y(4), 1, 1, "e"); R(6, Y(5), 2, 1, "e");
+    R(5, Y(6), 4, 1, "f"); R(6, Y(7), 2, 1, "f");
+    R(3, Y(8), 8, 6, "j"); R(3, Y(14), 8, 1, "b");
+    const aL = pose === 1 ? -2 : pose === 3 ? 2 : 0, aR = -aL;
+    R(1, Y(8) + aL, 2, 5, "j"); R(1, Y(13) + aL, 2, 1, "f");
+    R(11, Y(8) + aR, 2, 5, "j"); R(11, Y(13) + aR, 2, 1, "f");
+    const liftL = pose === 1 ? 3 : 0, liftR = pose === 3 ? 3 : 0;
+    R(4, Y(15), 3, 6 - liftL, "p"); R(3, Y(21) - liftL, 4, 1, "s");
+    R(8, Y(15), 3, 6 - liftR, "p"); R(8, Y(21) - liftR, 4, 1, "s");
+    return grid(M);
+  }
+  SKD.add({
+    code: "PX-03", group: "pix", ru: "Четыре позы",
+    what: "Персонаж идёт на месте через повторяющийся набор спрайтов.",
+    when: "Ходьба пиксельного героя.",
+    fam: ["F09"], proj: ["serial", "skilaxy"],
+    spec: "D=800 мс, E5, N=8; кадры спрайт-листа 0/1/2/3/0/1/2/3 по 100 мс; bbox и точка стоп общие; после D нейтральная поза 0.",
+    hold: 1300,
+    async play(c) {
+      const { P, g } = pxSetup(c);
+      const poses = [0, 1, 2, 3].map(walkerRows);
+      const ink = P.light ? P.dk : P.mu;
+      const map = { h: ink, f: P.lt, e: P.dk, j: P.ac, b: P.dk, p: ink, s: P.mu };
+      const draw = (pose, idx) => {
+        g.r(0, 0, GW, GH, P.bg);
+        dith(g, 0, 24, GW, 4, null, P.sf, 5); dith(g, 0, 28, GW, 4, null, P.sf, 9); dith(g, 0, 32, GW, 8, null, P.sf, 13);
+        g.r(0, 44, GW, 10, P.fg); g.r(0, 44, GW, 1, P.mu);
+        g.r(38, 43, 20, 1, P.mu); g.r(40, 42, 16, 1, P.sf);
+        g.spr(poses[pose], 41, 22, map, 1, P.dk);
+        // лист поз: подсвечена текущая
+        for (let i = 0; i < 4; i++) {
+          const x = 31 + i * 9, on = i === pose;
+          g.r(x, 46, 8, 8, on ? P.ac : P.mu); g.r(x + 1, 47, 6, 6, on ? P.ac : P.fg);
+          ptext(g, String(i), x + 2, 47, on ? P.dk : P.mu, 1) ;
+        }
+        ptext(g, "КАДР", 4, 4, P.fg, 1); ptext(g, String(idx), 33, 4, P.ac, 1);
+      };
+      draw(0, 0);
+      await c.wait(400);
+      await c.tick(800, (t, p) => { const k = stepK(p, 8); const s = k >= 8 ? 0 : k % 4; draw(s, k >= 8 ? 8 : k); });
+      draw(0, 8);
+    },
+  });
+
+  /* ----- PX-04 ----- */
+  SKD.add({
+    code: "PX-04", group: "pix", ru: "Замена палитры",
+    what: "Четыре группы цветов переходят к новой палитре по очереди.",
+    when: "Смена времени суток или игрового режима.",
+    fam: ["F09"], proj: ["skilaxy", "serial"],
+    spec: "D=600 мс; группы BG/SF/MU/AC целиком заменяются в 150/300/450/600 мс, E6, без промежуточных цветов; FG остаётся.",
+    hold: 1300,
+    async play(c) {
+      const { P, g } = pxSetup(c);
+      const r = P.raw;
+      const B = { bg: S(mix(r.bg, r.ac, 0.5)), sf: S(mix(r.sf, r.ac, 0.7)), mu: S(mix(r.mu, r.ac, 0.45)), ac: S(r.lt), fg: P.fg };
+      const A = { bg: P.bg, sf: P.sf, mu: P.mu, ac: P.ac, fg: P.fg };
+      const art = (n) => {
+        const Q = { bg: n >= 1 ? B.bg : A.bg, sf: n >= 2 ? B.sf : A.sf, mu: n >= 3 ? B.mu : A.mu, ac: n >= 4 ? B.ac : A.ac, fg: P.fg };
+        artLand(g, Q, "ХОД 07");
+        // образцы четырёх групп
+        ["bg", "sf", "mu", "ac"].forEach((k, i) => { g.r(60 + i * 8, 2, 7, 7, P.fg); g.r(61 + i * 8, 3, 5, 5, Q[k]); });
+        return Q;
+      };
+      art(0);
+      await c.wait(350);
+      let last = 0;
+      await c.tick(600, (t) => { const n = Math.floor(t / 150); if (n !== last) { last = n; art(n); } });
+      art(4);
+    },
+  });
+
+  /* ----- PX-05 ----- */
+  SKD.add({
+    code: "PX-05", group: "pix", ru: "Строки экрана",
+    what: "Изображение проявляется горизонтальными строками.",
+    when: "Загрузка терминальной иллюстрации.",
+    fam: ["F09"], proj: ["skilaxy"],
+    spec: "D=900 мс, E5, N=число строк (54 lp, в ролике 135); видимая высота 0→100% сверху вниз; открытые строки не мигают.",
+    hold: 1300,
+    async play(c) {
+      const { P, g } = pxSetup(c);
+      const art = renderArt(c, artWindow, P);
+      const N = GH;
+      const draw = (k) => {
+        g.r(0, 0, GW, GH, P.bg);
+        dith(g, 0, 0, GW, GH, null, P.fg, 2);
+        if (k > 0) g.x.drawImage(art, 0, 0, GW, k, 0, 0, GW, k);
+        if (k < N) g.r(0, k, GW, 1, P.ac);
+      };
+      draw(0);
+      await c.wait(350);
+      await c.tick(900, (t, p) => draw(stepK(p, N)));
+      draw(N);
+    },
+  });
+
+  /* ----- PX-06 ----- */
+  const MAP = [
+    "TTGGGFGGWWWWGGTTTG", "TGGGGGGGWWWWGGGTTG", "GGFGGRGGGGGGGFGGGT", "PPPPPPPPPPPPPPPPPP", "GGGGTGGGFGGGRGGGGG", "GTTGGGGGGGGGTTGGFG", "TTTGFGGWWGGGTTTGGG",
+  ];
+  const HERO = ["..hhhh..", ".hhhhhh.", ".hffffe.", ".hffffe.", "..jjjj..", ".jjjjjj.", ".jjjjjj.", "..pppp..", "..p..p..", "..ss.ss."];
+  function drawTile(g, Q, ch, x, y, i) {
+    const hh = (a, b) => (Math.imul(a + 7, 73856093) ^ Math.imul(b + 3, 19349663)) >>> 0;
+    const spk = (n) => { for (let k = 0; k < n; k++) { const v = hh(i, k); g.px(x + (v % 8), y + ((v >> 5) % 8), Q.light ? Q.mu : Q.bg); } };
+    if (ch === "W") {
+      g.r(x, y, 8, 8, Q.mu);
+      g.r(x + 1, y + 2, 3, 1, Q.bg); g.r(x + 5, y + 5, 2, 1, Q.bg); g.r(x + 2, y + 6, 1, 1, Q.sf);
+    } else if (ch === "P") {
+      g.r(x, y, 8, 8, Q.bg); g.px(x + 1, y + 6, Q.sf); g.px(x + 5, y + 2, Q.sf); g.px(x + 3, y + 4, Q.sf);
+      g.r(x, y, 8, 1, Q.sf); g.r(x, y + 7, 8, 1, Q.sf);
+    } else {
+      g.r(x, y, 8, 8, Q.sf); spk(3); g.px(x, y, Q.bg);
+      if (ch === "T") { g.r(x + 3, y + 5, 2, 3, Q.mu); g.r(x + 3, y, 2, 1, Q.fg); g.r(x + 2, y + 1, 4, 1, Q.fg); g.r(x + 1, y + 2, 6, 1, Q.fg); g.r(x + 2, y + 3, 4, 1, Q.fg); g.r(x + 1, y + 4, 6, 1, Q.fg); }
+      if (ch === "F") { g.r(x + 2, y + 3, 2, 2, Q.ac); g.r(x + 5, y + 5, 2, 2, Q.ac); g.px(x + 2, y + 5, Q.fg); g.px(x + 5, y + 7, Q.fg); }
+      if (ch === "R") { g.r(x + 2, y + 3, 4, 3, Q.mu); g.r(x + 1, y + 4, 6, 2, Q.mu); g.r(x + 1, y + 6, 6, 1, Q.fg); g.px(x + 3, y + 3, Q.bg); }
+    }
+  }
+  SKD.add({
+    code: "PX-06", group: "pix", ru: "Прокрутка карты",
+    what: "Карта движется на целое число тайлов.",
+    when: "Переход между участками пиксельного мира.",
+    fam: ["F09"], proj: ["skilaxy", "serial"],
+    spec: "D=1600 мс, E0; карта x=0→−32 lp, тайл 8 lp, координаты округляются до целого lp; герой и подпись в экранных координатах стоят; карта заполнена за краем.",
+    hold: 1200,
+    async play(c) {
+      const { P, g } = pxSetup(c);
+      const mw = MAP[0].length * 8, mh = MAP.length * 8;
+      const mg = pxCanvas(c, document.createElement("div"), mw, mh);
+      MAP.forEach((row, j) => { for (let i = 0; i < row.length; i++) drawTile(mg, P, row[i], i * 8, j * 8, i + j * 7); });
+      const draw = (off) => {
+        g.r(0, 0, GW, GH, P.bg);
+        g.x.drawImage(mg.cv, off, 0);
+        // герой и подпись стоят на экране
+        g.r(42, 31, 12, 1, P.mu);
+        g.spr(HERO, 44, 20, { h: P.dk, f: P.lt, e: P.dk, j: P.ac, p: P.fg, s: P.dk }, 1, P.light ? P.dk : P.lt);
+        g.r(3, 3, 31, 9, P.dk); ptext(g, "ЛЕС 1", 5, 4, P.lt, 1);
+      };
+      draw(0);
+      await c.wait(350);
+      await c.tick(1600, (t, p) => draw(-Math.round(32 * p)));
+      draw(-32);
+    },
+  });
+
+  /* ----- PX-07: растровое растворение ----- */
+  SKD.add({
+    code: "PX-07", group: "pix", ru: "Растровое растворение",
+    what: "Новый кадр проявляется через упорядоченную шахматную маску.",
+    when: "Переход ретроэкрана без глитча.",
+    fam: ["F09"], proj: ["skilaxy"],
+    spec: "D=800 мс, E5, N=16; матрица порогов 4×4: 0,8,2,10 / 12,4,14,6 / 3,11,1,9 / 15,7,13,5; на шаге k открыты ячейки с порогом<k, ячейка 1 lp.",
+    hold: 1300,
+    async play(c) {
+      const { P, g } = pxSetup(c);
+      const A = renderArt(c, artTitle, P), Bm = renderArt(c, artCity, P);
+      const da = A.getContext("2d").getImageData(0, 0, GW, GH), db = Bm.getContext("2d").getImageData(0, 0, GW, GH);
+      const out = g.x.createImageData(GW, GH);
+      const draw = (k) => {
+        for (let y = 0; y < GH; y++) for (let x = 0; x < GW; x++) {
+          const i = (y * GW + x) * 4, src = B4[y & 3][x & 3] < k ? db : da;
+          out.data[i] = src.data[i]; out.data[i + 1] = src.data[i + 1]; out.data[i + 2] = src.data[i + 2]; out.data[i + 3] = 255;
+        }
+        g.x.putImageData(out, 0, 0);
+      };
+      draw(0);
+      await c.wait(400);
+      await c.tick(800, (t, p) => draw(stepK(p, 16)));
+      draw(16);
+    },
+  });
+
+  /* ----- PX-08 ----- */
+  const ROBOT = [
+    "......aaaa......", ".......dd.......", ".......dd.......", "..############..", ".#sss#########m.", ".#s###########m.",
+    ".##eee####eee##.", ".##eee####eee##.", ".#cc########cc#m", ".#cc########cc#m", "bb###########mbb",
+    "bb##" + "mmmmmmmm" + "#mbb", "bb##" + "m#m#m#m#" + "#mbb", ".#############m", "..mmmmmmmmmmmm..", ".....dddddd.....",
+  ];
+  SKD.add({
+    code: "PX-08", group: "pix", ru: "Целочисленный зум",
+    what: "Один спрайт дважды увеличивается без размытия.",
+    when: "Рассмотреть конкретную деталь пиксельного рисунка.",
+    fam: ["F09"], proj: ["skilaxy", "democrm"],
+    spec: "D=900 мс; 0–300 мс s=1, при 300 мс s=2, при 600 мс s=3, до 900 мс удержание; E6 на сменах; опора T в целых lp, nearest-neighbor.",
+    hold: 1300,
+    async play(c) {
+      const { P, g } = pxSetup(c);
+      const T = { x: 48, y: 27 };
+      const draw = (s) => {
+        g.r(0, 0, GW, GH, P.bg);
+        for (let y = 3; y < GH; y += 8) for (let x = 3; x < GW; x += 8) g.px(x, y, P.mu);
+        g.spr(ROBOT, T.x - 8 * s, T.y - 8 * s, { "#": P.lt, e: P.ac, m: P.mu, a: P.ac, d: P.dk, b: P.sf, c: P.sf, s: P.sf }, s, P.dk);
+        g.r(3, 3, 17, 9, P.dk); ptext(g, "×" + s, 5, 4, P.lt, 1);
+      };
+      draw(1);
+      await c.wait(300);
+      draw(2);
+      await c.wait(300);
+      draw(3);
+      await c.wait(300);
+    },
+  });
+
+  /* ===================== VG — объём, свет и пространство ===================== */
+  /* Мини-рендер: ортографическая камера (6,4,6)→(0,0,0), up=(0,1,0), ключевой свет (−3,6,4), пол y=−1, 52 px сцены на единицу (в ролике 12 единиц на ширину, в демо крупнее).
+     Грани — многоугольники на canvas с градиентом по освещённости от точечного света; тень — проекция предмета на пол от того же света. */
+  const v3 = {
+    add: (a, b) => [a[0] + b[0], a[1] + b[1], a[2] + b[2]], sub: (a, b) => [a[0] - b[0], a[1] - b[1], a[2] - b[2]],
+    mul: (a, k) => [a[0] * k, a[1] * k, a[2] * k], dot: (a, b) => a[0] * b[0] + a[1] * b[1] + a[2] * b[2],
+    cross: (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]],
+    len: (a) => Math.hypot(a[0], a[1], a[2]),
+    norm: (a) => { const l = Math.hypot(a[0], a[1], a[2]) || 1; return [a[0] / l, a[1] / l, a[2] / l]; },
+  };
+  const CAM = (() => { const f = v3.norm([-6, -4, -6]); const r = v3.norm(v3.cross(f, [0, 1, 0])); const u = v3.cross(r, f); return { f, r, u }; })();
+  const KEY = [-3, 6, 4], SC = 52, OX = 240, OY = 93, HI = 2;
+  const proj = (p) => [OX + v3.dot(p, CAM.r) * SC, OY - v3.dot(p, CAM.u) * SC];
+  const rotY = (p, a) => { const ca = Math.cos(a), sa = Math.sin(a); return [p[0] * ca + p[2] * sa, p[1], -p[0] * sa + p[2] * ca]; };
+  const DEG = Math.PI / 180;
+
+  function mkBox(o) {
+    const [hx, hy, hz] = o.s.map((v) => v / 2);
+    const F = (tag, n, pts) => ({ tag, n, v: pts.map(([a, b, c]) => [a * hx, b * hy, c * hz]) });
+    return Object.assign({ ry: 0, alpha: 1 }, o, {
+      faces: [
+        F("pz", [0, 0, 1], [[-1, 1, 1], [1, 1, 1], [1, -1, 1], [-1, -1, 1]]),
+        F("px", [1, 0, 0], [[1, 1, 1], [1, 1, -1], [1, -1, -1], [1, -1, 1]]),
+        F("nx", [-1, 0, 0], [[-1, 1, -1], [-1, 1, 1], [-1, -1, 1], [-1, -1, -1]]),
+        F("nz", [0, 0, -1], [[1, 1, -1], [-1, 1, -1], [-1, -1, -1], [1, -1, -1]]),
+        F("py", [0, 1, 0], [[-1, 1, -1], [1, 1, -1], [1, 1, 1], [-1, 1, 1]]),
+        F("ny", [0, -1, 0], [[-1, -1, 1], [1, -1, 1], [1, -1, -1], [-1, -1, -1]]),
+      ],
+    });
+  }
+  /* призма-крыша: основание по x∈[−a,a], z∈[−b,b] на высоте y0, конёк вдоль x на высоте y1 */
+  function mkRoof(o) {
+    const a = o.s[0] / 2, b = o.s[2] / 2, y0 = -o.s[1] / 2, y1 = o.s[1] / 2;
+    const mk = (tag, pts) => { const e1 = v3.sub(pts[1], pts[0]), e2 = v3.sub(pts[2], pts[0]); let n = v3.norm(v3.cross(e1, e2)); const cen = pts.reduce((s, p) => v3.add(s, p), [0, 0, 0]).map((x) => x / pts.length); if (v3.dot(n, v3.sub(cen, [0, 0, 0])) < 0) n = v3.mul(n, -1); return { tag, n, v: pts }; };
+    return Object.assign({ ry: 0, alpha: 1 }, o, {
+      faces: [
+        mk("sz", [[-a, y0, b], [a, y0, b], [a, y1, 0], [-a, y1, 0]]),
+        mk("sn", [[a, y0, -b], [-a, y0, -b], [-a, y1, 0], [a, y1, 0]]),
+        mk("gx", [[a, y0, b], [a, y0, -b], [a, y1, 0]]),
+        mk("gn", [[-a, y0, -b], [-a, y0, b], [-a, y1, 0]]),
+      ],
+    });
+  }
+  const worldV = (m, v) => v3.add(rotY(v, m.ry), m.c);
+  /* отсечение многоугольника плоскостью y ≥ fy */
+  function clipY(poly, fy) {
+    const out = [];
+    for (let i = 0; i < poly.length; i++) {
+      const a = poly[i], b = poly[(i + 1) % poly.length], ia = a[1] >= fy - 1e-9, ib = b[1] >= fy - 1e-9;
+      if (ia) out.push(a);
+      if (ia !== ib) { const t = (fy - a[1]) / (b[1] - a[1]); out.push([a[0] + (b[0] - a[0]) * t, fy, a[2] + (b[2] - a[2]) * t]); }
+    }
+    return out;
+  }
+  function hull2(pts) {
+    pts = pts.slice().sort((p, q) => p[0] - q[0] || p[1] - q[1]);
+    const cr = (o, a, b) => (a[0] - o[0]) * (b[1] - o[1]) - (a[1] - o[1]) * (b[0] - o[0]);
+    const lo = []; for (const p of pts) { while (lo.length >= 2 && cr(lo[lo.length - 2], lo[lo.length - 1], p) <= 0) lo.pop(); lo.push(p); }
+    const up = []; for (let i = pts.length - 1; i >= 0; i--) { const p = pts[i]; while (up.length >= 2 && cr(up[up.length - 2], up[up.length - 1], p) <= 0) up.pop(); up.push(p); }
+    lo.pop(); up.pop(); return lo.concat(up);
+  }
+
+  /* сцена: три холста (пол, тень с размытием, предметы) в двойном разрешении */
+  function vgStage(c, o) {
+    o = o || {};
+    const P = PAL(c);
+    const W = document.createElement("div");
+    W.style.cssText = `position:absolute;left:0;top:0;width:480px;height:270px;transform-origin:240px 135px;transform:translate(0,${o.dy || 0}px) scale(${o.k || 1})`;
+    c.stage.appendChild(W);
+    /* холст выше и ниже кадра на 105 px: предметы и пол могут выходить за кадр, а обёртка W потом масштабирует и сдвигает всё целиком */
+    const mkc = (css) => { const cv = document.createElement("canvas"); cv.width = 480 * HI; cv.height = 480 * HI; cv.style.cssText = "position:absolute;left:0;top:-105px;width:480px;height:480px;" + (css || ""); W.appendChild(cv); const x = cv.getContext("2d"); x.scale(HI, HI); x.translate(0, 105); return { cv, x }; };
+    const A = mkc(), B = mkc(`filter:blur(${o.blur == null ? 4 : o.blur}px);opacity:${o.shadowA == null ? 0.24 : o.shadowA}`), C = mkc();
+    const R = P.raw;
+    return {
+      P, A, B, C, W, floorY: o.floorY == null ? -1 : o.floorY, L: o.L || KEY.slice(), floorPoly: null,
+      amb: o.amb == null ? 0.34 : o.amb, key: o.key == null ? 0.66 : o.key,
+      base: mix(R.sf, R.mu, 0.2), acc: mix(R.sf, R.ac, 0.62), mid: mix(R.sf, R.mu, 0.5),
+    };
+  }
+  /* освещённость точки p с нормалью n */
+  function lightI(env, p, n) {
+    const ld = v3.norm(v3.sub(env.L, p));
+    const lam = Math.max(0, v3.dot(n, ld));
+    const fill = Math.max(0, -v3.dot(n, CAM.f)) * 0.1;
+    return env.amb + env.key * lam + fill;
+  }
+  function shadeCol(env, base, I) {
+    const R = env.P.raw;
+    const lo = mix(base, R.dk, 0.5), hi = mix(base, R.lt, 0.6);
+    I = clamp(I, 0, 1.2);
+    if (I < 0.55) return mix(lo, base, I / 0.55);
+    return mix(base, hi, clamp((I - 0.55) / 0.5) * 0.6);
+  }
+  /* рисует грани одного предмета; pass: "all" | "front" | "back" */
+  function drawMesh(env, m, o) {
+    o = o || {};
+    const x = env.C.x, pass = o.pass || "all", fy = env.floorY, clipF = o.clip !== false;
+    const al = (o.alpha != null ? o.alpha : m.alpha);
+    for (const f of m.faces) {
+      const n = rotY(f.n, m.ry);
+      const facing = v3.dot(n, CAM.f) < 0;
+      if (pass === "front" && !facing) continue;
+      if (pass === "all" && !facing) continue;
+      if (pass === "back" && facing) continue;
+      let wv = f.v.map((p) => worldV(m, p));
+      const full = wv;
+      if (clipF) wv = clipY(wv, fy);
+      if (wv.length < 3) continue;
+      const sp = wv.map(proj);
+      const base = (m.cols && m.cols[f.tag]) || m.col;
+      x.save();
+      x.globalAlpha = al;
+      x.beginPath(); sp.forEach((q, i) => (i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]))); x.closePath();
+      if (pass === "back") {
+        x.fillStyle = S(shadeCol(env, base, 0.32)); x.fill();
+      } else {
+        const Is = wv.map((p) => lightI(env, p, n));
+        let imin = 0, imax = 0; Is.forEach((v, i) => { if (v < Is[imin]) imin = i; if (v > Is[imax]) imax = i; });
+        if (Is[imax] - Is[imin] < 0.015 || imin === imax) x.fillStyle = S(shadeCol(env, base, Is[imax]));
+        else {
+          const g = x.createLinearGradient(sp[imin][0], sp[imin][1], sp[imax][0], sp[imax][1]);
+          g.addColorStop(0, S(shadeCol(env, base, Is[imin]))); g.addColorStop(1, S(shadeCol(env, base, Is[imax])));
+          x.fillStyle = g;
+        }
+        x.fill();
+        // оттенок «блика»: мягкое пятно света на ближайшей к свету точке грани
+        if (o.glint) {
+          const cen = full.reduce((s, p) => v3.add(s, p), [0, 0, 0]).map((q) => q / full.length);
+          const d = v3.dot(v3.sub(env.L, cen), n);
+          if (d > 0) {
+            const q = v3.sub(env.L, v3.mul(n, d)), qp = proj(q);
+            x.save(); x.clip();
+            const gr = x.createRadialGradient(qp[0], qp[1], 0, qp[0], qp[1], 70);
+            const lt = env.P.raw.lt;
+            gr.addColorStop(0, S(lt, 0.62 * clamp(d / 3, 0.25, 1))); gr.addColorStop(1, S(lt, 0));
+            x.fillStyle = gr; x.fillRect(-20, -110, 520, 490); x.restore();
+          }
+        }
+        // декаль: плоский рисунок на грани, 0..1 по осям грани, y вниз
+        const dec = m.dec && m.dec[f.tag];
+        if (dec && full.length >= 4) {
+          const p0 = proj(full[0]), p1 = proj(full[1]), p3 = proj(full[3]);
+          x.save(); x.clip();
+          x.setTransform(HI * (p1[0] - p0[0]), HI * (p1[1] - p0[1]), HI * (p3[0] - p0[0]), HI * (p3[1] - p0[1]), HI * p0[0], HI * (p0[1] + 105));
+          dec(x, Math.hypot(p1[0] - p0[0], p1[1] - p0[1]), env);
+          x.restore();
+        }
+      }
+      if (o.edge !== false) {
+        x.globalAlpha = al * (m.edgeA == null ? 0.5 : m.edgeA);
+        x.lineWidth = 0.9; x.lineJoin = "round"; x.strokeStyle = S(mix(base, env.P.raw.dk, 0.55)); x.stroke();
+      }
+      x.restore();
+    }
+  }
+  /* тень: центральная проекция вершин на пол от точечного света, выпуклая оболочка */
+  function drawShadows(env, meshes) {
+    const x = env.B.x, fy = env.floorY, L = env.L;
+    x.clearRect(-20, -110, 520, 490);
+    x.save();
+    if (env.floorPoly) { x.beginPath(); env.floorPoly.forEach((q, i) => (i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]))); x.closePath(); x.clip(); }
+    x.fillStyle = S(env.P.raw.dk);
+    for (const m of meshes) {
+      const pts = [];
+      for (const f of m.faces) {
+        const wv = clipY(f.v.map((p) => worldV(m, p)), fy);
+        for (const p of wv) {
+          const dy = L[1] - p[1]; if (dy <= 0.05) continue;
+          const t = (L[1] - fy) / dy;
+          const q = [L[0] + (p[0] - L[0]) * t, fy, L[2] + (p[2] - L[2]) * t];
+          pts.push(proj(q));
+        }
+      }
+      if (pts.length < 3) continue;
+      const h = hull2(pts);
+      x.beginPath(); h.forEach((q, i) => (i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]))); x.closePath(); x.fill();
+    }
+    x.restore();
+  }
+  /* подиум-пол: плита с сеткой на верхней грани; рисуется один раз */
+  function drawFloor(env, half) {
+    half = half || 2.9;
+    const P = env.P, R = P.raw, x = env.C.x;
+    const slab = mkBox({ c: [0, env.floorY - 0.25, 0], s: [half * 2, 0.5, half * 2], col: mix(R.bg, R.fg, 0.1), edgeA: 0.35,
+      dec: { py: (g, k) => { g.strokeStyle = S(R.dk, 0.13); g.lineWidth = 1 / k; for (let i = 1; i < 8; i++) { g.beginPath(); g.moveTo(i / 8, 0); g.lineTo(i / 8, 1); g.moveTo(0, i / 8); g.lineTo(1, i / 8); g.stroke(); } } } });
+    env.floorPoly = [[-half, -half], [half, -half], [half, half], [-half, half]].map(([a, b]) => proj([a, env.floorY, b]));
+    const keep = env.C; env.C = env.A;
+    drawMesh(env, slab, { clip: false });
+    env.C = keep;
+    return slab;
+  }
+  function frameVG(env, meshes, o) {
+    o = o || {};
+    drawShadows(env, meshes.filter((m) => !m.noShadow));
+    env.C.x.clearRect(-20, -110, 520, 490);
+    const sorted = meshes.slice().sort((a, b) => (a.z != null || b.z != null ? (a.z || 0) - (b.z || 0) : v3.dot(b.c, CAM.f) - v3.dot(a.c, CAM.f)));
+    sorted.forEach((m) => drawMesh(env, m, { glint: o.glint }));
+  }
+
+  /* ----- декали ----- */
+  const shield = (g, k, env) => {
+    const R = env.P.raw;
+    g.fillStyle = S(R.ac); g.beginPath(); g.moveTo(0.5, 0.14); g.lineTo(0.82, 0.25); g.lineTo(0.82, 0.52); g.bezierCurveTo(0.82, 0.72, 0.66, 0.84, 0.5, 0.9); g.bezierCurveTo(0.34, 0.84, 0.18, 0.72, 0.18, 0.52); g.lineTo(0.18, 0.25); g.closePath(); g.fill();
+    g.strokeStyle = S(R.lt); g.lineWidth = 4.5 / k; g.lineCap = "round"; g.lineJoin = "round"; g.beginPath(); g.moveTo(0.34, 0.52); g.lineTo(0.46, 0.64); g.lineTo(0.68, 0.38); g.stroke();
+  };
+  const bars = (g, k, env) => { const R = env.P.raw; [0.28, 0.46, 0.64].forEach((y, i) => { g.fillStyle = S(i === 1 ? R.ac : R.mu, i === 1 ? 1 : 0.8); g.fillRect(0.2, y, i === 0 ? 0.6 : i === 1 ? 0.45 : 0.55, 0.1); }); };
+  const target = (g, k, env) => { const R = env.P.raw; g.lineWidth = 4 / k; g.strokeStyle = S(R.ac); g.beginPath(); g.arc(0.5, 0.5, 0.28, 0, 7); g.stroke(); g.fillStyle = S(R.ac); g.beginPath(); g.arc(0.5, 0.5, 0.11, 0, 7); g.fill(); g.strokeStyle = S(R.mu); g.lineWidth = 2.5 / k; g.beginPath(); g.arc(0.5, 0.5, 0.4, 0, 7); g.stroke(); };
+  const stripes = (g, k, env) => { const R = env.P.raw; g.strokeStyle = S(R.mu, 0.7); g.lineWidth = 5 / k; for (let i = -1; i < 6; i++) { g.beginPath(); g.moveTo(i * 0.22, 1); g.lineTo(i * 0.22 + 1, 0); g.stroke(); } };
+  const windows = (n, m) => (g, k, env) => { const R = env.P.raw; g.fillStyle = S(mix(R.dk, R.ac, 0.15), 0.85); const w = 0.7 / (n * 1.7), gap = w * 0.7; for (let j = 0; j < m; j++) for (let i = 0; i < n; i++) g.fillRect(0.15 + i * (w + gap) * 1 + (0.7 - (n * w + (n - 1) * gap)) / 2, 0.2 + j * 0.32, w, 0.18); };
+
+  /* ----- VG-01 ----- */
+  SKD.add({
+    code: "VG-01", group: "vol", ru: "Поворот предмета",
+    what: "Предмет показывает соседнюю сторону и останавливается.",
+    when: "Предмет, макет комнаты, low-poly объект.",
+    fam: ["F12", "F08"], proj: ["ecs", "democrm"],
+    spec: "D=1600 мс, E1; rotateY 0→90°, центр и камера неподвижны; контактная тень пересчитывается из того же света (−3,6,4); куб 2×2×2, пол y=−1.",
+    hold: 1200,
+    async play(c) {
+      const env = vgStage(c);
+      drawFloor(env);
+      const cube = mkBox({ c: [0, 0, 0], s: [2, 2, 2], col: env.base, dec: { pz: shield, px: bars, nx: target, nz: stripes } });
+      const draw = (a) => { cube.ry = a; frameVG(env, [cube]); };
+      draw(0);
+      await c.wait(450);
+      await c.tick(1600, (t, p) => draw(EF.E1(p) * 90 * DEG));
+      draw(90 * DEG);
+    },
+  });
+
+  /* ----- VG-02 ----- */
+  const dots = (g, k, env) => { const R = env.P.raw; g.fillStyle = S(R.dk, 0.55); for (let j = 0; j < 4; j++) for (let i = 0; i < 4; i++) { g.beginPath(); g.arc(0.2 + i * 0.2, 0.2 + j * 0.2, 0.035, 0, 7); g.fill(); } };
+  const ringTop = (g, k, env) => { const R = env.P.raw; g.strokeStyle = S(R.lt, 0.85); g.lineWidth = 3 / k; g.beginPath(); g.arc(0.5, 0.5, 0.26, 0, 7); g.stroke(); g.fillStyle = S(R.lt, 0.85); g.beginPath(); g.arc(0.5, 0.5, 0.08, 0, 7); g.fill(); };
+  SKD.add({
+    code: "VG-02", group: "vol", ru: "Объёмный разбор",
+    what: "Слои предмета расходятся вертикально.",
+    when: "Состав физического объекта.",
+    fam: ["F12", "F08"], proj: ["ecs", "democrm", "arseniy"],
+    spec: "D=1200 мс, E1; n=3 слоя 2×0.6×2, Y=−0.6/0/+0.6; сдвиг по Y на (i−(n−1)/2)×0.7 ед.; X/Z неизменны; пол опущен до y=−2, чтобы нижний слой не уходил под него.",
+    hold: 1300,
+    async play(c) {
+      const env = vgStage(c, { floorY: -2.2, k: 0.78, dy: -5 });
+      drawFloor(env, 2.4);
+      const R = env.P.raw;
+      const L = [
+        mkBox({ c: [0, -0.6, 0], s: [2, 0.6, 2], col: mix(R.sf, R.mu, 0.55), dec: { py: dots } }),
+        mkBox({ c: [0, 0, 0], s: [2, 0.6, 2], col: env.base }),
+        mkBox({ c: [0, 0.6, 0], s: [2, 0.6, 2], col: env.acc, dec: { py: ringTop } }),
+      ];
+      const draw = (p) => {
+        const e = EF.E1(p);
+        L.forEach((m, i) => { m.c = [0, [-0.6, 0, 0.6][i] + (i - 1) * 0.7 * e, 0]; });
+        frameVG(env, L);
+        // вертикальные направляющие по ближнему ребру
+        const x = env.C.x, ex = 1, ez = 1;
+        if (e > 0.02) {
+          x.save(); x.setLineDash([3, 3]); x.strokeStyle = S(R.dk, 0.4); x.lineWidth = 1;
+          [[ex, ez], [-ex, ez], [ex, -ez]].forEach(([a, b]) => { const p0 = proj([a, -0.9 - 0.7 * e, b]), p1 = proj([a, 0.9 + 0.7 * e, b]); x.beginPath(); x.moveTo(p0[0], p0[1]); x.lineTo(p1[0], p1[1]); x.stroke(); });
+          x.restore();
+        }
+      };
+      draw(0);
+      await c.wait(450);
+      await c.tick(1200, (t, p) => draw(p));
+      draw(1);
+    },
+  });
+
+  /* ----- VG-03 ----- */
+  function houseMeshes(env) {
+    const R = env.P.raw;
+    const body = mkBox({ c: [0, 0, 0], s: [2, 1.3, 2], col: env.base, dec: { pz: (g, k, e) => { windows(2, 1)(g, k, e); g.fillStyle = S(R.dk, 0.8); g.fillRect(0.43, 0.5, 0.2, 0.5); }, px: windows(2, 2) } });
+    const roof = mkRoof({ c: [0, 0, 0], s: [2.3, 0.7, 2.3], col: env.acc, cols: { gx: mix(env.acc, R.dk, 0.15), gn: mix(env.acc, R.dk, 0.15) } });
+    return [body, roof];
+  }
+  SKD.add({
+    code: "VG-03", group: "vol", ru: "Подъём из пола",
+    what: "Макет появляется из-за плоскости пола.",
+    when: "Вход здания или предмета в изометрическую сцену.",
+    fam: ["F12", "F08"], proj: ["ecs", "democrm"],
+    spec: "D=900 мс, E2; центр предмета Y=−3→0; всё ниже y=−1 отсечено плоскостью, пол непрозрачен; масштаб постоянен, тень появляется только после пересечения пола.",
+    hold: 1300,
+    async play(c) {
+      const env = vgStage(c);
+      drawFloor(env);
+      const [body, roof] = houseMeshes(env);
+      const draw = (yc) => { body.c = [0, yc - 0.35, 0]; roof.c = [0, yc + 0.65, 0]; roof.z = 1; body.z = 0; frameVG(env, [body, roof]); };
+      draw(-3);
+      await c.wait(450);
+      await c.tick(900, (t, p) => draw(lerp(-3, 0, EF.E2(p))));
+      draw(0);
+    },
+  });
+
+  /* ----- VG-04 ----- */
+  SKD.add({
+    code: "VG-04", group: "vol", ru: "Сборка кубиками",
+    what: "Восемь кубов собираются в один крупный блок.",
+    when: "Low-poly конструктор и объяснение структуры.",
+    fam: ["F12", "F08"], proj: ["skilaxy", "democrm"],
+    spec: "D=1020 мс; 8 кубов 1×1×1, конечные X/Y/Z=±0.5, старт = конечная×3; каждый 600 мс E2, задержка 60·i мс, порядок X→Y→Z.",
+    hold: 1300,
+    async play(c) {
+      const env = vgStage(c, { k: 0.78, dy: 24 });
+      drawFloor(env);
+      const R = env.P.raw;
+      const cubes = [];
+      let i = 0;
+      for (const x of [-0.5, 0.5]) for (const y of [-0.5, 0.5]) for (const z of [-0.5, 0.5]) {
+        const par = (x > 0) + (y > 0) + (z > 0);
+        cubes.push(mkBox({ c: [x, y, z], s: [0.97, 0.97, 0.97], col: i === 7 ? env.acc : (par % 2 ? env.base : mix(R.sf, R.mu, 0.38)), fin: [x, y, z] }));
+        i++;
+      }
+      const draw = (t) => {
+        cubes.forEach((m, k) => { const e = EF.E2(clamp((t - 60 * k) / 600)); m.c = m.fin.map((v) => v * (3 - 2 * e)); });
+        frameVG(env, cubes);
+      };
+      draw(0);
+      await c.wait(450);
+      await c.tick(1020, (t) => draw(t));
+      draw(1020);
+    },
+  });
+
+  /* ----- VG-05 ----- */
+  SKD.add({
+    code: "VG-05", group: "vol", ru: "Проход света",
+    what: "Световой блик проходит по неподвижному предмету.",
+    when: "Показать материал без вращения объекта.",
+    fam: ["F12", "F08"], proj: ["ecs", "skilaxy"],
+    spec: "D=2200 мс, E1; ключевой свет по окружности R=6 на Y=4: θ −45°→+45°, X=6sinθ, Z=6cosθ; интенсивность и материал постоянны, камера стоит.",
+    hold: 1200,
+    async play(c) {
+      const env = vgStage(c, { amb: 0.22, key: 0.9, dy: 6 });
+      drawFloor(env);
+      const R = env.P.raw;
+      const cube = mkBox({ c: [0, 0, 0], s: [2, 2, 2], col: mix(R.sf, R.mu, 0.5) });
+      const mk = (th) => [6 * Math.sin(th), 4, 6 * Math.cos(th)];
+      /* условный указатель источника: дуга над сценой, положение по углу θ */
+      const mark = (q, th) => [240 + 150 * (th / (45 * DEG)), 42 - 15 * (1 - Math.pow(th / (45 * DEG), 2))];
+      const arc = []; for (let a = -45; a <= 45; a += 5) arc.push(mark(null, a * DEG));
+      const draw = (th) => {
+        env.L = mk(th);
+        frameVG(env, [cube], { glint: true });
+        const x = env.C.x;
+        x.save(); x.setLineDash([2, 4]); x.strokeStyle = S(R.dk, 0.28); x.lineWidth = 1.2; x.beginPath(); arc.forEach((q, i) => (i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]))); x.stroke(); x.restore();
+        const m = mark(null, th);
+        const g = x.createRadialGradient(m[0], m[1], 0, m[0], m[1], 26);
+        g.addColorStop(0, S(R.lt, 0.95)); g.addColorStop(0.35, S(R.ac, 0.45)); g.addColorStop(1, S(R.ac, 0));
+        x.fillStyle = g; x.fillRect(m[0] - 30, m[1] - 30, 60, 60);
+        x.fillStyle = S(R.lt); x.beginPath(); x.arc(m[0], m[1], 4.5, 0, 7); x.fill();
+        x.strokeStyle = S(R.dk, 0.55); x.lineWidth = 1; x.stroke();
+      };
+      draw(-45 * DEG);
+      await c.wait(350);
+      await c.tick(2200, (t, p) => draw(lerp(-45, 45, EF.E1(p)) * DEG));
+      draw(45 * DEG);
+    },
+  });
+
+  /* ----- VG-06 ----- */
+  SKD.add({
+    code: "VG-06", group: "vol", ru: "Матовая прозрачность",
+    what: "Передний слой становится полупрозрачным и показывает внутренний.",
+    when: "Устройство предмета и матовое стекло.",
+    fam: ["F12", "F08"], proj: ["ecs", "democrm"],
+    spec: "D=1000 мс, E1; α наружной оболочки 1→0.28, roughness 0.8 постоянна; внутренняя деталь непрозрачна; сортировка по глубине, без преломлений и размытых надписей.",
+    hold: 1300,
+    async play(c) {
+      const env = vgStage(c);
+      drawFloor(env);
+      const R = env.P.raw;
+      const shell = mkBox({ c: [0, 0, 0], s: [2, 2, 2], col: env.base, alpha: 1, edgeA: 0.55 });
+      const inner = [
+        mkBox({ c: [0, -0.8, 0], s: [1.5, 0.2, 1.5], col: mix(R.sf, R.mu, 0.55) }),
+        mkBox({ c: [0, -0.05, 0], s: [1, 1.3, 1], col: mix(env.acc, R.ac, 0.35), dec: { pz: ringTop, px: bars } }),
+        mkBox({ c: [0.62, -0.5, -0.55], s: [0.3, 0.4, 0.3], col: mix(R.sf, R.mu, 0.4) }),
+      ];
+      const draw = (al) => {
+        shell.alpha = al;
+        drawShadows(env, [shell]);
+        env.B.cv.style.opacity = r1(0.24 * (0.5 + 0.5 * al));
+        env.C.x.clearRect(-20, -110, 520, 490);
+        drawMesh(env, shell, { pass: "back", alpha: al * 0.8 });
+        inner.slice().sort((a, b) => v3.dot(b.c, CAM.f) - v3.dot(a.c, CAM.f)).forEach((m) => drawMesh(env, m));
+        drawMesh(env, shell, { pass: "front", alpha: al });
+        if (al < 0.999) {
+          // матовая дымка стекла: лёгкий светлый налёт по передним граням, без бликов
+          const x = env.C.x;
+          shell.faces.forEach((f) => { const n = rotY(f.n, 0); if (v3.dot(n, CAM.f) >= 0) return; const sp = clipY(f.v.map((p) => worldV(shell, p)), env.floorY).map(proj); x.save(); x.globalAlpha = (1 - al) * 0.1; x.fillStyle = S(R.lt); x.beginPath(); sp.forEach((q, i) => (i ? x.lineTo(q[0], q[1]) : x.moveTo(q[0], q[1]))); x.closePath(); x.fill(); x.restore(); });
+        }
+      };
+      draw(1);
+      await c.wait(450);
+      await c.tick(1000, (t, p) => draw(lerp(1, 0.28, EF.E1(p))));
+      draw(0.28);
+    },
+  });
+
+  /* ----- VG-07: макет квартала ----- */
+  function townMeshes(env) {
+    const R = env.P.raw, FL = -1;
+    const walls = [env.base, mix(R.sf, R.mu, 0.38), mix(R.sf, R.bg, 0.5)];
+    const roofs = [env.acc, mix(R.mu, R.ac, 0.3), mix(env.acc, R.dk, 0.2)];
+    const out = [];
+    const road = mix(R.sf, R.dk, 0.42);
+    out.push(mkBox({ c: [0, FL + 0.02, 0.1], s: [5.4, 0.04, 0.75], col: road, z: -2, noShadow: true, edgeA: 0, dec: { py: (g, k, e) => { g.strokeStyle = S(e.P.raw.lt, 0.8); g.lineWidth = 1.6 / k; g.setLineDash([0.05, 0.05]); g.beginPath(); g.moveTo(0, 0.5); g.lineTo(1, 0.5); g.stroke(); } } }));
+    out.push(mkBox({ c: [-1.0, FL + 0.021, 0], s: [0.75, 0.04, 5.4], col: road, z: -2, noShadow: true, edgeA: 0 }));
+    const house = (x, z, w, d, h, wi, ri, ry) => {
+      const body = mkBox({ c: [x, FL + h / 2, z], s: [w, h, d], col: walls[wi], ry: ry || 0, dec: { pz: windows(2, h > 1 ? 2 : 1), px: windows(2, h > 1 ? 2 : 1) } });
+      const roof = mkRoof({ c: [x, FL + h + 0.17, z], s: [w + 0.18, 0.34, d + 0.18], col: roofs[ri], ry: ry || 0, cols: { gx: mix(roofs[ri], R.dk, 0.18), gn: mix(roofs[ri], R.dk, 0.18) } });
+      body.z = 0; roof.z = 0; return [body, roof];
+    };
+    [house(-2.0, -1.55, 1.1, 0.95, 0.8, 0, 0), house(-2.0, 1.45, 1.0, 1.2, 0.7, 2, 1), house(0.35, -1.75, 1.3, 0.9, 0.75, 1, 2), house(1.9, -1.0, 0.95, 1.1, 0.9, 0, 0, 90 * DEG), house(0.55, 1.65, 1.2, 1.0, 0.7, 2, 0),
+      house(1.65, 0.75, 0.9, 0.9, 0.62, 1, 1)].forEach((a) => out.push(...a));
+    const tower = mkBox({ c: [2.15, FL + 1.1, 1.75], s: [0.8, 2.2, 0.8], col: mix(R.sf, R.mu, 0.3), dec: { pz: windows(1, 3), px: windows(1, 3) } });
+    out.push(tower, mkRoof({ c: [2.15, FL + 2.2 + 0.25, 1.75], s: [1.0, 0.5, 1.0], col: env.acc, cols: { gx: mix(env.acc, R.dk, 0.18), gn: mix(env.acc, R.dk, 0.18) } }));
+    [[-0.1, 0.9], [0.2, 0.55], [-1.7, 0.1], [1.2, -2.2], [-0.2, -0.95], [2.3, 0.05]].forEach(([x, z], i) => {
+      out.push(mkBox({ c: [x, FL + 0.12, z], s: [0.1, 0.24, 0.1], col: mix(R.dk, R.mu, 0.4), noShadow: true }));
+      out.push(mkBox({ c: [x, FL + 0.44, z], s: [0.42, 0.46, 0.42], col: mix(R.mu, R.sf, 0.15 + (i % 3) * 0.12) }));
+    });
+    return out;
+  }
+  SKD.add({
+    code: "VG-07", group: "vol", ru: "Миниатюрный фокус",
+    what: "Центр макета резкий, ближний и дальний планы смягчаются.",
+    when: "Тилт-шифт как приём изображения макета.",
+    fam: ["F12", "F08"], proj: ["ecs", "democrm"],
+    spec: "D=1200 мс, E1; полоса резкости y=0.4H…0.65H, вне неё blur 0→8 px (в демо 6 px) с линейным пером 0.08H; предметы и камера неподвижны, текст поверх резкий.",
+    hold: 1300,
+    async play(c) {
+      const mkLayer = () => { const e = vgStage(c, { k: 0.98, dy: 4 }); drawFloor(e); const ms = townMeshes(e); frameVG(e, ms); return e; };
+      const blurred = mkLayer(), sharp = mkLayer();
+      const band = "linear-gradient(180deg,transparent 0,transparent 32%,#000 40%,#000 65%,transparent 73%,transparent 100%)";
+      sharp.W.style.webkitMaskImage = band; sharp.W.style.maskImage = band;
+      blurred.W.style.filter = "blur(0px)";
+      const cap = c.el("div", "position:absolute;left:16px;bottom:12px;padding:5px 11px;border-radius:7px;background:var(--sf);color:var(--fg);font-size:13px;font-weight:600;box-shadow:0 0 0 1px color-mix(in srgb,var(--fg) 14%,transparent);z-index:5", null, "Макет квартала · 1:200");
+      await c.wait(450);
+      await c.a(blurred.W, [{ filter: "blur(0px)" }, { filter: "blur(6px)" }], { duration: 1200, easing: c.E.E1 });
+    },
+  });
+
+  /* ----- VG-08: свет сквозь витраж ----- */
+  SKD.add({
+    code: "VG-08", group: "vol", ru: "Свет сквозь витраж",
+    what: "Цветное пятно постепенно появляется на соседней плоскости.",
+    when: "Символическая световая сцена, тихая заставка.",
+    fam: ["F12", "F08"], proj: ["ecs"],
+    spec: "D=1800 мс, E1; копия маски витража на плоскости пола: skewX −25°, sy 0.45, центр T; α 0→0.22, x −30→0 px, blur; сам витраж неизменен.",
+    hold: 1300,
+    async play(c) {
+      const P = PAL(c), R = P.raw;
+      const { svg, defs } = layer(c, "");
+      const WX = 138, WY = 100, T = { x: 340, y: 224 }, WS = 0.94;
+      // стена и пол
+      sv(c, svg, "rect", { x: 0, y: 0, width: 480, height: 270 }, "fill:var(--bg)");
+      sv(c, svg, "rect", { x: 0, y: 186, width: 480, height: 84 }, `fill:${S(mix(R.bg, R.fg, 0.1))}`);
+      sv(c, svg, "rect", { x: 0, y: 183, width: 480, height: 3 }, `fill:${S(mix(R.bg, R.fg, 0.2))}`);
+      // витраж: арка 120×170 вокруг (0,0)
+      const cp = sv(c, defs, "clipPath", { id: "vg8clip" });
+      sv(c, cp, "path", { d: "M-60 85 V-25 A60 60 0 0 1 60 -25 V85 Z" });
+      const win = sv(c, defs, "g", { id: "vg8win" });
+      const cols = [R.ac, mix(R.ac, R.bg, 0.5), mix(R.ac, R.fg, 0.4), R.mu, mix(R.mu, R.ac, 0.5), mix(R.sf, R.ac, 0.25)];
+      const cg = sv(c, win, "g", { "clip-path": "url(#vg8clip)" });
+      const cw = 30, ch = 170 / 6;
+      for (let j = 0; j < 6; j++) for (let i = 0; i < 4; i++) {
+        const k = Math.floor(c.rnd() * cols.length);
+        sv(c, cg, "rect", { x: -60 + i * cw, y: -85 + j * ch, width: cw + 0.5, height: ch + 0.5 }, `fill:${S(cols[k])}`);
+      }
+      const lead = "stroke:" + S(R.dk) + ";stroke-width:3;fill:none;stroke-linecap:round";
+      const lg = sv(c, win, "g", { "clip-path": "url(#vg8clip)" });
+      for (let i = 1; i < 4; i++) sv(c, lg, "line", { x1: -60 + i * cw, y1: -90, x2: -60 + i * cw, y2: 90 }, lead);
+      for (let j = 1; j < 6; j++) sv(c, lg, "line", { x1: -62, y1: -85 + j * ch, x2: 62, y2: -85 + j * ch }, lead);
+      sv(c, lg, "path", { d: "M-60 -25 L0 -85 L60 -25 M-60 28 L0 -25 L60 28", style: lead });
+      sv(c, win, "path", { d: "M-60 85 V-25 A60 60 0 0 1 60 -25 V85 Z", style: `fill:none;stroke:${S(R.dk)};stroke-width:6;stroke-linejoin:round` });
+      sv(c, svg, "rect", { x: WX - 66, y: WY + 85 * WS, width: 132, height: 8, rx: 2 }, `fill:${S(mix(R.bg, R.fg, 0.25))}`);
+      const bg2 = sv(c, defs, "linearGradient", { id: "vg8beam", gradientUnits: "userSpaceOnUse", x1: WX + 60, y1: WY, x2: T.x, y2: T.y });
+      sv(c, bg2, "stop", { offset: 0, "stop-color": S(R.lt), "stop-opacity": 0.2 }); sv(c, bg2, "stop", { offset: 1, "stop-color": S(R.lt), "stop-opacity": 0 });
+      const beam = sv(c, svg, "polygon", { points: `${WX + 56},${WY - 70} ${WX + 56},${WY + 78} ${T.x + 62},${T.y + 24} ${T.x - 14},${T.y - 30}` }, "fill:url(#vg8beam);opacity:0");
+      const w1 = sv(c, svg, "g", { transform: `translate(${WX} ${WY}) scale(${WS})` });
+      sv(c, w1, "use", { href: "#vg8win" });
+      // пятно света: копия маски, сжатая и скошенная
+      const fl = sv(c, defs, "filter", { id: "vg8blur", x: "-30%", y: "-30%", width: "160%", height: "160%" });
+      sv(c, fl, "feGaussianBlur", { stdDeviation: 3.2 });
+      const gt = sv(c, svg, "g", { transform: `translate(${T.x} ${T.y}) scale(${WS})` });
+      const patch = sv(c, gt, "g", { filter: "url(#vg8blur)" });
+      patch.style.opacity = "0"; patch.style.mixBlendMode = P.light ? "multiply" : "screen";
+      const pu = sv(c, patch, "g", {});
+      sv(c, pu, "use", { href: "#vg8win" });
+      await c.wait(450);
+      pu.style.transformOrigin = "0 0";
+      await c.all(
+        c.a(patch, [{ opacity: 0 }, { opacity: 0.22 }], { duration: 1800, easing: c.E.E1 }),
+        c.a(beam, [{ opacity: 0 }, { opacity: 1 }], { duration: 1800, easing: c.E.E1 }),
+        c.a(pu, [{ transform: "translateX(-30px) skewX(-25deg) scaleY(0.45)" }, { transform: "translateX(0px) skewX(-25deg) scaleY(0.45)" }], { duration: 1800, easing: c.E.E1 }),
+      );
+    },
+  });
+
+  /* ===================== FX — печать, фактура и материал ===================== */
+  /* Все маски зерна и текстуры считаются один раз (feTurbulence с фиксированным seed) и приклеены к предмету:
+     никакой «кипящей» фактуры и дрожания. Фильтры лежат в userSpaceOnUse, поэтому положение зерна не зависит от анимации слоя. */
+  const FONTF = "font-family:'Golos Text',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif";
+  /* выпадение краски: шум → порог → маска; thr≈0.35 при частоте 0.5 снимает ≈12% площади */
+  function fSpeckle(c, defs, seed, thr, freq) {
+    const id = uid();
+    const f = c.sv(defs, "filter", { id, filterUnits: "userSpaceOnUse", x: -10, y: -10, width: 500, height: 290, "color-interpolation-filters": "sRGB" });
+    c.sv(f, "feTurbulence", { type: "fractalNoise", baseFrequency: freq || 0.5, numOctaves: 2, seed, result: "n" });
+    c.sv(f, "feColorMatrix", { in: "n", type: "matrix", values: `0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  40 0 0 0 ${-40 * thr}`, result: "m" });
+    c.sv(f, "feComposite", { in: "SourceGraphic", in2: "m", operator: "in" });
+    return id;
+  }
+  /* неровный край: смещение по шуму (низкая частота), затем выпадение краски */
+  function fPrint(c, defs, o) {
+    const id = uid();
+    const f = c.sv(defs, "filter", { id, filterUnits: "userSpaceOnUse", x: -10, y: -10, width: 500, height: 290, "color-interpolation-filters": "sRGB" });
+    let src = "SourceGraphic";
+    if (o.wob) {
+      c.sv(f, "feTurbulence", { type: "fractalNoise", baseFrequency: o.wf || 0.04, numOctaves: 2, seed: o.wob, result: "w" });
+      c.sv(f, "feDisplacementMap", { in: "SourceGraphic", in2: "w", scale: o.ws || 2, xChannelSelector: "R", yChannelSelector: "G", result: "d" });
+      src = "d";
+    }
+    if (o.thr) {
+      c.sv(f, "feTurbulence", { type: "fractalNoise", baseFrequency: o.freq || 0.5, numOctaves: 2, seed: o.seed || 17, result: "n" });
+      c.sv(f, "feColorMatrix", { in: "n", type: "matrix", values: `0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  40 0 0 0 ${-40 * o.thr}`, result: "m" });
+      c.sv(f, "feComposite", { in: src, in2: "m", operator: "in" });
+    }
+    return id;
+  }
+  /* бумага: фиксированное мягкое зерно по всему кадру */
+  function paper(c, parent, a) {
+    const { svg, defs } = layer(c, "", parent);
+    const id = uid();
+    const f = c.sv(defs, "filter", { id, filterUnits: "userSpaceOnUse", x: 0, y: 0, width: 480, height: 270, "color-interpolation-filters": "sRGB" });
+    c.sv(f, "feTurbulence", { type: "fractalNoise", baseFrequency: 0.9, numOctaves: 2, seed: 17, result: "n" });
+    c.sv(f, "feColorMatrix", { in: "n", type: "matrix", values: `0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.25  ${a} 0 0 0 0` });
+    c.sv(svg, "rect", { x: 0, y: 0, width: 480, height: 270, filter: `url(#${id})` });
+    return svg;
+  }
+
+  /* ----- FX-01: ризограф ----- */
+  SKD.add({
+    code: "FX-01", group: "fx", ru: "Проявление ризографа",
+    what: "Первый слой краски появляется, второй чуть запаздывает.",
+    when: "Двухкрасочный плакат.",
+    fam: ["F14", "F10"], proj: ["serial", "arseniy"],
+    spec: "D=700 мс; слой 1 α 0→1 на 0–450 мс E2; слой 2 α 0→1 на 180–700 мс E2, постоянное смещение (+2,+1) px; зерно снимает ≈12% площади каждого слоя, маски фиксированы (seed 17).",
+    hold: 1300,
+    async play(c) {
+      const P = PAL(c), R = P.raw;
+      c.el("div", `position:absolute;inset:0;background:var(--bg)`);
+      paper(c, null, 0.1);
+      const ink = (css) => layer(c, "mix-blend-mode:multiply;opacity:0;" + css);
+      const L1 = ink(""), L2 = ink("transform:translate(2px,1px)");
+      const g1 = sv(c, L1.svg, "g", { filter: `url(#${fSpeckle(c, L1.defs, 5, 0.35)})` });
+      const g2 = sv(c, L2.svg, "g", { filter: `url(#${fSpeckle(c, L2.defs, 11, 0.35)})` });
+      // слой 1 (AC): солнце со щелями и волны
+      const m = sv(c, L1.defs, "mask", { id: "fx1m", maskUnits: "userSpaceOnUse", x: 0, y: 0, width: 480, height: 270 });
+      sv(c, m, "rect", { x: 0, y: 0, width: 480, height: 270, fill: "#fff" });
+      [[146, 3], [158, 5], [172, 7], [188, 9]].forEach(([y, h]) => sv(c, m, "rect", { x: 220, y, width: 220, height: h, fill: "#000" }));
+      sv(c, g1, "circle", { cx: 330, cy: 112, r: 88, mask: "url(#fx1m)" }, `fill:var(--ac)`);
+      for (let i = 0; i < 3; i++) {
+        let d = `M0 ${232 + i * 13}`; for (let x = 0; x < 480; x += 40) d += ` q10 -9 20 0 t20 0`;
+        sv(c, g1, "path", { d }, `fill:none;stroke:var(--ac);stroke-width:5;stroke-linecap:round`);
+      }
+      // слой 2 (FG): заголовок и растр
+      const t = sv(c, g2, "text", { x: 26, y: 188, textLength: 292, lengthAdjust: "spacingAndGlyphs" }, `${FONTF};font-weight:900;font-size:116px;fill:var(--fg)`);
+      t.textContent = "ЛЕТО";
+      const t2 = sv(c, g2, "text", { x: 28, y: 214, textLength: 250, lengthAdjust: "spacingAndGlyphs" }, `${FONTF};font-weight:700;font-size:15px;letter-spacing:.5px;fill:var(--fg)`);
+      t2.textContent = "ФЕСТИВАЛЬ · 12–14 ИЮЛЯ";
+      const pat = sv(c, L2.defs, "pattern", { id: "fx1dots", width: 7, height: 7, patternUnits: "userSpaceOnUse" });
+      sv(c, pat, "circle", { cx: 3.5, cy: 3.5, r: 1.7 }, "fill:var(--fg)");
+      sv(c, g2, "rect", { x: 26, y: 26, width: 130, height: 56, fill: "url(#fx1dots)" });
+      sv(c, g2, "rect", { x: 26, y: 20, width: 130, height: 3 }, "fill:var(--fg)");
+      await c.all(
+        c.a(L1.svg, [{ opacity: 0 }, { opacity: 1 }], { duration: 450, easing: c.E.E2 }),
+        c.wait(180).then(() => c.a(L2.svg, [{ opacity: 0 }, { opacity: 1 }], { duration: 520, easing: c.E.E2 })),
+      );
+    },
+  });
+
+  /* ----- FX-02: шелкографский проход ----- */
+  SKD.add({
+    code: "FX-02", group: "fx", ru: "Шелкографский проход",
+    what: "Краска заполняет форму одним проходом ракеля.",
+    when: "Шелкография и плоский плакат.",
+    fam: ["F14", "F10"], proj: ["serial", "arseniy"],
+    spec: "D=900 мс, E0; маска заливки от верхнего края формы к нижнему 0→100%h; край жёсткий; после прохода заливка не меняется, текстура сетки неподвижна.",
+    hold: 1300,
+    async play(c) {
+      const P = PAL(c), R = P.raw;
+      c.el("div", "position:absolute;inset:0;background:var(--bg)");
+      paper(c, null, 0.07);
+      const { svg, defs } = layer(c, "");
+      // лист и тень
+      sv(c, svg, "rect", { x: 146, y: 22, width: 188, height: 226, rx: 3 }, `fill:${S(R.fg, 0.14)};filter:blur(6px);transform:translate(4px,8px)`);
+      sv(c, svg, "rect", { x: 146, y: 22, width: 188, height: 226, rx: 3 }, "fill:var(--sf)");
+      // форма: солнце над горами
+      const ecx = 240, ecy = 136;
+      let star = ""; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 17 : 40; star += (i ? "L" : "M") + r1(ecx + Math.cos(a) * rr) + " " + r1(ecy + Math.sin(a) * rr) + " "; }
+      const ring = (r) => `M${ecx - r} ${ecy} a${r} ${r} 0 1 0 ${2 * r} 0 a${r} ${r} 0 1 0 ${-2 * r} 0 Z`;
+      const shape = ring(76) + " " + ring(62) + " " + star + "Z";
+      const Y0 = 58, Y1 = 214;
+      // контур трафарета — виден до печати
+      sv(c, svg, "path", { d: shape, "fill-rule": "evenodd" }, `fill:none;stroke:${S(R.mu, 0.55)};stroke-width:1.2;stroke-dasharray:4 4`);
+      const cp = sv(c, defs, "clipPath", { id: "fx2clip" });
+      const rect = sv(c, cp, "rect", { x: 140, y: Y0, width: 200, height: 0 });
+      const ink = sv(c, svg, "g", { "clip-path": "url(#fx2clip)" });
+      sv(c, ink, "path", { d: shape, "fill-rule": "evenodd" }, "fill:var(--ac)");
+      // сетка ткани: фиксированная диагональная штриховка по краске
+      const pat = sv(c, defs, "pattern", { id: "fx2mesh", width: 3, height: 3, patternUnits: "userSpaceOnUse", patternTransform: "rotate(45)" });
+      sv(c, pat, "rect", { x: 0, y: 0, width: 3, height: 1.1 }, `fill:${S(R.dk, 0.26)}`);
+      const pg = sv(c, ink, "g", { "clip-path": "url(#fx2shape)" });
+      const sc = sv(c, defs, "clipPath", { id: "fx2shape" });
+      sv(c, sc, "path", { d: shape, "clip-rule": "evenodd" });
+      sv(c, pg, "rect", { x: 140, y: 50, width: 200, height: 180, fill: "url(#fx2mesh)" });
+      // ракель: лезвие стоит на кромке краски
+      const sq = sv(c, svg, "g", {});
+      sv(c, sq, "rect", { x: 122, y: 12, width: 236, height: 8, rx: 2 }, "fill:var(--fg)");
+      sv(c, sq, "rect", { x: 130, y: 20, width: 220, height: 20, rx: 6 }, `fill:${S(R.mu)}`);
+      sv(c, sq, "rect", { x: 130, y: 20, width: 220, height: 20, rx: 6 }, `fill:none;stroke:${S(R.dk, 0.35)};stroke-width:1`);
+      sq.style.transform = `translateY(${Y0 - 12}px)`;
+      sq.style.opacity = "0";
+      await c.wait(400);
+      sq.style.opacity = "1";
+      await c.tick(900, (t, p) => { const y = Y0 + (Y1 - Y0) * p; rect.setAttribute("height", String(y - Y0)); sq.style.transform = `translateY(${r1(y - 12)}px)`; });
+      await c.a(sq, [{ opacity: 1 }, { opacity: 1 }], { duration: 10 });
+    },
+  });
+
+  /* ----- FX-03: газетный растр ----- */
+  const smooth = (t) => { t = clamp(t); return t * t * (3 - 2 * t); };
+  function photoL(x, y, W, H) {
+    let L = 0.42 + 0.36 * smooth(y / (H * 0.78));
+    const dm = Math.hypot(x - 196, y - 62);
+    if (dm > 30 && dm < 46) L = Math.max(L, 0.8 * Math.pow(1 - (dm - 30) / 16, 1.6));
+    if (dm <= 30) {
+      L = 0.97;
+      [[188, 56, 6], [204, 68, 5], [198, 48, 3.5], [180, 72, 4]].forEach(([cx, cy, r]) => { if (Math.hypot(x - cx, y - cy) < r) L = 0.74; });
+    }
+    [[40, 24], [78, 50], [120, 20], [140, 70], [60, 96], [250, 36], [262, 84], [24, 74], [222, 22], [100, 100]].forEach(([sx, sy]) => { if (Math.hypot(x - sx, y - sy) < 2.2) L = 0.92; });
+    const horizon = H - 52;
+    const bl = [[0, 22, 40], [22, 44, 66], [44, 62, 34], [62, 94, 82], [94, 112, 46], [112, 140, 70], [140, 160, 38], [160, 188, 90], [188, 210, 52], [210, 238, 74], [238, 262, 42], [262, 280, 60]];
+    for (const [x0, x1, h] of bl) {
+      if (x >= x0 && x < x1 && y > H - h - 6) {
+        L = 0.05;
+        const wx = Math.floor((x - x0 - 3) / 7), wy = Math.floor((y - (H - h)) / 8);
+        if (y > H - h && (x - x0) % 7 > 2 && (x - x0) % 7 < 5 && (y - (H - h)) % 8 > 2 && (y - (H - h)) % 8 < 6 && wx >= 0 && ((wx * 7 + wy * 3 + x0) % 5 < 2)) L = 0.85;
+      }
+    }
+    if (y > H - 14) L = Math.min(L, 0.08 + 0.1 * ((x * 5) % 3 === 0 ? 1 : 0));
+    return L;
+  }
+  SKD.add({
+    code: "FX-03", group: "fx", ru: "Газетный растр",
+    what: "Фото проявляется крупными точками без движения самого фото.",
+    when: "Научная новость или архивная полоса.",
+    fam: ["F14", "F10"], proj: ["serial", "arseniy", "ecs"],
+    spec: "D=800 мс, E1; центры точек на сетке 8 px; радиус 0→4·√(1−L) px, L — нормированная яркость исходного кадра (фиксирована); точки FG на бумаге BG.",
+    hold: 1300,
+    async play(c) {
+      const P = PAL(c), R = P.raw;
+      c.el("div", "position:absolute;inset:0;background:var(--bg)");
+      paper(c, null, 0.08);
+      const cv = document.createElement("canvas"); cv.width = 960; cv.height = 540;
+      cv.style.cssText = "position:absolute;left:0;top:0;width:480px;height:270px";
+      c.stage.appendChild(cv);
+      const x = cv.getContext("2d"); x.scale(2, 2);
+      const { svg } = layer(c, "");
+      const FX0 = 24, FY0 = 36, PW = 280, PH = 192, PITCH = 8;
+      sv(c, svg, "text", { x: 24, y: 22, textLength: 92, lengthAdjust: "spacingAndGlyphs" }, `${FONTF};font-weight:900;font-size:15px;fill:var(--fg)`).textContent = "ВЕСТНИК";
+      sv(c, svg, "rect", { x: 24, y: 27, width: 432, height: 2 }, "fill:var(--fg)");
+      sv(c, svg, "rect", { x: FX0 - 1, y: FY0 - 1, width: PW + 2, height: PH + 2 }, `fill:none;stroke:var(--fg);stroke-width:1`);
+      sv(c, svg, "text", { x: 24, y: 249, textLength: 118, lengthAdjust: "spacingAndGlyphs" }, `${FONTF};font-weight:600;font-size:11px;font-style:italic;fill:${S(R.mu)}`).textContent = "иллюстрация, растр 8 px";
+      const h1 = sv(c, svg, "text", { x: 326, y: 56, textLength: 128, lengthAdjust: "spacingAndGlyphs" }, `${FONTF};font-weight:900;font-size:21px;fill:var(--fg)`);
+      h1.textContent = "ЛУНА НАД";
+      sv(c, svg, "text", { x: 326, y: 80, textLength: 128, lengthAdjust: "spacingAndGlyphs" }, `${FONTF};font-weight:900;font-size:21px;fill:var(--fg)`).textContent = "ГОРОДОМ";
+      for (let i = 0; i < 12; i++) sv(c, svg, "rect", { x: 326, y: 98 + i * 11, width: i % 5 === 4 ? 78 : 128, height: 4, rx: 1 }, `fill:${S(R.mu, 0.55)}`);
+      const dots = [];
+      for (let j = 0; j < PH / PITCH; j++) for (let i = 0; i < PW / PITCH; i++) {
+        const cx = i * PITCH + PITCH / 2, cy = j * PITCH + PITCH / 2;
+        let L = 0; for (let a = -1; a <= 1; a++) for (let b = -1; b <= 1; b++) L += photoL(cx + a * 2.2, cy + b * 2.2, PW, PH);
+        L /= 9;
+        dots.push([FX0 + cx, FY0 + cy, 4 * Math.sqrt(1 - clamp(L))]);
+      }
+      const draw = (k) => {
+        x.clearRect(0, 0, 480, 270);
+        x.save(); x.beginPath(); x.rect(FX0, FY0, PW, PH); x.clip();
+        x.fillStyle = S(R.fg);
+        for (const d of dots) { const r = d[2] * k; if (r < 0.15) continue; x.beginPath(); x.arc(d[0], d[1], r, 0, 6.2832); x.fill(); }
+        x.restore();
+      };
+      draw(0);
+      await c.wait(400);
+      await c.tick(800, (t, p) => draw(EF.E1(p)));
+      draw(1);
+    },
+  });
+
+  /* ----- FX-04: резец по чёрному ----- */
+  SKD.add({
+    code: "FX-04", group: "fx", ru: "Резец по чёрному",
+    what: "Белые резы открывают изображение из тёмной массы.",
+    when: "Линогравюра и контрастный силуэт.",
+    fam: ["F14", "F10"], proj: ["serial", "arseniy"],
+    spec: "D=1000 мс, E0; n=11 белых путей в общей маске открываются по очереди, время каждого пропорционально длине, штрих 3 px; тёмная масса неподвижна.",
+    hold: 1300,
+    async play(c) {
+      const P = PAL(c), R = P.raw;
+      c.el("div", "position:absolute;inset:0;background:var(--bg)");
+      paper(c, null, 0.07);
+      const { svg, defs } = layer(c, "");
+      const mass = P.light ? R.fg : R.sf, cut = P.light ? R.bg : R.fg;
+      const rid = uid();
+      const f = sv(c, defs, "filter", { id: rid, filterUnits: "userSpaceOnUse", x: 0, y: 0, width: 480, height: 270, "color-interpolation-filters": "sRGB" });
+      sv(c, f, "feTurbulence", { type: "fractalNoise", baseFrequency: 0.09, numOctaves: 2, seed: 17, result: "w" });
+      sv(c, f, "feDisplacementMap", { in: "SourceGraphic", in2: "w", scale: 2.4, xChannelSelector: "R", yChannelSelector: "G" });
+      sv(c, svg, "rect", { x: 40, y: 20, width: 400, height: 230, rx: 3 }, `fill:${S(mass)};filter:url(#${rid})`);
+      const g = sv(c, svg, "g", { filter: `url(#${rid})` });
+      const st = `fill:none;stroke:${S(cut)};stroke-width:3.2;stroke-linecap:round;stroke-linejoin:round`;
+      const cx = 240, cy = 104;
+      let rays = ""; for (let i = 0; i < 24; i++) { const a = i * 15 * DEG, r0 = 40, r1_ = i % 2 ? 56 : 68; rays += `M${r1(cx + Math.cos(a) * r0)} ${r1(cy + Math.sin(a) * r0)} L${r1(cx + Math.cos(a) * r1_)} ${r1(cy + Math.sin(a) * r1_)} `; }
+      const waves = (y, ph, amp) => { let d = `M60 ${y}`; for (let x = 60; x < 420; x += 40) d += ` q10 ${-amp + ph} 20 0 t20 0`; return d; };
+      const paths = [
+        rays,
+        `M${cx + 30} ${cy} a30 30 0 1 0 -60 0 a30 30 0 1 0 60 0`,
+        `M${cx - 20} ${cy + 4} a20 20 0 0 1 34 -14 M${cx - 10} ${cy + 6} a11 11 0 0 1 18 -8`,
+        "M52 172 L96 150 L128 166 L176 138 L214 160 L250 142 L292 164 L332 144 L376 168 L428 148",
+        "M52 186 L94 170 L132 182 L180 160 L218 178 L252 164 L294 182 L336 164 L380 184 L428 170",
+        (() => { let d = ""; for (let i = 0; i < 16; i++) { const x = 66 + i * 23; d += `M${x} ${192 + (i % 2) * 3} l-8 10 `; } return d; })(),
+        waves(206, 0, 7), waves(218, 2, 7), waves(230, 0, 7), waves(240, -2, 6),
+        "M60 160 l28 -14 l24 12 l28 -22",
+      ];
+      const els = paths.map((d) => { const p = sv(c, g, "path", { d }, st); return p; });
+      const lens = els.map((e) => e.getTotalLength());
+      const total = lens.reduce((a, b) => a + b, 0);
+      let acc = 0; const sched = lens.map((l) => { const s = acc / total; acc += l; return [s, acc / total]; });
+      els.forEach((e, i) => { e.style.strokeDasharray = lens[i] + 1; e.style.strokeDashoffset = lens[i] + 1; });
+      const draw = (p) => els.forEach((e, i) => { const f2 = clamp((p - sched[i][0]) / (sched[i][1] - sched[i][0])); e.style.strokeDashoffset = (lens[i] + 1) * (1 - f2); e.style.opacity = f2 > 0 ? 1 : 0; });
+      draw(0);
+      await c.wait(450);
+      await c.tick(1000, (t, p) => draw(p));
+      draw(1);
+    },
+  });
+
+  /* ----- FX-05: смена оттиска ----- */
+  SKD.add({
+    code: "FX-05", group: "fx", ru: "Смена оттиска",
+    what: "Три похожих оттиска сменяются и затем замирают.",
+    when: "Короткая живая печатная иллюстрация.",
+    fam: ["F14", "F10"], proj: ["serial", "arseniy"],
+    spec: "D=600 мс; маски M1/M2/M3/M1 сменяются в 0/200/400/600 мс, E6 (мгновенно); отклонение контура каждой ≤1 px, положение и рамка одинаковы; после 600 мс без повтора.",
+    hold: 1300,
+    async play(c) {
+      const P = PAL(c), R = P.raw;
+      c.el("div", "position:absolute;inset:0;background:var(--bg)");
+      paper(c, null, 0.07);
+      const { svg, defs } = layer(c, "");
+      const cx = 240, cy = 124;
+      const seal = (parent) => {
+        const g = sv(c, parent, "g", {});
+        const ring = (r, w) => sv(c, g, "circle", { cx, cy, r }, `fill:none;stroke:var(--ac);stroke-width:${w}`);
+        ring(92, 6); ring(80, 2);
+        const pid = uid();
+        sv(c, defs, "path", { id: pid, d: `M${cx - 66} ${cy} a66 66 0 1 1 132 0 a66 66 0 1 1 -132 0` });
+        const tx = sv(c, g, "text", {}, `${FONTF};font-weight:800;font-size:14px;fill:var(--ac)`);
+        const tp = sv(c, tx, "textPath", { href: "#" + pid, startOffset: "0", textLength: 409, lengthAdjust: "spacing" });
+        tp.textContent = "ТИРАЖ 50 · ОТТИСК · ТИРАЖ 50 · ОТТИСК ·";
+        let star = ""; for (let i = 0; i < 10; i++) { const a = -Math.PI / 2 + i * Math.PI / 5, rr = i % 2 ? 19 : 46; star += (i ? "L" : "M") + r1(cx + Math.cos(a) * rr) + " " + r1(cy + Math.sin(a) * rr) + " "; }
+        sv(c, g, "path", { d: star + "Z" }, "fill:var(--ac);stroke:var(--ac);stroke-width:3;stroke-linejoin:round");
+        sv(c, g, "circle", { cx, cy, r: 8 }, "fill:var(--bg)");
+        return g;
+      };
+      const vars = [[3, 9, 0.35], [8, 21, 0.36], [14, 4, 0.34]];
+      const gs = vars.map(([wob, seed, thr]) => {
+        const wrap = sv(c, svg, "g", { filter: `url(#${fPrint(c, defs, { wob, ws: 2, wf: 0.05, thr, seed, freq: 0.5 })})` });
+        seal(wrap); wrap.style.display = "none"; return wrap;
+      });
+      const lab = c.el("div", `position:absolute;left:0;right:0;top:238px;text-align:center;font-size:12px;font-weight:700;letter-spacing:1px;color:${S(R.mu)};${FONTF}`, null, "ОТТИСК 1 / 3");
+      await c.wait(400);
+      const show = (i) => { gs.forEach((g, k) => { g.style.display = k === i ? "" : "none"; }); lab.textContent = `ОТТИСК ${i + 1} / 3`; };
+      show(0);
+      await c.wait(200); show(1);
+      await c.wait(200); show(2);
+      await c.wait(200); show(0);
+    },
+  });
+
+  /* ----- FX-06: графит ----- */
+  SKD.add({
+    code: "FX-06", group: "fx", ru: "Проявление графита",
+    what: "На светлой форме усиливается карандашная фактура.",
+    when: "Карандаш, бумажная учебная вставка.",
+    fam: ["F14", "F10"], proj: ["arseniy", "serial"],
+    spec: "D=1200 мс, E1; фиксированная маска штрихов FG α 0→0.22 внутри контура, штрихи накапливаются при перекрытии; контур уже виден; масштаб и координаты маски постоянны.",
+    hold: 1300,
+    async play(c) {
+      const P = PAL(c), R = P.raw;
+      c.el("div", "position:absolute;inset:0;background:var(--bg)");
+      const { svg, defs } = layer(c, "");
+      sv(c, svg, "rect", { x: 30, y: 18, width: 420, height: 234, rx: 3 }, `fill:${S(R.fg, 0.12)};filter:blur(6px);transform:translate(3px,6px)`);
+      sv(c, svg, "rect", { x: 30, y: 18, width: 420, height: 234, rx: 3 }, "fill:var(--sf)");
+      paper(c, null, 0.05);
+      // карандашная неровность линий
+      const fid = uid();
+      const f = sv(c, defs, "filter", { id: fid, filterUnits: "userSpaceOnUse", x: 0, y: 0, width: 480, height: 270 });
+      sv(c, f, "feTurbulence", { type: "fractalNoise", baseFrequency: 0.7, numOctaves: 2, seed: 17, result: "w" });
+      sv(c, f, "feDisplacementMap", { in: "SourceGraphic", in2: "w", scale: 1.6, xChannelSelector: "R", yChannelSelector: "G" });
+      const sheet = sv(c, svg, "g", { filter: `url(#${fid})` });
+      const ink = `stroke:var(--fg);stroke-linecap:round;fill:none`;
+      // кубик (изометрия) и шар
+      const cube = { cx: 150, cy: 150, a: 46 };
+      const A = [cube.cx, cube.cy - cube.a * 1.15], Bq = [cube.cx + cube.a, cube.cy - cube.a * 0.55], C = [cube.cx + cube.a, cube.cy + cube.a * 0.5], D = [cube.cx, cube.cy + cube.a * 1.1], E = [cube.cx - cube.a, cube.cy + cube.a * 0.5], F = [cube.cx - cube.a, cube.cy - cube.a * 0.55], M = [cube.cx, cube.cy - cube.a * 0.05];
+      const poly = (pts) => "M" + pts.map((p) => p.join(" ")).join(" L") + " Z";
+      const faceL = poly([F, M, D, E]), faceR = poly([M, Bq, C, D]), faceT = poly([A, Bq, M, F]);
+      const ball = { cx: 332, cy: 140, r: 56 };
+      const defsClip = (id, d) => { const cp = sv(c, defs, "clipPath", { id }); sv(c, cp, "path", { d }); return id; };
+      defsClip("fx6l", faceL); defsClip("fx6r", faceR);
+      const cb = sv(c, defs, "clipPath", { id: "fx6b" }); sv(c, cb, "circle", { cx: ball.cx, cy: ball.cy, r: ball.r });
+      const cm = sv(c, defs, "mask", { id: "fx6cm", maskUnits: "userSpaceOnUse", x: 0, y: 0, width: 480, height: 270 });
+      sv(c, cm, "rect", { x: 0, y: 0, width: 480, height: 270, fill: "#fff" });
+      sv(c, cm, "circle", { cx: ball.cx - ball.r * 0.55, cy: ball.cy - ball.r * 0.6, r: ball.r * 1.15, fill: "#000" });
+      // штриховка: фиксированный набор линий (seed 17), общий strokeOpacity на группе, перекрытия накапливаются
+      const hatch = sv(c, sheet, "g", {});
+      hatch.style.strokeOpacity = "0";
+      const lines = (clip, x0, y0, x1, y1, step, ang, w) => {
+        const g = sv(c, hatch, "g", { "clip-path": `url(#${clip})` });
+        const ca = Math.cos(ang * DEG), sa = Math.sin(ang * DEG), len = 400;
+        for (let t = -300; t < 300; t += step) {
+          const mx = (x0 + x1) / 2 + (-sa) * t, my = (y0 + y1) / 2 + ca * t, j = (c.rnd() - 0.5) * 3, k = 0.88 + c.rnd() * 0.12;
+          sv(c, g, "line", { x1: mx - ca * len * k + j, y1: my - sa * len * k, x2: mx + ca * len * k + j, y2: my + sa * len * k }, `${ink};stroke-width:${w}`);
+        }
+      };
+      lines("fx6l", 90, 90, 210, 210, 3.4, -52, 1.5);
+      lines("fx6r", 90, 90, 210, 210, 3.2, 58, 1.5); lines("fx6r", 90, 90, 210, 210, 4.2, 14, 1.4);
+      lines("fx6b", 276, 84, 388, 196, 3.6, -48, 1.5);
+      { const cg = sv(c, hatch, "g", { "clip-path": "url(#fx6b)" }); const mg = sv(c, cg, "g", { mask: "url(#fx6cm)" }); const keep = hatch; /* перекрёстная штриховка только на полумесяце тени */
+        const ca = Math.cos(38 * DEG), sa = Math.sin(38 * DEG);
+        for (let t = -200; t < 200; t += 3.2) { const mx = ball.cx - sa * t, my = ball.cy + ca * t, j = (c.rnd() - 0.5) * 3, k = 0.9 + c.rnd() * 0.1; sv(c, mg, "line", { x1: mx - ca * 160 * k + j, y1: my - sa * 160 * k, x2: mx + ca * 160 * k + j, y2: my + sa * 160 * k }, `${ink};stroke-width:1.4`); } }
+      const gsh = defsClip("fx6s", `M${ball.cx - 70} ${ball.cy + 60} a82 14 0 1 0 164 0 a82 14 0 1 0 -164 0 Z`);
+      lines(gsh, 250, 190, 420, 210, 3.4, 8, 1.4);
+      const cs2 = defsClip("fx6s2", `M${cube.cx - 40} ${cube.cy + 56} L${cube.cx + 60} ${cube.cy + 58} L${cube.cx + 100} ${cube.cy + 64} L${cube.cx + 10} ${cube.cy + 66} Z`);
+      lines(cs2, 100, 190, 260, 220, 3.4, 8, 1.4);
+      // контуры — всегда видны
+      const kon = `${ink};stroke-width:2;stroke-linejoin:round;stroke:var(--fg)`;
+      sv(c, sheet, "path", { d: faceL }, kon); sv(c, sheet, "path", { d: faceR }, kon); sv(c, sheet, "path", { d: faceT }, kon);
+      sv(c, sheet, "circle", { cx: ball.cx, cy: ball.cy, r: ball.r }, kon);
+      sv(c, sheet, "path", { d: "M54 228 H430" }, `${ink};stroke-width:1.2;stroke-opacity:.55`);
+      const cap = sv(c, svg, "text", { x: 52, y: 242 }, `${FONTF};font-size:11px;font-weight:600;font-style:italic;fill:${S(R.mu)}`); cap.textContent = "Рис. 1. Куб и шар, штриховка карандашом";
+      await c.wait(450);
+      await c.a(hatch, [{ strokeOpacity: 0 }, { strokeOpacity: 0.22 }], { duration: 1200, easing: c.E.E1 });
+    },
+  });
+
+  /* ----- FX-07: блик по металлу ----- */
+  SKD.add({
+    code: "FX-07", group: "fx", ru: "Блик по металлу",
+    what: "Узкая светлая полоса один раз проходит по материалу.",
+    when: "Один металлический предмет или деталь.",
+    fam: ["F14", "F10"], proj: ["ecs", "skilaxy"],
+    spec: "D=900 мс, E1; полоса BG α 0.22, ширина 0.15w, высота 2h, blur, угол −20°; центр x=−0.2w→1.2w, y=0.5h, клип по предмету; вне предмета невидима.",
+    hold: 1300,
+    async play(c) {
+      const P = PAL(c), R = P.raw;
+      c.el("div", "position:absolute;inset:0;background:var(--bg)");
+      const { svg, defs } = layer(c, "");
+      const cx = 240, cy = 126, Rr = 100;
+      const hexPts = (r, rot) => Array.from({ length: 6 }, (_, i) => { const a = (i * 60 + (rot || 30)) * DEG; return [r1(cx + Math.cos(a) * r), r1(cy + Math.sin(a) * r)]; });
+      const hexD = (r) => "M" + hexPts(r).map((p) => p.join(" ")).join(" L") + " Z";
+      // тень на поверхности
+      sv(c, svg, "ellipse", { cx, cy: 232, rx: 118, ry: 12 }, `fill:${S(R.dk, 0.22)};filter:blur(6px)`);
+      // металл: диагональные полосы тона + щётка
+      const gid = uid();
+      const lg = sv(c, defs, "linearGradient", { id: gid, x1: "0", y1: "0", x2: "1", y2: "1" });
+      const hi = mix(R.mu, R.sf, 0.18), mid = mix(R.mu, R.dk, 0.42), lo = mix(R.mu, R.dk, 0.78);
+      [[0, mid], [0.22, hi], [0.4, mix(mid, lo, 0.4)], [0.62, hi], [0.8, mid], [1, lo]].forEach(([o, col]) => sv(c, lg, "stop", { offset: o, "stop-color": S(col) }));
+      const gid2 = uid();
+      const rg = sv(c, defs, "radialGradient", { id: gid2, cx: "0.5", cy: "0.5", r: "0.5" });
+      [[0, S(hi)], [0.7, S(mid)], [1, S(lo)]].forEach(([o, col]) => sv(c, rg, "stop", { offset: o, "stop-color": col }));
+      const brush = uid();
+      const bf = sv(c, defs, "filter", { id: brush, filterUnits: "userSpaceOnUse", x: 0, y: 0, width: 480, height: 270, "color-interpolation-filters": "sRGB" });
+      sv(c, bf, "feTurbulence", { type: "fractalNoise", baseFrequency: "0.015 0.9", numOctaves: 2, seed: 17, result: "n" });
+      sv(c, bf, "feColorMatrix", { in: "n", type: "matrix", values: "0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0.9 0 0 0 -0.32" });
+      const obj = sv(c, svg, "g", {});
+      sv(c, obj, "path", { d: hexD(Rr) }, `fill:url(#${gid});stroke:${S(R.dk, 0.55)};stroke-width:1.5;stroke-linejoin:round`);
+      sv(c, obj, "path", { d: hexD(Rr - 11) }, `fill:url(#${gid});stroke:${S(R.dk, 0.35)};stroke-width:1`);
+      sv(c, obj, "circle", { cx, cy, r: 62 }, `fill:url(#${gid2});stroke:${S(R.dk, 0.4)};stroke-width:1.2`);
+      sv(c, obj, "circle", { cx, cy, r: 38 }, `fill:${S(mix(R.bg, R.dk, 0.55))}`);
+      sv(c, obj, "circle", { cx, cy, r: 38 }, `fill:none;stroke:${S(R.lt, 0.5)};stroke-width:2;stroke-dasharray:3 2.2`);
+      sv(c, obj, "circle", { cx, cy, r: 29 }, `fill:var(--bg);stroke:${S(R.dk, 0.5)};stroke-width:1.2`);
+      // щётка: тонкие горизонтальные штрихи по металлу
+      const clipId = uid();
+      const cp = sv(c, defs, "clipPath", { id: clipId });
+      sv(c, cp, "path", { d: hexD(Rr) + ` M${cx - 29} ${cy} a29 29 0 1 0 58 0 a29 29 0 1 0 -58 0 Z`, "clip-rule": "evenodd" });
+      sv(c, svg, "rect", { x: 0, y: 0, width: 480, height: 270, filter: `url(#${brush})`, "clip-path": `url(#${clipId})`, opacity: 0.1 });
+      // полоса блика: ширина 0.15w, высота 2h, угол −20°, α 0.22, blur
+      const w = Rr * 1.732, h = Rr * 2;
+      const bl = sv(c, defs, "filter", { id: "fx7blur", x: "-100%", y: "-20%", width: "300%", height: "140%" });
+      sv(c, bl, "feGaussianBlur", { stdDeviation: 5 });
+      const bc = sv(c, defs, "filter", { id: "fx7core", x: "-200%", y: "-20%", width: "500%", height: "140%" });
+      sv(c, bc, "feGaussianBlur", { stdDeviation: 1.6 });
+      const clip = sv(c, svg, "g", { "clip-path": `url(#${clipId})` });
+      const mover = sv(c, clip, "g", { transform: `translate(${cx} ${cy})` });
+      const band = sv(c, mover, "g", {});
+      sv(c, band, "rect", { x: -0.075 * w, y: -h, width: 0.15 * w, height: 2 * h, transform: "rotate(-20)", filter: "url(#fx7blur)" }, `fill:${S(R.lt)};opacity:.22`);
+      sv(c, band, "rect", { x: -0.025 * w, y: -h, width: 0.05 * w, height: 2 * h, transform: "rotate(-20)", filter: "url(#fx7core)" }, `fill:${S(R.lt)};opacity:.22`);
+      band.style.transform = `translateX(${-0.7 * w}px)`;
+      band.style.opacity = "0";
+      await c.wait(500);
+      band.style.opacity = "1";
+      await c.a(band, [{ transform: `translateX(${-0.7 * w}px)` }, { transform: `translateX(${0.7 * w}px)` }], { duration: 900, easing: c.E.E1 });
+      band.style.opacity = "0";
+    },
+  });
+
+  /* ----- FX-08: открытие древесины ----- */
+  SKD.add({
+    code: "FX-08", group: "fx", ru: "Открытие древесины",
+    what: "Материал проявляется от общего тона к фактуре.",
+    when: "Тихая предметная сцена, деревянный предмет.",
+    fam: ["F14", "F10"], proj: ["ecs", "serial"],
+    spec: "D=1000 мс, E1; текстура дерева поверх плоской заливки SF, α 0→0.45; текстура не масштабируется и не течёт, свет, контур и положение предмета постоянны.",
+    hold: 1300,
+    async play(c) {
+      const P = PAL(c), R = P.raw;
+      c.el("div", "position:absolute;inset:0;background:var(--bg)");
+      const { svg, defs } = layer(c, "");
+      const bx = 70, by = 44, bw = 340, bh = 182, br = 26;
+      const board = `M${bx + br} ${by} H${bx + bw - br} a${br} ${br} 0 0 1 ${br} ${br} V${by + bh - br} a${br} ${br} 0 0 1 ${-br} ${br} H${bx + br} a${br} ${br} 0 0 1 ${-br} ${-br} V${by + br} a${br} ${br} 0 0 1 ${br} ${-br} Z`;
+      const hole = `M${bx + bw - 62} ${by + 36} a16 16 0 1 0 0.01 0 Z`;
+      const full = board + " " + hole;
+      // тень
+      sv(c, svg, "path", { d: board + " " + hole, "fill-rule": "evenodd" }, `fill:${S(R.dk, 0.22)};filter:blur(8px);transform:translate(0,10px)`);
+      const cp = sv(c, defs, "clipPath", { id: "fx8clip" }); sv(c, cp, "path", { d: full, "clip-rule": "evenodd" });
+      // плоская заливка SF
+      sv(c, svg, "path", { d: full, "fill-rule": "evenodd" }, `fill:${S(mix(R.sf, R.mu, 0.12))}`);
+      // текстура: кольца роста — шум, растянутый вдоль волокон, пропущенный через ступенчатую таблицу
+      const wf = sv(c, defs, "filter", { id: "fx8wood", filterUnits: "userSpaceOnUse", x: 0, y: 0, width: 480, height: 270, "color-interpolation-filters": "sRGB" });
+      sv(c, wf, "feTurbulence", { type: "fractalNoise", baseFrequency: "0.0065 0.1", numOctaves: 3, seed: 17, result: "n" });
+      sv(c, wf, "feColorMatrix", { in: "n", type: "matrix", values: "0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  1 0 0 0 0", result: "a" });
+      const tr = sv(c, wf, "feComponentTransfer", { in: "a", result: "rings" });
+      sv(c, tr, "feFuncA", { type: "table", tableValues: "0 0.85 0.1 0.9 0.05 0.8 0.15 0.9 0.1" });
+      sv(c, wf, "feFlood", { "flood-color": S(mix(mix(R.mu, R.dk, 0.5), R.ac, 0.22)), "flood-opacity": 1, result: "dark" });
+      sv(c, wf, "feComposite", { in: "dark", in2: "rings", operator: "in", result: "grain" });
+      sv(c, wf, "feFlood", { "flood-color": S(mix(mix(R.mu, R.sf, 0.3), R.ac, 0.32)), result: "base" });
+      sv(c, wf, "feComposite", { in: "grain", in2: "base", operator: "over" });
+      const tex = sv(c, svg, "g", { "clip-path": "url(#fx8clip)" });
+      const texLayer = sv(c, tex, "rect", { x: 0, y: 0, width: 480, height: 270, filter: "url(#fx8wood)" });
+      texLayer.style.opacity = "0";
+      // свет и контур — постоянные
+      const hl = sv(c, defs, "linearGradient", { id: "fx8hl", x1: 0, y1: 0, x2: 0, y2: 1 });
+      sv(c, hl, "stop", { offset: 0, "stop-color": S(R.lt), "stop-opacity": 0.5 });
+      sv(c, hl, "stop", { offset: 0.35, "stop-color": S(R.lt), "stop-opacity": 0 });
+      sv(c, hl, "stop", { offset: 1, "stop-color": S(R.dk), "stop-opacity": 0.14 });
+      sv(c, svg, "path", { d: full, "fill-rule": "evenodd" }, "fill:url(#fx8hl)");
+      sv(c, svg, "path", { d: full, "fill-rule": "evenodd" }, `fill:none;stroke:${S(R.dk, 0.5)};stroke-width:1.5;stroke-linejoin:round`);
+      sv(c, svg, "path", { d: hole }, `fill:none;stroke:${S(R.lt, 0.55)};stroke-width:1.5;transform:translate(0,1.5px)`);
+      await c.wait(450);
+      await c.a(texLayer, [{ opacity: 0 }, { opacity: 0.45 }], { duration: 1000, easing: c.E.E1 });
     },
   });
 })();

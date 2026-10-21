@@ -209,7 +209,7 @@ function viewAnim(){const order=famOrder();const g=S.grp&&order.includes(S.grp)?
   const fits=a=>!S.fam.length||a.fam.some(f=>S.fam.includes(f));
   let list=D.anims.filter(a=>a.group===g);const fitN=list.filter(fits).length;
   const few=fitN<6;if(S.onlyFit&&!few)list=list.filter(fits);
-  list.sort((a,b)=>(fits(b)-fits(a))||(a.slop-b.slop)||((S.proj&&b.proj.includes(S.proj))-(S.proj&&a.proj.includes(S.proj)))||(a.src==="astra"?-1:0));
+  list.sort((a,b)=>(fits(b)-fits(a))||(a.slop-b.slop)||((S.proj&&b.proj.includes(S.proj))-(S.proj&&a.proj.includes(S.proj)))||((a.src==="astra"?0:1)-(b.src==="astra"?0:1))||a.code.localeCompare(b.code,"ru",{numeric:true}));
   const shown=list.slice(0,animLimit);const gg=grpById[g];
   return `<h2>Анимации: ${esc(gg.ru)}</h2><p class="lead">${esc(gg.hint)} Отметь всё, что нравится, — лучше 1–3 в каждом разделе. Превью играют сами; нажми «крупно», чтобы посмотреть в большом окне.</p>
   <div class="bar scroll">${order.map((id,i)=>{const n=(S.anim[id]||[]).length;const sep=i>0&&mainGroups().length&&!mainGroups().includes(id)&&mainGroups().includes(order[i-1])?'<span class="note" style="margin:0 4px">ещё:</span>':"";return sep+`<button class="chip ${id===g?"on":""}" data-g="${id}">${esc(grpById[id].ru)}<small>${grpCount(id)}</small>${n?`<small>✓${n}</small>`:""}</button>`}).join("")}</div>
@@ -272,10 +272,10 @@ function message(){const L=[];const d=new Date().toLocaleDateString("ru-RU");
   if(S.proj)L.push("Для кого: "+projById[S.proj].ru);
   if(S.fam.length)L.push("Семейство: "+S.fam.map(f=>f.replace("F","Ф")+" «"+famById[f].ru+"»").join(", "));
   if(S.style.length)L.push("Стиль: "+S.style.map((c,i)=>{const s=styleByCode[c];return c+" «"+s.ru+"» ["+s.id+"]"+(i===0&&S.style.length>1?" — главный":"")}).join("; "));
-  famOrder().concat(D.groups.map(g=>g.id)).filter((v,i,a)=>a.indexOf(v)===i).forEach(g=>{const arr=S.anim[g];if(arr&&arr.length)L.push(grpById[g].ru+": "+arr.map(c=>c+" «"+animByCode[c].ru+"» [hf:"+animByCode[c].name+"]").join("; "))});
+  famOrder().concat(D.groups.map(g=>g.id)).filter((v,i,a)=>a.indexOf(v)===i).forEach(g=>{const arr=S.anim[g];if(arr&&arr.length)L.push(grpById[g].ru+": "+arr.map(c=>c+" «"+animByCode[c].ru+"» ["+(animByCode[c].src==="astra"?"наш":"hf")+":"+animByCode[c].name+"]").join("; "))});
   if(S.pal){const p=D.palettes.find(x=>x.code===S.pal);L.push("Палитра: "+p.code+" «"+p.ru+"» "+p.colors.join(" "))}
   if(S.font){const f=D.fonts.find(x=>x.code===S.font);L.push("Шрифт: "+f.code+" «"+f.ru+"» ("+f.family+")")}
-  D.more.forEach(q=>{const a=S.more[q.id];if(a&&a.length)L.push(q.ru+": "+a.map(o=>q.opts.find(x=>x.id===o).ru).join(", "))});
+  D.more.forEach(q=>{const a=S.more[q.id];if(a&&a.length)L.push(q.ru.replace(/\s*\(.*\)/,"")+": "+a.map(o=>q.opts.find(x=>x.id===o).ru).join(", "))});
   if(S.note.trim())L.push("Своими словами: "+S.note.trim());
   L.push("Ограничения: антислоп AS-01 (без эмодзи, караоке-капса, конфетти, глитча по умолчанию; субтитры ≤14 знаков в строке)");
   L.push("Ссылка: diveylaunch.github.io/show/konstruktor");return L.join("\n")}
