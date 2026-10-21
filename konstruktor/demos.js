@@ -4395,9 +4395,9 @@ SKD.add({
         const wrap = sv(c, svg, "g", { filter: `url(#${fPrint(c, defs, { wob, ws: 2, wf: 0.05, thr, seed, freq: 0.5 })})` });
         seal(wrap); wrap.style.display = "none"; return wrap;
       });
-      const lab = c.el("div", `position:absolute;left:0;right:0;top:238px;text-align:center;font-size:12px;font-weight:700;letter-spacing:1px;color:${S(R.mu)};${FONTF}`, null, "ОТТИСК 1 / 3");
+      const lab = c.el("div", `opacity:0;position:absolute;left:0;right:0;top:238px;text-align:center;font-size:12px;font-weight:700;letter-spacing:1px;color:${S(R.mu)};${FONTF}`, null, "ОТТИСК 1 / 3");
       await c.wait(400);
-      const show = (i) => { gs.forEach((g, k) => { g.style.display = k === i ? "" : "none"; }); lab.textContent = `ОТТИСК ${i + 1} / 3`; };
+      const show = (i) => { lab.style.opacity = "1"; gs.forEach((g, k) => { g.style.display = k === i ? "" : "none"; }); lab.textContent = `ОТТИСК ${i + 1} / 3`; };
       show(0);
       await c.wait(200); show(1);
       await c.wait(200); show(2);
