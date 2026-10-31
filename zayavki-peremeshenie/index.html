@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Перемещение оборудования: прототип</title>
+<style>
+:root{--bg:#fff;--s1:#F7F8F9;--bd:#DCDFE4;--tx2:#626F86;--tx:#172B4D;--blue:#0C66E4;--blue-h:#0055CC;--blue-l:#E9F2FF;--ok:#22A06B;--ok-l:#DCFFF1;--warn:#E2B203;--warn-l:#FFF7D6;--err:#C9372C;--err-l:#FFECEB}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font:14px/20px -apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:var(--tx);background:var(--bg);-webkit-text-size-adjust:100%}
+h1{font-size:22px;line-height:28px;margin:0 0 4px;font-weight:600}
+h2{font-size:16px;line-height:24px;margin:0 0 12px;font-weight:600}
+h3{font-size:14px;line-height:20px;margin:0 0 8px;font-weight:600}
+p{margin:0 0 8px}
+button,input,select,textarea{font:inherit;color:inherit}
+a{color:var(--blue)}
+.muted{color:var(--tx2)}
+.small{font-size:12px;line-height:16px}
+[hidden]{display:none!important}
+svg.ic{width:16px;height:16px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* шапка */
+.top{display:flex;align-items:center;gap:16px;min-height:56px;padding:8px 24px;border-bottom:1px solid var(--bd);background:#fff;flex-wrap:wrap}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px}
+.brand i{width:28px;height:28px;border-radius:4px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center}
+.brand i svg{width:18px;height:18px}
+.roles{margin-left:auto;display:flex;align-items:center;gap:10px}
+.roles label{color:var(--tx2);font-size:12px}
+.seg{display:inline-flex;border:1px solid var(--bd);border-radius:4px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:6px 12px;cursor:pointer;border-right:1px solid var(--bd);height:32px}
+.seg button:last-child{border-right:0}
+.seg button:hover{background:var(--s1)}
+.seg button[aria-pressed=true]{background:var(--blue);color:#fff}
+.seg button:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.rsel{display:none}
+select,input[type=text],input[type=date],textarea{border:1px solid var(--bd);border-radius:3px;background:#fff;height:32px;padding:0 8px;width:100%}
+textarea{height:auto;min-height:72px;padding:6px 8px;resize:vertical}
+select:hover,input:hover,textarea:hover{background:var(--s1)}
+select:focus,input:focus,textarea:focus{outline:2px solid var(--blue);outline-offset:-1px;background:#fff}
+.bad{border-color:var(--err)!important}
+.err{color:var(--err);font-size:12px;line-height:16px;margin-top:4px}
+.nav{display:flex;align-items:center;gap:4px;padding:0 24px;border-bottom:1px solid var(--bd);background:#fff;min-height:44px}
+.nav a{display:inline-flex;align-items:center;gap:6px;height:44px;padding:0 10px;color:var(--tx2);text-decoration:none;font-weight:500;border-bottom:2px solid transparent}
+.nav a:hover{color:var(--tx);background:var(--s1)}
+.nav a[aria-current=page]{color:var(--blue);border-bottom-color:var(--blue)}
+.nav a:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.nav .sp{flex:1}
+main{padding:20px 24px 40px;min-height:60vh}
+.nav .gbtn{margin-left:auto;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid var(--blue);border-radius:3px;background:#fff;color:var(--blue);font-weight:500;cursor:pointer;white-space:nowrap}
+.nav .gbtn:hover{background:var(--blue-l)}
+/* где сейчас заявка */
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin:0 0 6px}
+.flow .fs{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--tx2);white-space:nowrap}
+.flow .fs i{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--bd);display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:10px;font-weight:700;background:#fff}
+.flow .fs.done{color:#216E4E}.flow .fs.done i{background:var(--ok);border-color:var(--ok);color:#fff}
+.flow .fs.on{color:var(--tx);font-weight:600}.flow .fs.on i{border-color:var(--blue);background:var(--blue);color:#fff}
+.flow .fs.bad i{background:var(--err);border-color:var(--err);color:#fff}
+.flow .fl2{width:16px;height:1px;background:var(--bd)}
+.nextp{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--s1);border:1px solid var(--bd);border-radius:4px;padding:10px 12px;margin-bottom:16px}
+.nextp .tx{flex:1;min-width:220px}
+/* подсказка-гид */
+.gd{position:fixed;right:24px;bottom:24px;width:370px;background:#fff;border:1px solid var(--bd);border-top:4px solid var(--blue);border-radius:6px;box-shadow:0 8px 24px rgba(9,30,66,.25);z-index:55;padding:14px 16px 12px}
+.gd .gn{font-size:12px;color:var(--tx2);display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:4px}
+.gd .gn button{background:none;border:0;color:var(--tx2);cursor:pointer;padding:2px 4px;font-size:12px}
+.gd .gn button:hover{color:var(--tx)}
+.gd h4{margin:0 0 6px;font-size:15px;line-height:20px}
+.gd p{margin:0 0 10px;color:#2C3E5D}
+.gd .gb{display:flex;gap:8px;flex-wrap:wrap}
+.gd .bar{height:3px;background:var(--s1);border-radius:2px;margin:0 0 10px;overflow:hidden}
+.gd .bar b{display:block;height:100%;background:var(--blue)}
+.gmini{position:fixed;right:24px;bottom:24px;z-index:55;display:inline-flex;align-items:center;gap:6px;height:40px;padding:0 14px;border:0;border-radius:20px;background:var(--blue);color:#fff;font-weight:600;cursor:pointer;box-shadow:0 4px 12px rgba(9,30,66,.3)}
+body.guide main{padding-bottom:230px}
+.gl{outline:3px solid #F5CD47!important;outline-offset:3px;animation:glp 1.4s ease-in-out infinite}
+@keyframes glp{50%{outline-color:rgba(245,205,71,.25)}}
+@media (prefers-reduced-motion:reduce){.gl{animation:none}}
+.welcome p{margin:0 0 10px}
+.welcome ol{margin:0 0 14px;padding-left:20px}
+.welcome li{margin-bottom:4px}
+footer{padding:12px 24px 24px;color:var(--tx2);font-size:12px;border-top:1px solid var(--bd)}
+footer button{background:none;border:0;color:var(--blue);cursor:pointer;padding:0;font-size:12px}
+
+/* кнопки */
+.btn{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 12px;border:1px solid transparent;border-radius:3px;background:#F1F2F4;color:var(--tx);font-weight:500;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{background:var(--bd)}
+.btn:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.btn:disabled,.btn[aria-disabled=true]{opacity:.5;cursor:not-allowed}
+.btn.pri{background:var(--blue);color:#fff}
+.btn.pri:hover{background:var(--blue-h)}
+.btn.line{background:#fff;border-color:var(--bd)}
+.btn.line:hover{background:var(--s1)}
+.btn.dng{background:#fff;border-color:var(--err);color:var(--err)}
+.btn.dng:hover{background:var(--err-l)}
+.btn.sm{height:28px;padding:0 8px;font-size:13px}
+.btn.lnk{background:none;color:var(--blue);padding:0 4px}
+.btn.lnk:hover{background:var(--blue-l)}
+
+/* плашки */
+.lz{display:inline-block;padding:0 6px;border-radius:3px;font-size:12px;line-height:18px;font-weight:600;white-space:nowrap;background:#F1F2F4;color:var(--tx)}
+.lz-s1{background:#F1F2F4;color:#44546F}
+.lz-s2{background:var(--blue-l);color:#0055CC}
+.lz-s3{background:var(--warn-l);color:#7F5F01}
+.lz-s4{background:var(--ok-l);color:#216E4E}
+.lz-s5{background:var(--blue);color:#fff}
+.lz-s6{background:#1F845A;color:#fff}
+.lz-s7{background:var(--err-l);color:#AE2E24}
+
+/* список */
+.head{display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.head .grow{flex:1;min-width:200px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.tools .search{position:relative;width:280px;max-width:100%}
+.tools .search svg{position:absolute;left:8px;top:8px;color:var(--tx2)}
+.tools .search input{padding-left:30px}
+.tools select{width:auto;min-width:190px}
+.chip{display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 10px;border:1px solid var(--bd);border-radius:3px;background:#fff;cursor:pointer}
+.chip:hover{background:var(--s1)}
+.chip[aria-pressed=true]{background:var(--blue-l);border-color:var(--blue);color:#0055CC}
+.chip b{background:var(--blue);color:#fff;border-radius:10px;padding:0 6px;font-size:12px;line-height:18px}
+.tbl{width:100%;border-collapse:collapse}
+.tbl th{text-align:left;font-size:12px;color:var(--tx2);font-weight:600;padding:8px 12px;border-bottom:2px solid var(--bd);white-space:nowrap}
+.tbl td{padding:10px 12px;border-bottom:1px solid var(--bd);vertical-align:top}
+.tbl tbody tr{cursor:pointer}
+.tbl tbody tr:hover{background:var(--s1)}
+.tbl tbody tr:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.tbl .num{font-weight:600;color:var(--blue);white-space:nowrap}
+.cards{display:none}
+.rcard{display:block;width:100%;text-align:left;background:#fff;border:1px solid var(--bd);border-radius:4px;padding:12px;margin-bottom:8px;cursor:pointer}
+.rcard:hover{background:var(--s1)}
+.rcard .r1{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:4px}
+.empty{border:1px dashed var(--bd);border-radius:4px;padding:32px 16px;text-align:center;color:var(--tx2)}
+.empty b{display:block;color:var(--tx);margin-bottom:4px}
+.empty .btn{margin-top:12px}
+
+/* панели и формы */
+.panel{border:1px solid var(--bd);border-radius:4px;padding:20px;background:#fff;margin-bottom:16px}
+.cols{display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:20px;align-items:start}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.fgrid .full{grid-column:1/-1}
+.fl{font-weight:600;font-size:12px;color:var(--tx2);display:block;margin-bottom:4px}
+.fl i{font-style:normal;font-weight:400}
+.radios{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.opt{display:flex;align-items:center;gap:8px;border:1px solid var(--bd);border-radius:3px;padding:8px 10px;cursor:pointer;background:#fff}
+.opt:hover{background:var(--s1)}
+.opt:has(input:checked){border-color:var(--blue);background:var(--blue-l)}
+.opt:has(input:focus-visible){outline:2px solid var(--blue);outline-offset:1px}
+.opt input{margin:0;width:16px;height:16px;accent-color:var(--blue)}
+.copts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.actions{display:flex;gap:8px;justify-content:space-between;margin-top:20px;flex-wrap:wrap}
+.steps{display:flex;align-items:center;gap:8px;margin-bottom:16px}
+.st{display:flex;align-items:center;gap:8px;color:var(--tx2);font-weight:500}
+.st b{width:24px;height:24px;border-radius:50%;border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;font-size:12px;background:#fff;color:var(--tx2)}
+.st.on{color:var(--tx)}
+.st.on b{background:var(--blue);border-color:var(--blue);color:#fff}
+.st.done b{background:var(--ok);border-color:var(--ok);color:#fff}
+.st.done{color:var(--tx)}
+.steps .ln{flex:1;height:1px;background:var(--bd);min-width:12px}
+.w2{display:grid;grid-template-columns:300px minmax(0,1fr);gap:20px;align-items:start}
+.side fieldset{border:1px solid var(--bd);border-radius:4px;padding:12px;margin:0 0 12px}
+.side legend{font-weight:600;padding:0 4px}
+.side .row{display:grid;grid-template-columns:1fr 84px;gap:8px;margin-top:6px}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mode button{display:flex;align-items:center;gap:8px;padding:8px;border:1px solid var(--bd);border-radius:3px;background:#fff;cursor:pointer;text-align:left;min-height:44px}
+.mode button:hover{background:var(--s1)}
+.mode button[aria-pressed=true]{border-color:var(--blue);background:var(--blue-l)}
+.mode button:focus-visible{outline:2px solid var(--blue);outline-offset:1px}
+.mdot{width:22px;height:22px;border-radius:50%;color:#fff;font:700 12px/22px sans-serif;text-align:center;flex:none}
+.mdot.A{background:#44546F}.mdot.B{background:var(--blue)}
+.ptxt{font-size:13px;line-height:18px;margin-bottom:6px}
+.ptxt.miss{color:var(--tx2)}
+.dl{display:grid;grid-template-columns:150px 1fr;gap:8px 16px;margin:0}
+.dl dt{color:var(--tx2)}
+.dl dd{margin:0}
+
+/* схема */
+.pv-tools{display:flex;gap:12px;flex-wrap:wrap;align-items:center;margin-bottom:8px}
+.pv-tools .lg{display:flex;gap:14px;align-items:center;flex-wrap:wrap;flex:1;font-size:12px;color:var(--tx2)}
+.pv-tools .lg span{display:inline-flex;align-items:center;gap:6px}
+.pv-tools .lg .mdot{width:16px;height:16px;font-size:10px;line-height:16px}
+.zoom{display:flex;gap:4px;align-items:center}
+.zoom .zv{min-width:44px;text-align:center;font-size:12px;color:var(--tx2)}
+.plan-scroll{overflow:auto;border:1px solid var(--bd);border-radius:4px;max-height:78vh;background:#fff;-webkit-overflow-scrolling:touch}
+.plan{position:relative;max-width:none}
+.plan>.pl{display:block;width:100%;height:100%}
+.plan.int{cursor:crosshair}
+.ov{position:absolute;inset:0;pointer-events:none}
+.ov svg{position:absolute;inset:0;width:100%;height:100%}
+.mk{position:absolute;transform:translate(-50%,-50%);width:28px;height:28px;border-radius:50%;border:2px solid #fff;color:#fff;font:700 13px/24px sans-serif;text-align:center;box-shadow:0 1px 4px rgba(9,30,66,.45);pointer-events:auto;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+.mk-A{background:#44546F}.mk-B{background:var(--blue)}
+.plan.sm .mk{width:20px;height:20px;font-size:11px;line-height:16px;cursor:default}
+.figs{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px}
+.fig .cap{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:6px;font-weight:500}
+.hint{background:var(--blue-l);border-radius:3px;padding:8px 10px;color:#09326C;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start}
+.hint svg{margin-top:2px}
+.hint.w{background:var(--warn-l);color:#533F04}
+
+/* маршрут */
+.tl{list-style:none;margin:0;padding:0}
+.tl li{position:relative;display:grid;grid-template-columns:28px 1fr;gap:10px;padding-bottom:16px}
+.tl li:last-child{padding-bottom:0}
+.tl li:not(:last-child)::before{content:"";position:absolute;left:13px;top:28px;bottom:0;width:2px;background:var(--bd)}
+.dot{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;border:2px solid var(--bd);background:#fff;color:var(--tx2);font-weight:600;font-size:12px}
+.dot svg{width:15px;height:15px}
+.dot.done{background:var(--ok);border-color:var(--ok);color:#fff}
+.dot.pending{border-color:var(--blue);color:var(--blue)}
+.dot.ret{background:var(--warn);border-color:var(--warn);color:#172B4D}
+.dot.rej{background:var(--err);border-color:var(--err);color:#fff}
+.tl .t1{font-weight:600}
+.tl .t2{color:var(--tx2);font-size:13px}
+.cm{background:var(--s1);border-radius:3px;padding:6px 10px;margin-top:6px;font-size:13px}
+.log{list-style:none;margin:0;padding:0}
+.log li{padding:8px 0;border-bottom:1px solid var(--bd);font-size:13px}
+.log li:last-child{border-bottom:0}
+.log time{display:block;color:var(--tx2);font-size:12px}
+.crumbs{font-size:12px;color:var(--tx2);margin-bottom:8px}
+.crumbs a{color:var(--tx2)}
+.act{border-color:var(--blue);background:#fff}
+.act .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.jk{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.jk strong{font-size:15px}
+.jl{display:inline-block;padding:0 6px;border-radius:3px;font-size:12px;line-height:18px;font-weight:700;background:#DCDFE4;color:#172B4D;text-transform:uppercase}
+.jl.b{background:#CCE0FF;color:#09326C}.jl.g{background:#BAF3DB;color:#164B35}.jl.y{background:#F8E6A0;color:#533F04}.jl.r{background:#FFD5D2;color:#5D1F1A}
+
+/* админ */
+.floors{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
+.fcard{border:1px solid var(--bd);border-radius:4px;overflow:hidden;background:#fff}
+.fcard .pad{padding:12px}
+.fcard .nm{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px;align-items:center}
+.fcard .plan-scroll{border:0;border-bottom:1px solid var(--bd);border-radius:0}
+.fcard .bt{display:flex;gap:8px;flex-wrap:wrap}
+.bld{margin:0 0 20px}
+.bld h3{font-size:14px}
+.rules{width:100%;border-collapse:collapse}
+.rules td{padding:10px 8px;border-bottom:1px solid var(--bd);vertical-align:middle}
+.rules tr:last-child td{border-bottom:0}
+.sw{position:relative;display:inline-block;width:36px;height:20px}
+.sw input{position:absolute;inset:0;opacity:0;margin:0;cursor:pointer;width:100%;height:100%}
+.sw i{position:absolute;inset:0;border-radius:10px;background:#8590A2;transition:background .15s}
+.sw i::after{content:"";position:absolute;left:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff;transition:transform .15s}
+.sw input:checked+i{background:var(--blue)}
+.sw input:checked+i::after{transform:translateX(16px)}
+.sw input:focus-visible+i{outline:2px solid var(--blue);outline-offset:2px}
+.sw input:disabled{cursor:not-allowed}
+.sw input:disabled+i{opacity:.5}
+.tag{display:inline-block;background:#F1F2F4;border-radius:3px;padding:0 6px;font-size:12px;line-height:18px;margin:0 4px 2px 0}
+
+/* модальное окно, уведомление */
+.ovl{position:fixed;inset:0;background:rgba(9,30,66,.54);display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;overflow:auto;z-index:50}
+.modal{background:#fff;border-radius:4px;max-width:960px;width:100%;box-shadow:0 8px 12px rgba(9,30,66,.25)}
+.mh{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid var(--bd)}
+.mb{padding:16px}
+.toast{position:fixed;left:24px;bottom:24px;background:var(--tx);color:#fff;padding:10px 14px;border-radius:4px;max-width:420px;z-index:60;box-shadow:0 4px 8px rgba(9,30,66,.3)}
+.jira{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:24px}
+.jira .jt{font-size:20px;line-height:26px;font-weight:600;margin:4px 0 12px}
+.jira .jbc{font-size:12px;color:var(--tx2)}
+.jira .jd{border:1px solid var(--bd);border-radius:3px}
+.jira .jd h4{margin:0;padding:8px 12px;border-bottom:1px solid var(--bd);font-size:13px;background:var(--s1)}
+.jira .jd dl{margin:0;padding:8px 12px;display:grid;grid-template-columns:90px 1fr;gap:8px}
+.jira .jd dt{color:var(--tx2);font-size:12px}
+.jira .jd dd{margin:0;font-size:13px}
+.att{display:inline-block;border:1px solid var(--bd);border-radius:3px;width:230px;overflow:hidden;background:#fff}
+.att .nm{padding:6px 8px;font-size:12px;border-top:1px solid var(--bd)}
+.jcm{display:flex;gap:10px;margin-top:12px;font-size:13px}
+.av{width:28px;height:28px;border-radius:50%;background:#44546F;color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex:none}
+
+@media(max-width:900px){
+ .cols{grid-template-columns:1fr}
+ .w2{grid-template-columns:1fr}
+ .jira{grid-template-columns:1fr}
+}
+@media(max-width:720px){
+ .top{padding:8px 12px;gap:8px}
+ .brand{font-size:15px}
+ .roles{width:100%;margin-left:0}
+ .roles .seg{display:none}
+ .roles .rsel{display:block;flex:1}
+ main{padding:16px 12px 32px}
+ footer{padding:12px}
+ .nav{padding:0 8px;overflow-x:auto}
+ .nav a{padding:0 8px;white-space:nowrap}
+ .tbl-wrap{display:none}
+ .cards{display:block}
+ .tools .search{width:100%}
+ .tools select{flex:1;min-width:150px;padding-right:24px}
+ .fgrid{grid-template-columns:1fr}
+ .radios{grid-template-columns:1fr}
+ .copts{grid-template-columns:1fr 1fr}
+ .panel{padding:14px}
+ .dl{grid-template-columns:1fr;gap:2px}
+ .dl dt{margin-top:8px}
+ .st span{display:none}
+ .st.on span{display:inline}
+ .figs{grid-template-columns:1fr}
+ .side fieldset{padding:8px 10px;margin-bottom:8px}
+ .hint .dsk{display:none}
+ .mode{margin-bottom:8px}
+ h1{font-size:19px;line-height:24px}
+ .toast{left:12px;right:12px;bottom:12px;max-width:none}
+ .ovl{padding:0}
+ .modal{border-radius:0;min-height:100vh}
+ .actions .btn{flex:1;justify-content:center}
+ .nav .gbtn{height:30px;padding:0 10px;margin-right:4px}
+ .gd{left:0;right:0;bottom:0;width:auto;border-radius:10px 10px 0 0;padding:12px 14px calc(12px + env(safe-area-inset-bottom))}
+ .gd .gb .btn{flex:1;justify-content:center;height:38px}
+ .gmini{right:12px;bottom:12px}
+ body.guide main{padding-bottom:260px}
+ body.guide .toast{bottom:auto;top:12px}
+ .toast{left:12px;right:12px}
+ .nextp .btn{width:100%;justify-content:center}
+}
+</style>
+</head>
+<body>
+<header class="top">
+ <div class="brand"><i id="logo"></i><span>Перемещение оборудования</span></div>
+ <div class="roles">
+  <label for="rsel">Роль в демо</label>
+  <div class="seg" id="seg" role="group" aria-label="Роль в демо"></div>
+  <select class="rsel" id="rsel" aria-label="Роль в демо"></select>
+ </div>
+</header>
+<nav class="nav" id="nav" aria-label="Разделы"></nav>
+<main id="app"></main>
+<footer>Демо-версия: данные вымышленные, хранятся только в этом браузере. <button type="button" data-act="guideStart">Пройти по шагам</button> · <button type="button" data-act="resetDemo">Сбросить демо-данные</button></footer>
+<div id="modalRoot"></div>
+<div id="toastRoot" role="status" aria-live="polite"></div>
+<div id="guideRoot"></div>
+
+<script>
+(function(){
+'use strict';
+var $=function(s,r){return (r||document).querySelector(s)};
+var esc=function(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})};
+var pad=function(n){return String(n).padStart(2,'0')};
+var fd=function(iso){if(!iso)return '';var p=iso.split('T'),d=p[0].split('-');return d[2]+'.'+d[1]+'.'+d[0]+(p[1]?' '+p[1].slice(0,5):'')};
+var fdate=function(iso){return fd((iso||'').split('T')[0])};
+var nowISO=function(){var n=new Date();return n.getFullYear()+'-'+pad(n.getMonth()+1)+'-'+pad(n.getDate())+'T'+pad(n.getHours())+':'+pad(n.getMinutes())};
+
+/* ---------- иконки (линейные, inline SVG) ---------- */
+var IC={
+ plus:'M12 5v14M5 12h14',download:'M12 4v11m0 0l-4-4m4 4l4-4M5 19h14',search:'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4',
+ check:'M5 12.5l4.5 4.5L19 7.5',x:'M6 6l12 12M18 6L6 18',undo:'M9 14L4 9l5-5M4 9h10a6 6 0 010 12h-3',
+ ext:'M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 01-1 1H5a1 1 0 01-1-1V7a1 1 0 011-1h5',clock:'M12 7v5l3 2M12 3a9 9 0 100 18 9 9 0 000-18z',
+ pin:'M12 21s-6-5.5-6-11a6 6 0 1112 0c0 5.5-6 11-6 11zM12 7.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z',
+ sliders:'M4 7h10M18 7h2M4 17h2M10 17h10M14 4v6M6 14v6',upload:'M12 16V5m0 0L8 9m4-4l4 4M5 19h14',
+ history:'M4 12a8 8 0 108-8 8 8 0 00-6 2.7L4 9M4 4v5h5M12 8v4l3 2',arrow:'M5 12h14m-5-5l5 5-5 5',
+ list:'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',zin:'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4M8.5 11h5M11 8.5v5',
+ zout:'M11 4a7 7 0 100 14 7 7 0 000-14zM20 20l-4-4M8.5 11h5',expand:'M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5',
+ info:'M12 3a9 9 0 100 18 9 9 0 000-18zM12 11v5M12 8h.01',stack:'M4 7l8-4 8 4-8 4-8-4zM4 12l8 4 8-4M4 17l8 4 8-4',
+ file:'M7 3h7l5 5v13H7zM14 3v5h5',send:'M4 12l16-8-6 16-3-7-7-1z'
+};
+function ic(n){return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="'+IC[n]+'"/></svg>'}
+
+/* ---------- справочники ---------- */
+var SV={head:'Руководитель подразделения',energy:'Главный энергетик',mech:'Главный механик',ops:'Служба эксплуатации',it:'IT-служба',safety:'ОТ и ПБ'};
+var SVP={head:'Крылова Е. С.',energy:'Захаров Д. И.',mech:'Сидоров П. Н.',ops:'Макарова О. В.',it:'Воронин А. Е.',safety:'Белова Т. Г.'};
+var ROLES=[['init','Инициатор','Петров А. В.'],['head','Руководитель','Крылова Е. С.'],['energy','Главный энергетик','Захаров Д. И.'],['exec','Исполнитель','Орлов В. Н., мастер РМЦ'],['admin','Администратор','Администратор системы']];
+var COMMS=[['220','Электричество 220 В','220 В'],['380','Электричество 380 В','380 В'],['water','Вода','Вода'],['sewer','Канализация','Канализация'],['air','Сжатый воздух','Сжатый воздух'],['vent','Вентиляция / вытяжка','Вентиляция'],['gas','Газ','Газ'],['net','Компьютерная сеть','Сеть']];
+var cl=function(id){for(var i=0;i<COMMS.length;i++)if(COMMS[i][0]===id)return COMMS[i][2];return id};
+var BLD=[{id:'k1',name:'Корпус 1',desc:'Механический цех',floors:[1,2]},{id:'k2',name:'Корпус 2',desc:'Лаборатории и управление',floors:[1,2,3]},{id:'k3',name:'Корпус 3',desc:'Склад и сборка',floors:[1,2]}];
+var bld=function(id){return BLD.filter(function(b){return b.id===id})[0]};
+var STATUSES=['Черновик','На согласовании','Возвращена на доработку','Согласована','В работе','Выполнена','Отклонена'];
+var STCLS={'Черновик':'s1','На согласовании':'s2','Возвращена на доработку':'s3','Согласована':'s4','В работе':'s5','Выполнена':'s6','Отклонена':'s7'};
+var lz=function(s){return '<span class="lz lz-'+STCLS[s]+'">'+esc(s)+'</span>'};
+var DEF_RULES=[
+ {id:'r1',comms:['220','380'],svc:'energy',on:true},
+ {id:'r2',comms:['water','sewer','gas','air'],svc:'mech',on:true},
+ {id:'r3',comms:['vent'],svc:'ops',on:true},
+ {id:'r4',comms:['net'],svc:'it',on:true},
+ {id:'r5',always:true,svc:'safety',on:true}
+];
+
+/* ---------- планы этажей: [кол1, ряд1, кол2, ряд2, название, тип] ---------- */
+var LAY={
+'k1-1':[[1,0,8,2,'Станочный пролёт','hall'],[1,2,5,3,'Заготовительный участок','hall'],[5,2,7,3,'Инструментальная','room'],[7,2,8,3,'Щитовая','room'],[8,0,9,3,'Проход','corr'],[9,0,10,1,'Л-1','stair'],[9,1,10,2,'Тамбур','room'],[9,2,10,3,'Л-2','stair'],[10,0,12,2,'Термоучасток','hall'],[10,2,12,3,'Вент. камера','room']],
+'k1-2':[[1,0,5,3,'Участок сборки','hall'],[5,0,8,1.5,'Участок сушки и покраски','hall'],[5,1.5,8,3,'Лаборатория контроля','room'],[8,0,9,3,'Проход','corr'],[9,0,10,1,'Л-1','stair'],[9,1,10,2,'Тамбур','room'],[9,2,10,3,'Л-2','stair'],[10,0,12,1,'Мастерская КИПиА','room'],[10,1,12,2,'Кабинет мастера','room'],[10,2,12,3,'Склад комплектующих','room']],
+'k2-1':[[1,0,2,1.5,'Л-1','stair'],[2,0,4,1.5,'Вестибюль','room'],[4,0,6,1.5,'Бюро пропусков','room'],[6,0,8,1.5,'Серверная','room'],[8,0,10,1.5,'Медпункт','room'],[10,0,12,1.5,'Буфет','room'],[1,1.5,12,2,'Коридор','corr'],[1,2,4,3,'Лаборатория механических испытаний','hall'],[4,2,7,3,'Лаборатория химического анализа','hall'],[7,2,9,3,'Весовая','room'],[9,2,11,3,'Склад реактивов','room'],[11,2,12,3,'Л-2','stair']],
+'k2-2':[[1,0,2,1.5,'Л-1','stair'],[2,0,4,1.5,'Каб. 201','room'],[4,0,6,1.5,'Каб. 202','room'],[6,0,8,1.5,'Отдел главного энергетика','room'],[8,0,10,1.5,'Отдел главного механика','room'],[10,0,12,1.5,'Служба эксплуатации','room'],[1,1.5,12,2,'Коридор','corr'],[1,2,5,3,'Конструкторский отдел','open'],[5,2,8,3,'Технологический отдел','open'],[8,2,11,3,'IT-служба','room'],[11,2,12,3,'Л-2','stair']],
+'k2-3':[[1,0,2,1.5,'Л-1','stair'],[2,0,5,1.5,'Переговорная','room'],[5,0,8,1.5,'Дирекция','room'],[8,0,10,1.5,'Приёмная','room'],[10,0,12,1.5,'Бухгалтерия','room'],[1,1.5,12,2,'Коридор','corr'],[1,2,6,3,'Открытый офис','open'],[6,2,9,3,'Архив','room'],[9,2,11,3,'Серверная','room'],[11,2,12,3,'Л-2','stair']],
+'k3-1':[[1,0,9,3,'Склад готовой продукции','rack'],[9,0,10,1,'Л-1','stair'],[9,1,10,2,'Тамбур','room'],[9,2,10,3,'Л-2','stair'],[10,0,12,1.5,'Экспедиция','open'],[10,1.5,12,3,'Рампа погрузки','open']],
+'k3-2':[[1,0,6,3,'Сборочный участок','hall'],[6,0,9,1.5,'Участок испытаний','hall'],[6,1.5,9,3,'Компрессорная','room'],[9,0,10,1,'Л-1','stair'],[9,1,10,2,'Тамбур','room'],[9,2,10,3,'Л-2','stair'],[10,0,12,1.5,'Бытовые помещения','room'],[10,1.5,12,3,'Кабинет начальника участка','room']]
+};
+var GX=function(c){return 100+(c-1)*90},GY=function(r){return 110+r*150};
+var AXL=['А','Б','В','Г'];
+var planCache={};
+function wrapTxt(t,w,k){var max=Math.max(5,Math.floor(w/(k||6.8))),words=t.split(' '),lines=[],cur='';words.forEach(function(wd){if((cur+' '+wd).trim().length>max&&cur){lines.push(cur);cur=wd}else cur=(cur+' '+wd).trim()});if(cur)lines.push(cur);return lines}
+function planTitle(key){var p=key.split('-'),b=bld(p[0]);return b.name+', этаж '+p[1]}
+function planSVG(key){
+ if(planCache[key])return planCache[key];
+ var L=LAY[key],p=key.split('-'),b=bld(p[0]),fl=+p[1],o=[];
+ var fills={hall:'#FFFFFF',open:'#FFFFFF',rack:'#FFFFFF',room:'#EEF0F3',corr:'#F7F8F9',stair:'#E4E7EC'};
+ o.push('<svg class="pl" viewBox="0 0 1200 700" role="img" aria-label="План: '+esc(planTitle(key))+'" font-family="-apple-system,\'Segoe UI\',Roboto,Arial,sans-serif">');
+ o.push('<rect width="1200" height="700" fill="#fff"/><rect x="8" y="8" width="1184" height="684" fill="none" stroke="#172B4D" stroke-width="1.5"/>');
+ L.forEach(function(r){o.push('<rect x="'+GX(r[0])+'" y="'+GY(r[1])+'" width="'+(GX(r[2])-GX(r[0]))+'" height="'+(GY(r[3])-GY(r[1]))+'" fill="'+fills[r[5]]+'"/>')});
+ /* оси */
+ var i,x,y;
+ for(i=1;i<=12;i++){x=GX(i);o.push('<line x1="'+x+'" y1="84" x2="'+x+'" y2="'+(GY(3)+30)+'" stroke="#8590A2" stroke-width="0.9" stroke-dasharray="16 4 3 4"/><circle cx="'+x+'" cy="70" r="14" fill="#fff" stroke="#172B4D" stroke-width="1.2"/><text x="'+x+'" y="75" text-anchor="middle" font-size="14" fill="#172B4D">'+i+'</text>')}
+ for(i=0;i<4;i++){y=GY(i);o.push('<line x1="70" y1="'+y+'" x2="'+(GX(12)+26)+'" y2="'+y+'" stroke="#8590A2" stroke-width="0.9" stroke-dasharray="16 4 3 4"/><circle cx="56" cy="'+y+'" r="14" fill="#fff" stroke="#172B4D" stroke-width="1.2"/><text x="56" y="'+(y+5)+'" text-anchor="middle" font-size="14" fill="#172B4D">'+AXL[i]+'</text>')}
+ /* стены */
+ L.forEach(function(r){o.push('<rect x="'+GX(r[0])+'" y="'+GY(r[1])+'" width="'+(GX(r[2])-GX(r[0]))+'" height="'+(GY(r[3])-GY(r[1]))+'" fill="none" stroke="#172B4D" stroke-width="2.2"/>')});
+ o.push('<rect x="'+GX(1)+'" y="'+GY(0)+'" width="'+(GX(12)-GX(1))+'" height="'+(GY(3)-GY(0))+'" fill="none" stroke="#172B4D" stroke-width="5"/>');
+ /* оборудование и стеллажи */
+ L.forEach(function(r){
+  var t=r[5];if(t!=='hall'&&t!=='rack')return;
+  var cc,rr,ii=0,jj;
+  for(cc=r[0]+0.5,ii=0;cc<r[2];cc+=1,ii++){
+   for(rr=r[1]+0.5,jj=0;rr<r[3];rr+=1,jj++){
+    var cx=GX(cc),cy=GY(rr);
+    if(t==='hall'){
+     if((ii+jj)%2!==0)continue;
+     o.push('<g><rect x="'+(cx-27)+'" y="'+(cy-17)+'" width="54" height="34" fill="#fff" stroke="#44546F" stroke-width="1.3"/><rect x="'+(cx-22)+'" y="'+(cy-12)+'" width="30" height="24" fill="none" stroke="#8590A2" stroke-width="0.9"/><circle cx="'+(cx+16)+'" cy="'+cy+'" r="4" fill="none" stroke="#8590A2" stroke-width="0.9"/></g>')
+    }else{
+     if(jj%2===1)continue;
+     for(var s=0;s<2;s++){var yy=cy-15+s*16;o.push('<g><rect x="'+(cx-34)+'" y="'+yy+'" width="68" height="14" fill="#fff" stroke="#44546F" stroke-width="1.1"/><line x1="'+(cx-11)+'" y1="'+yy+'" x2="'+(cx-11)+'" y2="'+(yy+14)+'" stroke="#8590A2" stroke-width="0.8"/><line x1="'+(cx+11)+'" y1="'+yy+'" x2="'+(cx+11)+'" y2="'+(yy+14)+'" stroke="#8590A2" stroke-width="0.8"/></g>')}
+    }
+   }
+  }
+ });
+ /* колонны */
+ for(var c=1;c<=12;c++)for(var rw=0;rw<4;rw++)o.push('<rect x="'+(GX(c)-6)+'" y="'+(GY(rw)-6)+'" width="12" height="12" fill="#172B4D"/>');
+ /* двери */
+ function ov(a1,a2,b1,b2){return Math.max(a1,b1)<Math.min(a2,b2)}
+ L.forEach(function(r){
+  if(r[5]==='corr'||r[5]==='stair')return;
+  var side=null,mid;
+  L.forEach(function(q){
+   if(side||q[5]!=='corr')return;
+   if(q[0]===r[2]&&ov(r[1],r[3],q[1],q[3])){side='r';mid=(GY(Math.max(r[1],q[1]))+GY(Math.min(r[3],q[3])))/2}
+   else if(q[2]===r[0]&&ov(r[1],r[3],q[1],q[3])){side='l';mid=(GY(Math.max(r[1],q[1]))+GY(Math.min(r[3],q[3])))/2}
+   else if(q[3]===r[1]&&ov(r[0],r[2],q[0],q[2])){side='t';mid=(GX(Math.max(r[0],q[0]))+GX(Math.min(r[2],q[2])))/2}
+   else if(q[1]===r[3]&&ov(r[0],r[2],q[0],q[2])){side='b';mid=(GX(Math.max(r[0],q[0]))+GX(Math.min(r[2],q[2])))/2}
+  });
+  if(!side){
+   if(r[3]===3){side='b';mid=(GX(r[0])+GX(r[2]))/2+20}
+   else if(r[1]===0){side='t';mid=(GX(r[0])+GX(r[2]))/2+20}
+   else {side='l';mid=(GY(r[1])+GY(r[3]))/2}
+  }
+  var tf,gap;
+  if(side==='b'){tf='translate('+(mid-17)+' '+GY(r[3])+') scale(1 -1)'}
+  else if(side==='t'){tf='translate('+(mid-17)+' '+GY(r[1])+')'}
+  else if(side==='l'){tf='matrix(0 1 1 0 '+GX(r[0])+' '+(mid-17)+')'}
+  else {tf='matrix(0 1 -1 0 '+GX(r[2])+' '+(mid-17)+')'}
+  o.push('<g transform="'+tf+'"><line x1="-1" y1="0" x2="35" y2="0" stroke="#fff" stroke-width="6"/><line x1="0" y1="0" x2="0" y2="34" stroke="#172B4D" stroke-width="1.4"/><path d="M34 0A34 34 0 0 1 0 34" fill="none" stroke="#626F86" stroke-width="0.9"/></g>')
+ });
+ /* лестницы и подписи */
+ L.forEach(function(r){
+  var x1=GX(r[0]),x2=GX(r[2]),y1=GY(r[1]),y2=GY(r[3]),w=x2-x1,h=y2-y1,cx=(x1+x2)/2,cy=(y1+y2)/2;
+  if(r[5]==='stair'){
+   for(var k=1;k<10;k++){var yy=y1+h*k/10;o.push('<line x1="'+(x1+8)+'" y1="'+yy+'" x2="'+(x2-8)+'" y2="'+yy+'" stroke="#626F86" stroke-width="1"/>')}
+   o.push('<line x1="'+cx+'" y1="'+(y2-16)+'" x2="'+cx+'" y2="'+(y1+18)+'" stroke="#172B4D" stroke-width="1.4"/><path d="M'+(cx-5)+' '+(y1+25)+'L'+cx+' '+(y1+16)+'L'+(cx+5)+' '+(y1+25)+'" fill="none" stroke="#172B4D" stroke-width="1.4"/>');
+   o.push('<rect x="'+(cx-17)+'" y="'+(cy-9)+'" width="34" height="18" fill="#fff" stroke="#8590A2" stroke-width="0.8"/><text x="'+cx+'" y="'+(cy+4.5)+'" text-anchor="middle" font-size="12" font-weight="600" fill="#172B4D">'+esc(r[4])+'</text>');
+   return;
+  }
+  if(r[5]==='corr'){
+   if(h>w)o.push('<text transform="translate('+cx+' '+cy+') rotate(-90)" text-anchor="middle" font-size="12" font-style="italic" fill="#626F86">'+esc(r[4])+'</text>');
+   else o.push('<text x="'+(cx)+'" y="'+(cy+4)+'" text-anchor="middle" font-size="12" font-style="italic" fill="#626F86">'+esc(r[4])+'</text>');
+   return;
+  }
+  if(r[5]==='hall'||r[5]==='rack'){
+   var lines=wrapTxt(r[4],w-24,8.2);
+   var tw=Math.max.apply(null,lines.map(function(s){return s.length}))*8+14;
+   o.push('<rect x="'+(x1+8)+'" y="'+(y1+8)+'" width="'+tw+'" height="'+(lines.length*17+6)+'" fill="#fff" fill-opacity=".92"/>');
+   lines.forEach(function(s,i){o.push('<text x="'+(x1+14)+'" y="'+(y1+24+i*17)+'" font-size="14" font-weight="600" fill="#172B4D">'+esc(s)+'</text>')});
+   return;
+  }
+  var lines2=wrapTxt(r[4],w-14),y0=cy-(lines2.length-1)*7+4;
+  lines2.forEach(function(s,i){o.push('<text x="'+cx+'" y="'+(y0+i*14)+'" text-anchor="middle" font-size="12" fill="'+(r[5]==='open'?'#172B4D':'#44546F')+'" '+(r[5]==='open'?'font-weight="600"':'')+'>'+esc(s)+'</text>')});
+ });
+ /* размеры */
+ var dy=GY(3)+38;
+ o.push('<line x1="'+GX(1)+'" y1="'+dy+'" x2="'+GX(12)+'" y2="'+dy+'" stroke="#172B4D" stroke-width="0.9"/>');
+ for(i=1;i<=12;i++){x=GX(i);o.push('<line x1="'+(x-5)+'" y1="'+(dy+5)+'" x2="'+(x+5)+'" y2="'+(dy-5)+'" stroke="#172B4D" stroke-width="1.2"/><line x1="'+x+'" y1="'+(dy-8)+'" x2="'+x+'" y2="'+(dy+8)+'" stroke="#172B4D" stroke-width="0.6"/>');if(i<12)o.push('<text x="'+(x+45)+'" y="'+(dy-5)+'" text-anchor="middle" font-size="11" fill="#172B4D">6000</text>')}
+ o.push('<line x1="'+GX(1)+'" y1="'+(dy+22)+'" x2="'+GX(12)+'" y2="'+(dy+22)+'" stroke="#172B4D" stroke-width="0.9"/><text x="'+((GX(1)+GX(12))/2)+'" y="'+(dy+18)+'" text-anchor="middle" font-size="11" fill="#172B4D">66000</text><line x1="'+GX(1)+'" y1="'+(dy+16)+'" x2="'+GX(1)+'" y2="'+(dy+28)+'" stroke="#172B4D" stroke-width="0.6"/><line x1="'+GX(12)+'" y1="'+(dy+16)+'" x2="'+GX(12)+'" y2="'+(dy+28)+'" stroke="#172B4D" stroke-width="0.6"/>');
+ o.push('<line x1="30" y1="'+GY(0)+'" x2="30" y2="'+GY(3)+'" stroke="#172B4D" stroke-width="0.9"/>');
+ for(i=0;i<4;i++){y=GY(i);o.push('<line x1="25" y1="'+(y+5)+'" x2="35" y2="'+(y-5)+'" stroke="#172B4D" stroke-width="1.2"/>');if(i<3)o.push('<text transform="translate(26 '+(y+75)+') rotate(-90)" text-anchor="middle" font-size="10" fill="#172B4D">10000</text>')}
+ /* север */
+ o.push('<g transform="translate(1146 62)"><circle r="18" fill="#fff" stroke="#172B4D" stroke-width="1.2"/><path d="M0 -13L6 8L0 4L-6 8Z" fill="#172B4D"/><text y="-22" text-anchor="middle" font-size="11" fill="#172B4D">С</text></g>');
+ /* легенда */
+ o.push('<rect x="40" y="652" width="12" height="12" fill="#172B4D"/><text x="60" y="662" font-size="11" fill="#172B4D">колонна</text>');
+ o.push('<rect x="130" y="650" width="26" height="16" fill="#fff" stroke="#44546F" stroke-width="1.2"/><text x="164" y="662" font-size="11" fill="#172B4D">оборудование</text>');
+ o.push('<line x1="262" y1="658" x2="300" y2="658" stroke="#8590A2" stroke-width="1" stroke-dasharray="10 3 2 3"/><text x="308" y="662" font-size="11" fill="#172B4D">разбивочные оси</text>');
+ o.push('<path d="M430 664A14 14 0 0 1 444 650" fill="none" stroke="#626F86" stroke-width="1"/><line x1="430" y1="664" x2="430" y2="650" stroke="#172B4D" stroke-width="1.2"/><text x="452" y="662" font-size="11" fill="#172B4D">дверь</text>');
+ /* штамп */
+ var elev=['+0,000','+4,800','+9,600'][fl-1];
+ o.push('<g><rect x="760" y="626" width="420" height="58" fill="#fff" stroke="#172B4D" stroke-width="1.5"/><line x1="760" y1="646" x2="1180" y2="646" stroke="#172B4D" stroke-width="1"/><line x1="1050" y1="646" x2="1050" y2="684" stroke="#172B4D" stroke-width="1"/><text x="772" y="641" font-size="13" font-weight="700" fill="#172B4D">'+esc(b.name+'. '+b.desc)+'</text><text x="772" y="664" font-size="12" fill="#172B4D">План '+fl+' этажа, отметка '+elev+'</text><text x="772" y="678" font-size="11" fill="#626F86">Схема для отметок, масштаб условный</text><text x="1064" y="664" font-size="12" fill="#172B4D">Лист '+fl+'</text><text x="1064" y="678" font-size="11" fill="#626F86">Демо-план</text></g>');
+ o.push('</svg>');
+ return planCache[key]=o.join('');
+}
+function roomAt(key,xp,yp){
+ var gc=((xp/100*1200)-100)/90+1,gr=((yp/100*700)-110)/150,L=LAY[key]||[],res=null;
+ L.forEach(function(r){if(gc>=r[0]&&gc<r[2]&&gr>=r[1]&&gr<r[3])res=r});
+ return {room:res&&res[5]!=='corr'&&res[5]!=='stair'?res[4]:(res?res[4]:null),col:Math.min(12,Math.max(1,Math.round(gc))),row:AXL[Math.min(3,Math.max(0,Math.round(gr)))]};
+}
+function pointText(side){
+ if(!side||side.x==null)return null;
+ var key=side.b+'-'+side.f,s=bld(side.b).name+', этаж '+side.f;
+ if(state.uploads[key])return s+', точка на загруженном плане';
+ var r=roomAt(key,side.x,side.y);
+ return s+(r.room?', '+r.room:'')+', оси '+r.col+'–'+r.row;
+}
+
+/* ---------- данные ---------- */
+function buildRoute(comms,rules){
+ var out=[{svc:'head',reason:'всегда'}];
+ rules.forEach(function(r){
+  if(!r.on||r.always)return;
+  var hit=r.comms.filter(function(c){return comms.indexOf(c)>=0});
+  if(hit.length)out.push({svc:r.svc,reason:hit.map(cl).join(', ')});
+ });
+ rules.forEach(function(r){if(r.always&&r.on)out.push({svc:r.svc,reason:'всегда'})});
+ return out;
+}
+function demo(o){
+ var route=buildRoute(o.comms,DEF_RULES).map(function(s,i){var d=o.steps[i]||['wait'];return {svc:s.svc,reason:s.reason,state:d[0],time:d[1]||'',who:d[0]==='wait'||d[0]==='pending'?'':SVP[s.svc],comment:d[2]||''}});
+ var log=[{t:o.date+'T09:00',who:o.init,text:'Создана заявка'},{t:o.date+'T09:05',who:'Система',text:'Отправлена на согласование. Маршрут: '+route.map(function(s){return SV[s.svc]}).join(' → ')},{t:o.date+'T09:05',who:'Система',text:'Создана задача '+o.jira+' в Jira (макет)'}];
+ var tx={done:'согласовано',ret:'возвращено с замечанием',rej:'отклонено'};
+ route.forEach(function(s){if(s.time&&tx[s.state])log.push({t:s.time,who:s.who,text:SV[s.svc]+': '+tx[s.state]+(s.comment?'. «'+s.comment+'»':'')})});
+ if(o.status==='В работе')log.push({t:o.workT,who:'Jira',text:'Задача взята в работу'});
+ if(o.status==='Выполнена')log.push({t:o.doneT,who:'Jira',text:'Задача выполнена, статус передан в заявку'});
+ return {id:o.id,type:o.type,name:o.name,inv:o.inv,size:o.size||'',reason:o.reason||'',comms:o.comms,from:o.from,to:o.to,date:o.date,init:o.init,dept:o.dept,status:o.status,route:route,log:log,jira:{key:o.jira,status:o.jst}};
+}
+function initialState(){
+ var I='Петров А. В.';
+ var reqs=[
+  demo({id:'ПО-0145',type:'Перемещение',name:'Компрессор винтовой',inv:'01-007781',size:'1800 × 900 × 1600 мм, 1 150 кг',reason:'Сокращаем длину воздушной магистрали до заготовительного участка.',comms:['380','air','vent'],from:{b:'k3',f:2,x:57,y:64},to:{b:'k1',f:1,x:23,y:69},date:'2026-10-29',init:'Громова И. П.',dept:'Цех № 3',status:'На согласовании',jira:'MOVE-212',jst:'Ожидает согласования',steps:[['pending']]}),
+  demo({id:'ПО-0144',type:'Перемещение',name:'Шкаф сушильный лабораторный',inv:'02-001934',size:'700 × 650 × 1000 мм, 90 кг',reason:'Освобождаем место под новый стенд испытаний.',comms:['220','vent'],from:{b:'k2',f:1,x:40,y:70},to:{b:'k2',f:1,x:20,y:71},date:'2026-10-22',init:'Лебедев К. А.',dept:'Лаборатория',status:'Согласована',jira:'MOVE-208',jst:'К выполнению',steps:[['done','2026-10-22T14:10'],['done','2026-10-23T09:40','Розетка 220 В в точке B есть, нагрузка в норме.'],['done','2026-10-24T11:20','Вытяжной зонт в зоне B уже установлен.'],['done','2026-10-26T10:05']]}),
+  demo({id:'ПО-0143',type:'Перемещение',name:'Пресс гидравлический 100 т',inv:'01-003277',size:'1500 × 1100 × 2900 мм, 6 200 кг',reason:'Пресс нужен на участке сборки, сейчас детали возим через весь цех.',comms:['380','water','air'],from:{b:'k1',f:1,x:40,y:30},to:{b:'k1',f:2,x:30,y:55},date:'2026-10-14',init:I,dept:'Цех № 1',status:'В работе',jira:'MOVE-203',jst:'В работе',workT:'2026-10-21T08:30',steps:[['done','2026-10-14T13:00'],['done','2026-10-15T10:15'],['done','2026-10-16T15:40','Подвод воды и воздуха на втором этаже согласован.'],['done','2026-10-20T09:30','Нагрузка на перекрытие проверена.']]}),
+  demo({id:'ПО-0142',type:'Перемещение',name:'Станок токарный 16К20',inv:'01-004512',size:'2800 × 1190 × 1500 мм, 2 900 кг',reason:'Станок переносим ближе к участку шлифовки, освобождаем проход к линии.',comms:['380','air'],from:{b:'k1',f:1,x:24,y:38},to:{b:'k1',f:1,x:55,y:44},date:'2026-10-27',init:I,dept:'Цех № 1',status:'На согласовании',jira:'MOVE-214',jst:'Ожидает согласования',steps:[['done','2026-10-28T10:12','Согласовано. Станок нужен ближе к шлифовке с ноября.'],['pending']]}),
+  demo({id:'ПО-0141',type:'Перепланировка',name:'Стеллажи складские, 12 секций',inv:'',size:'',reason:'Новая схема хранения: проходы под погрузчик.',comms:[],from:{b:'k3',f:1,x:30,y:40},to:{b:'k3',f:1,x:62,y:55},date:'2026-10-20',init:'Громова И. П.',dept:'Склад',status:'Возвращена на доработку',jira:'MOVE-199',jst:'Ожидает согласования',steps:[['done','2026-10-21T09:10'],['ret','2026-10-22T16:25','Проход между рядами получается 0,9 м, для погрузчика нужно не менее 1,2 м. Сдвиньте точку B правее.']]}),
+  demo({id:'ПО-0140',type:'Перемещение',name:'Плоттер широкоформатный A0',inv:'02-009150',size:'1400 × 700 × 1100 мм, 55 кг',reason:'Объединяем печать чертежей в технологическом отделе.',comms:['220','net'],from:{b:'k2',f:2,x:23,y:69},to:{b:'k2',f:2,x:50,y:69},date:'2026-10-09',init:'Лебедев К. А.',dept:'Конструкторский отдел',status:'Отклонена',jira:'MOVE-191',jst:'Закрыто',steps:[['done','2026-10-09T15:00'],['done','2026-10-12T10:30'],['rej','2026-10-13T12:10','В точке B нет свободного сетевого порта. Подайте заявку после прокладки кабеля.']]}),
+  demo({id:'ПО-0139',type:'Перемещение',name:'Стол лабораторный с мойкой',inv:'02-004410',size:'1800 × 750 × 900 мм',reason:'Перенос в новую зону химического анализа.',comms:['220','water','sewer','vent'],from:{b:'k2',f:1,x:50,y:72},to:{b:'k2',f:1,x:25,y:66},date:'2026-09-17',init:'Лебедев К. А.',dept:'Лаборатория',status:'Выполнена',jira:'MOVE-186',jst:'Готово',doneT:'2026-10-05T16:00',steps:[['done','2026-09-17T14:00'],['done','2026-09-18T09:20'],['done','2026-09-19T11:45'],['done','2026-09-22T10:10'],['done','2026-09-24T12:00']]}),
+  demo({id:'ПО-0097',type:'Перемещение',name:'Станок токарный 16К20',inv:'01-004512',size:'2800 × 1190 × 1500 мм, 2 900 кг',reason:'Перенос на первый этаж, ближе к заготовительному участку.',comms:['380'],from:{b:'k1',f:2,x:20,y:50},to:{b:'k1',f:1,x:24,y:38},date:'2026-03-14',init:I,dept:'Цех № 1',status:'Выполнена',jira:'MOVE-051',jst:'Готово',doneT:'2026-04-02T15:30',steps:[['done','2026-03-14T16:00'],['done','2026-03-16T09:30'],['done','2026-03-18T14:15']]})
+ ];
+ return {v:4,requests:reqs,rules:JSON.parse(JSON.stringify(DEF_RULES)),role:'init',uploads:{},jiraSeq:214,seen:false,guide:{on:false,rid:null,min:false}};
+}
+var LS='peremeshenie-proto-v4';
+var state=null;
+function load(){try{var s=localStorage.getItem(LS);if(s){var p=JSON.parse(s);if(p&&p.v===4)return p}}catch(e){}return initialState()}
+function save(){try{localStorage.setItem(LS,JSON.stringify(state))}catch(e){}}
+state=load();
+
+var filters={q:'',st:'',mine:false};
+var draft=null;
+var isMobile=function(){return window.innerWidth<720};
+var roleObj=function(){return ROLES.filter(function(r){return r[0]===state.role})[0]};
+var getReq=function(id){return state.requests.filter(function(r){return r.id===id})[0]};
+var placeStr=function(s){return bld(s.b).name+', эт. '+s.f};
+var placeShort=function(s){return 'Корп. '+s.b.slice(1)+' · эт. '+s.f};
+function curStep(r){return r.route.filter(function(s){return s.state==='pending'})[0]}
+function approverText(r){
+ if(r.status==='На согласовании'){var s=curStep(r);return s?SV[s.svc]:'—'}
+ if(r.status==='Возвращена на доработку')return 'Инициатор (доработка)';
+ if(r.status==='Согласована'||r.status==='В работе')return 'Исполнитель';
+ return '—';
+}
+function canAct(r){
+ if(r.status!=='На согласовании')return false;
+ var s=curStep(r);if(!s)return false;
+ return state.role==='admin'||(state.role==='head'&&s.svc==='head')||(state.role==='energy'&&s.svc==='energy');
+}
+var canResubmit=function(r){return r.status==='Возвращена на доработку'&&(state.role==='init'||state.role==='admin')};
+function waitingForMe(){return state.requests.filter(canAct)}
+var canExec=function(r){return (r.status==='Согласована'||r.status==='В работе')&&(state.role==='exec'||state.role==='admin')};
+function roleFor(svc){return svc==='head'||svc==='energy'?svc:'admin'}
+function roleName(ro){return ROLES.filter(function(x){return x[0]===ro})[0][1]}
+function roleBtnLabel(ro,svc){return ro==='admin'?'Согласовать за: '+SV[svc]:'Стать: '+roleName(ro)}
+function nextActor(r){
+ if(r.status==='На согласовании'){var s=curStep(r);if(!s)return null;var ro=roleFor(s.svc);return {role:ro,label:roleBtnLabel(ro,s.svc),text:'Сейчас решает <b>'+esc(SV[s.svc])+'</b>. Ему пришло уведомление.'}}
+ if(r.status==='Возвращена на доработку')return {role:'init',label:'Стать: Инициатор',text:'Заявка у <b>инициатора</b>: он исправляет её по замечанию и отправляет снова.'};
+ if(r.status==='Согласована')return {role:'exec',label:'Стать: Исполнитель',text:'Все согласовали. Задача <b>'+esc(r.jira.key)+'</b> ушла исполнителю в Jira, он должен взять её в работу.'};
+ if(r.status==='В работе')return {role:'exec',label:'Стать: Исполнитель',text:'<b>Исполнитель</b> переносит и подключает оборудование, потом отмечает выполнение.'};
+ return null;
+}
+function flowHTML(r){
+ var done=r.route.filter(function(x){return x.state==='done'}).length,n=r.route.length;
+ var t=['Создана','Согласование '+done+'/'+n,'У исполнителя','В работе','Выполнена'];
+ var cur={'На согласовании':1,'Возвращена на доработку':1,'Согласована':2,'В работе':3,'Выполнена':5,'Отклонена':1}[r.status];
+ if(r.status==='Возвращена на доработку')t[1]='Доработка';
+ if(r.status==='Отклонена')t[1]='Отклонена';
+ return '<div class="flow" aria-label="Где сейчас заявка">'+t.map(function(x,i){
+  var c=i<cur?'done':(i===cur?(r.status==='Отклонена'?'bad':'on'):'');
+  var mark=c==='done'?'✓':(c==='bad'?'×':i+1);
+  return (i?'<span class="fl2"></span>':'')+'<span class="fs '+c+'"><i>'+mark+'</i>'+esc(x)+'</span>';
+ }).join('')+'</div>';
+}
+
+/* ---------- схема: разметка ---------- */
+function dimsOf(key){var u=state.uploads[key];return u?{w:u.w,h:u.h}:{w:1200,h:700}}
+function planBase(key){var u=state.uploads[key];return u?'<img class="pl" src="'+u.src+'" alt="Загруженный план этажа" draggable="false">':planSVG(key)}
+function marksHTML(key,m){
+ var d=dimsOf(key),h='<div class="ov">';
+ if(m&&m.A&&m.B&&m.arrow){
+  var k=d.w/1200,ax=m.A.x/100*d.w,ay=m.A.y/100*d.h,bx=m.B.x/100*d.w,by=m.B.y/100*d.h,dx=bx-ax,dy=by-ay,len=Math.sqrt(dx*dx+dy*dy);
+  if(len>40*k){
+   var ux=dx/len,uy=dy/len,tx=bx-ux*20*k,ty=by-uy*20*k,qx=tx-ux*24*k,qy=ty-uy*24*k,nx=-uy*10*k,ny=ux*10*k;
+   h+='<svg viewBox="0 0 '+d.w+' '+d.h+'" aria-hidden="true"><line x1="'+ax+'" y1="'+ay+'" x2="'+qx+'" y2="'+qy+'" stroke="#0C66E4" stroke-width="'+(5*k)+'" stroke-dasharray="'+(16*k)+' '+(9*k)+'"/><polygon points="'+tx+','+ty+' '+(qx+nx)+','+(qy+ny)+' '+(qx-nx)+','+(qy-ny)+'" fill="#0C66E4"/></svg>';
+  }
+ }
+ ['A','B'].forEach(function(s){if(m&&m[s])h+='<span class="mk mk-'+s+'" data-mk="'+s+'" style="left:'+m[s].x+'%;top:'+m[s].y+'%" title="'+(s==='A'?'Сейчас здесь':'Перенести сюда')+'">'+s+'</span>'});
+ return h+'</div>';
+}
+function pvHTML(key,marks,o){
+ o=o||{};var d=dimsOf(key),z=o.zoom||1;
+ var tools=o.tools?'<div class="pv-tools"><div class="lg"><span><i class="mdot A">A</i>Сейчас здесь</span><span><i class="mdot B">B</i>Перенести сюда</span>'+(o.hint?'<span>'+o.hint+'</span>':'')+'</div><div class="zoom"><button type="button" class="btn sm line" data-act="zoom" data-f="0.7" aria-label="Уменьшить схему">'+ic('zout')+'</button><span class="zv">'+Math.round(z*100)+'%</span><button type="button" class="btn sm line" data-act="zoom" data-f="1.4" aria-label="Увеличить схему">'+ic('zin')+'</button></div></div>':'';
+ return '<div class="pv" data-zoom="'+z+'"'+(o.wiz?' data-wiz="1"':'')+'>'+tools+'<div class="plan-scroll"><div class="plan'+(o.int?' int':'')+(o.small?' sm':'')+'" data-key="'+key+'" style="width:'+(z*100)+'%;aspect-ratio:'+d.w+'/'+d.h+'">'+planBase(key)+marksHTML(key,marks)+'</div></div></div>';
+}
+function figures(r){
+ var a=r.from,b=r.to,ka=a.b+'-'+a.f,kb=b.b+'-'+b.f;
+ if(ka===kb)return [{key:ka,title:planTitle(ka)+': откуда и куда',marks:{A:a.x!=null?{x:a.x,y:a.y}:null,B:b.x!=null?{x:b.x,y:b.y}:null,arrow:true}}];
+ return [{key:ka,title:'Откуда: '+planTitle(ka),marks:{A:a.x!=null?{x:a.x,y:a.y}:null}},{key:kb,title:'Куда: '+planTitle(kb),marks:{B:b.x!=null?{x:b.x,y:b.y}:null}}];
+}
+function figsHTML(r,withBtn){
+ return '<div class="figs">'+figures(r).map(function(f,i){return '<div class="fig"><div class="cap"><span>'+esc(f.title)+'</span>'+(withBtn?'<button type="button" class="btn sm line" data-act="viewer" data-rid="'+esc(r.id)+'" data-i="'+i+'">'+ic('expand')+'Крупно</button>':'')+'</div>'+pvHTML(f.key,f.marks,{small:true})+'</div>'}).join('')+'</div>';
+}
+
+/* ---------- каркас ---------- */
+function toast(t){var r=$('#toastRoot');r.innerHTML='<div class="toast">'+esc(t)+'</div>';clearTimeout(toast.t);toast.t=setTimeout(function(){r.innerHTML=''},4200)}
+function openModal(html){$('#modalRoot').innerHTML='<div class="ovl" data-act="mclose" id="ovl"><div class="modal" role="dialog" aria-modal="true">'+html+'</div></div>';var b=$('#modalRoot .mclose');if(b)b.focus()}
+function closeModal(){$('#modalRoot').innerHTML=''}
+function renderChrome(){
+ $('#logo').innerHTML='<svg class="ic" viewBox="0 0 24 24" aria-hidden="true"><path d="'+IC.stack+'"/></svg>';
+ $('#seg').innerHTML=ROLES.map(function(r){return '<button type="button" data-act="role" data-r="'+r[0]+'" aria-pressed="'+(state.role===r[0])+'">'+r[1]+'</button>'}).join('');
+ $('#rsel').innerHTML=ROLES.map(function(r){return '<option value="'+r[0]+'"'+(state.role===r[0]?' selected':'')+'>'+r[1]+'</option>'}).join('');
+ var v=view.name,items=[['list','Заявки','list','#/list',v==='list'||v==='req'||v==='hist'],['new','Новая заявка','plus','#/new',v==='new']];
+ if(state.role==='admin')items.push(['admin','Администрирование','sliders','#/admin',v==='admin']);
+ $('#nav').innerHTML=items.map(function(i){return '<a href="'+i[3]+'"'+(i[4]?' aria-current="page"':'')+'>'+ic(i[2])+i[1]+'</a>'}).join('')+'<button type="button" class="gbtn" data-act="guideStart">'+ic('info')+'Пройти по шагам</button>';
+}
+
+/* ---------- маршрутизация ---------- */
+var view={name:'list',arg:null};
+function parseHash(){
+ var h=location.hash.slice(1);try{h=decodeURIComponent(h)}catch(e){}
+ var p=h.split('/').filter(Boolean);
+ view={name:p[0]||'list',arg:p.slice(1).join('/')};
+ if(['list','new','req','hist','admin'].indexOf(view.name)<0)view={name:'list',arg:null};
+}
+function render(){
+ parseHash();
+ if(view.name==='admin'&&state.role!=='admin'){view={name:'adminlock',arg:null}}
+ renderChrome();
+ var app=$('#app');
+ if(view.name==='list')app.innerHTML=viewList();
+ else if(view.name==='new'){if(!draft)draft=newDraft();app.innerHTML=viewNew()}
+ else if(view.name==='req')app.innerHTML=viewCard(view.arg);
+ else if(view.name==='hist')app.innerHTML=viewHist(view.arg);
+ else if(view.name==='admin')app.innerHTML=viewAdmin();
+ else app.innerHTML='<div class="empty"><b>Этот раздел для администратора</b>Переключите роль вверху справа, чтобы настроить корпуса и маршрут согласования.<br><button type="button" class="btn pri" data-act="role" data-r="admin">Стать администратором</button></div>';
+ if(view.name==='list')fillListBody();
+ renderGuide();
+}
+function go(h){if(location.hash===h)render();else location.hash=h;window.scrollTo(0,0)}
+window.addEventListener('hashchange',function(){closeModal();render();window.scrollTo(0,0)});
+
+/* ---------- список ---------- */
+function filtered(){
+ var q=filters.q.trim().toLowerCase();
+ return state.requests.filter(function(r){
+  if(filters.st&&r.status!==filters.st)return false;
+  if(filters.mine&&!canAct(r))return false;
+  if(q){var hay=(r.id+' '+r.name+' '+r.inv+' '+r.init+' '+r.dept).toLowerCase();if(hay.indexOf(q)<0)return false}
+  return true;
+ }).sort(function(a,b){return a.id<b.id?1:-1});
+}
+function viewList(){
+ var n=waitingForMe().length;
+ return '<div class="head"><div class="grow"><h1>Заявки на перемещение</h1><div class="muted">Роль: '+esc(roleObj()[1])+', '+esc(roleObj()[2])+'</div></div><button type="button" class="btn pri" data-act="newReq">'+ic('plus')+'Новая заявка</button></div>'+
+ '<div class="tools"><div class="search">'+ic('search')+'<input type="text" id="q" placeholder="Номер, оборудование, инв. номер" value="'+esc(filters.q)+'" aria-label="Поиск по заявкам"></div>'+
+ '<select id="fst" aria-label="Фильтр по статусу"><option value="">Все статусы</option>'+STATUSES.map(function(s){return '<option'+(filters.st===s?' selected':'')+'>'+s+'</option>'}).join('')+'</select>'+
+ (state.role!=='init'?'<button type="button" class="chip" data-act="mine" aria-pressed="'+filters.mine+'">Ждут моего решения <b id="mineN">'+n+'</b></button>':'')+
+ '<span class="grow" style="flex:1"></span><button type="button" class="btn line" data-act="export">'+ic('download')+'Выгрузить в Excel</button></div><div id="lbody"></div>';
+}
+function fillListBody(){
+ var list=filtered(),el=$('#lbody');if(!el)return;
+ var mn=$('#mineN');if(mn)mn.textContent=waitingForMe().length;
+ if(!list.length){el.innerHTML='<div class="empty"><b>Ничего не найдено</b>Измените поиск или фильтр статуса.<br><button type="button" class="btn line" data-act="clearF">Сбросить фильтры</button></div>';return}
+ var rows=list.map(function(r){return '<tr tabindex="0" data-open="'+esc(r.id)+'"><td class="num">'+esc(r.id)+'</td><td><b>'+esc(r.name)+'</b><div class="muted small">'+(r.inv?'инв. № '+esc(r.inv):'без инв. номера')+' · '+esc(r.type.toLowerCase())+'</div></td><td>'+esc(placeShort(r.from))+'<div class="muted small">→ '+esc(placeShort(r.to))+'</div></td><td>'+lz(r.status)+'</td><td>'+esc(approverText(r))+'</td><td style="white-space:nowrap">'+fdate(r.date)+'</td></tr>'}).join('');
+ var cards=list.map(function(r){return '<button type="button" class="rcard" data-open="'+esc(r.id)+'"><div class="r1"><b class="muted">'+esc(r.id)+'</b>'+lz(r.status)+'</div><div><b>'+esc(r.name)+'</b></div><div class="muted small">'+esc(placeShort(r.from))+' → '+esc(placeShort(r.to))+'</div><div class="small" style="margin-top:6px">'+(approverText(r)==='—'?'':'Сейчас: '+esc(approverText(r))+' · ')+fdate(r.date)+'</div></button>'}).join('');
+ el.innerHTML='<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Номер</th><th>Оборудование</th><th>Откуда → куда</th><th>Статус</th><th>Сейчас у кого</th><th>Дата</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="cards">'+cards+'</div>';
+}
+function exportCSV(){
+ var rows=[['Номер','Оборудование','Инв. номер','Тип','Откуда','Куда','Статус','Сейчас у кого','Дата','Инициатор','Задача Jira']];
+ filtered().forEach(function(r){rows.push([r.id,r.name,r.inv,r.type,placeStr(r.from),placeStr(r.to),r.status,approverText(r),fdate(r.date),r.init,r.jira.key])});
+ var csv='﻿'+rows.map(function(r){return r.map(function(v){return '"'+String(v).replace(/"/g,'""')+'"'}).join(';')}).join('\r\n');
+ var blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),a=document.createElement('a');
+ a.href=URL.createObjectURL(blob);a.download='заявки_на_перемещение_'+nowISO().slice(0,10)+'.csv';document.body.appendChild(a);a.click();a.remove();
+ setTimeout(function(){URL.revokeObjectURL(a.href)},1500);
+ toast('Файл выгружен: '+(rows.length-1)+' заявок. Откроется в Excel.');
+}
+
+/* ---------- мастер ---------- */
+function newDraft(){return {step:1,type:'Перемещение',name:'',inv:'',size:'',reason:'',date:'',comms:[],from:{b:'k1',f:1,x:null,y:null},to:{b:'k1',f:1,x:null,y:null},mode:'A',zoom:isMobile()?2.2:1,e:{}}}
+function stepper(){
+ var t=['Что переносим','Откуда и куда','Проверка'];
+ return '<div class="steps" aria-label="Шаги">'+t.map(function(s,i){var n=i+1,c=draft.step===n?'on':(draft.step>n?'done':'');return (i?'<span class="ln"></span>':'')+'<div class="st '+c+'"'+(draft.step===n?' aria-current="step"':'')+'><b>'+(draft.step>n?ic('check').replace('class="ic"','class="ic" style="width:13px;height:13px"'):n)+'</b><span>'+s+'</span></div>'}).join('')+'</div>';
+}
+function viewNew(){
+ return '<div class="crumbs"><a href="#/list">Заявки</a> / Новая заявка</div><h1>Новая заявка</h1><div class="muted" style="margin-bottom:16px">Три шага. Номер и маршрут согласования появятся сами.</div>'+stepper()+'<div id="wiz">'+wizStep()+'</div>';
+}
+function wizStep(){return draft.step===1?step1():draft.step===2?step2():step3()}
+function selBld(side,v){return '<select data-sel="'+side+'.b" aria-label="Корпус">'+BLD.map(function(b){return '<option value="'+b.id+'"'+(v.b===b.id?' selected':'')+'>'+b.name+'</option>'}).join('')+'</select>'}
+function selFl(side,v){return '<select data-sel="'+side+'.f" aria-label="Этаж">'+bld(v.b).floors.map(function(f){return '<option value="'+f+'"'+(+v.f===f?' selected':'')+'>'+f+' этаж</option>'}).join('')+'</select>'}
+function step1(){
+ var e=draft.e;
+ return '<div class="panel"><h2>Что переносим</h2><div class="fgrid">'+
+ '<div class="full"><span class="fl">Тип заявки</span><div class="radios" role="radiogroup" aria-label="Тип заявки">'+['Перемещение','Перепланировка'].map(function(t){return '<label class="opt"><input type="radio" name="type" data-f="type" value="'+t+'"'+(draft.type===t?' checked':'')+'>'+(t==='Перемещение'?'Перемещение оборудования':'Технологическая перепланировка')+'</label>'}).join('')+'</div></div>'+
+ '<div><label class="fl" for="f-name">Наименование *</label><input type="text" id="f-name" data-f="name" value="'+esc(draft.name)+'" placeholder="Например, станок токарный 16К20" autocomplete="off"'+(e.name?' class="bad" aria-invalid="true"':'')+'><div class="err" id="e-name"'+(e.name?'':' hidden')+'>Укажите наименование оборудования или участка</div></div>'+
+ '<div><label class="fl" for="f-inv">Инвентарный номер <i>(если есть)</i></label><input type="text" id="f-inv" data-f="inv" value="'+esc(draft.inv)+'" placeholder="01-004512" autocomplete="off"></div>'+
+ '<div><label class="fl" for="f-size">Габариты и вес <i>(необязательно)</i></label><input type="text" id="f-size" data-f="size" value="'+esc(draft.size)+'" placeholder="2800 × 1190 × 1500 мм, 2 900 кг" autocomplete="off"></div>'+
+ '<div><label class="fl" for="f-date">Желаемая дата <i>(необязательно)</i></label><input type="date" id="f-date" data-f="date" value="'+esc(draft.date)+'"></div>'+
+ '<div class="full"><span class="fl">Подключаемые коммуникации в новой точке</span><div class="copts">'+COMMS.map(function(c){return '<label class="opt"><input type="checkbox" data-comm="'+c[0]+'"'+(draft.comms.indexOf(c[0])>=0?' checked':'')+'>'+c[1]+'</label>'}).join('')+'</div><div class="muted small" style="margin-top:6px">От выбора зависит, какие службы получат заявку на согласование.</div></div>'+
+ '<div class="full"><label class="fl" for="f-reason">Обоснование <i>(необязательно)</i></label><textarea id="f-reason" data-f="reason" placeholder="Зачем переносим, что освобождаем">'+esc(draft.reason)+'</textarea></div>'+
+ '</div><div class="actions"><a class="btn line" href="#/list">Отмена</a><button type="button" class="btn pri" data-act="next">Далее: откуда и куда'+ic('arrow')+'</button></div></div>';
+}
+function wizKey(){var s=draft.mode==='A'?draft.from:draft.to;return s.b+'-'+s.f}
+function wizMarks(){
+ var key=wizKey(),a=draft.from,b=draft.to,m={A:null,B:null,arrow:false};
+ if(a.b+'-'+a.f===key&&a.x!=null)m.A={x:a.x,y:a.y};
+ if(b.b+'-'+b.f===key&&b.x!=null)m.B={x:b.x,y:b.y};
+ m.arrow=!!(m.A&&m.B);return m;
+}
+function ptStatus(){
+ var a=pointText(draft.from),b=pointText(draft.to);
+ return '<div class="ptxt'+(a?'':' miss')+'"><b>A:</b> '+(a?esc(a):'не поставлена')+'</div><div class="ptxt'+(b?'':' miss')+'"><b>B:</b> '+(b?esc(b):'не поставлена')+'</div>';
+}
+function step2(){
+ var same=draft.from.b===draft.to.b&&draft.from.f===draft.to.f;
+ return '<div class="panel"><h2>Откуда и куда</h2><div class="w2"><div class="side">'+
+ '<fieldset><legend>Откуда</legend><div class="row">'+selBld('from',draft.from)+selFl('from',draft.from)+'</div></fieldset>'+
+ '<fieldset><legend>Куда</legend><div class="row">'+selBld('to',draft.to)+selFl('to',draft.to)+'</div></fieldset>'+
+ '<div class="mode" role="group" aria-label="Какую точку ставим"><button type="button" data-act="mode" data-m="A" aria-pressed="'+(draft.mode==='A')+'"><i class="mdot A">A</i><span>Сейчас здесь</span></button><button type="button" data-act="mode" data-m="B" aria-pressed="'+(draft.mode==='B')+'"><i class="mdot B">B</i><span>Перенести сюда</span></button></div>'+
+ '<div id="pstat">'+ptStatus()+'</div></div><div>'+
+ '<div class="hint">'+ic('info')+'<span>Нажмите на схему, чтобы поставить точку <b id="hm">'+draft.mode+'</b>. <span class="dsk">Поставленную точку можно перетащить или нажать в другом месте. </span>'+(same?'Этаж один, поэтому покажем стрелку A → B.':'Этажи разные, схемы покажем две.')+'</span></div>'+
+ '<div id="pvbox">'+pvHTML(wizKey(),wizMarks(),{int:true,tools:true,zoom:draft.zoom,wiz:true})+'</div>'+
+ '<div class="err" id="e-pts" '+(draft.e.pts?'':'hidden')+'>'+esc(draft.e.pts||'')+'</div></div></div>'+
+ '<div class="actions"><button type="button" class="btn line" data-act="back">Назад</button><button type="button" class="btn pri" data-act="next">Далее: проверка'+ic('arrow')+'</button></div></div>';
+}
+function step3(){
+ var route=buildRoute(draft.comms,state.rules),pr={id:'',from:draft.from,to:draft.to};
+ return '<div class="panel"><h2>Проверка</h2><div class="cols"><div>'+
+ '<dl class="dl"><dt>Тип</dt><dd>'+esc(draft.type)+'</dd><dt>Наименование</dt><dd><b>'+esc(draft.name)+'</b></dd><dt>Инвентарный номер</dt><dd>'+(draft.inv?esc(draft.inv):'<span class="muted">не указан</span>')+'</dd>'+(draft.size?'<dt>Габариты и вес</dt><dd>'+esc(draft.size)+'</dd>':'')+'<dt>Коммуникации</dt><dd>'+(draft.comms.length?draft.comms.map(function(c){return '<span class="tag">'+cl(c)+'</span>'}).join(''):'<span class="muted">не нужны</span>')+'</dd><dt>Откуда (A)</dt><dd>'+esc(pointText(draft.from)||'')+'</dd><dt>Куда (B)</dt><dd>'+esc(pointText(draft.to)||'')+'</dd>'+(draft.date?'<dt>Желаемая дата</dt><dd>'+fdate(draft.date)+'</dd>':'')+(draft.reason?'<dt>Обоснование</dt><dd>'+esc(draft.reason)+'</dd>':'')+'</dl>'+
+ '<h3 style="margin-top:20px">Схема с отметками</h3>'+figsHTML(pr,false)+'</div><div><h3>Маршрут согласования</h3><ol class="tl">'+route.map(function(s,i){return '<li><span class="dot">'+(i+1)+'</span><div><div class="t1">'+SV[s.svc]+'</div><div class="t2">'+(s.reason==='всегда'?'Подключается всегда':'Из-за: '+esc(s.reason))+'</div></div></li>'}).join('')+'</ol><p class="muted small" style="margin-top:12px">Маршрут настраивает администратор.</p></div></div>'+
+ '<div class="actions"><button type="button" class="btn line" data-act="back">Назад</button><button type="button" class="btn pri" data-act="submit">'+ic('send')+'Отправить на согласование</button></div></div>';
+}
+function updateWizPlan(){
+ var pl=$('#pvbox .plan');if(pl){var ov=$('.ov',pl);var tmp=document.createElement('div');tmp.innerHTML=marksHTML(pl.dataset.key,wizMarks());ov.replaceWith(tmp.firstChild)}
+ var ps=$('#pstat');if(ps)ps.innerHTML=ptStatus();
+ var hm=$('#hm');if(hm)hm.textContent=draft.mode;
+}
+function rerenderWiz(){
+ var keep=$('#pvbox .plan-scroll'),sl=keep?keep.scrollLeft:0,st=keep?keep.scrollTop:0;
+ $('#wiz').innerHTML=wizStep();
+ var k2=$('#pvbox .plan-scroll');if(k2){k2.scrollLeft=sl;k2.scrollTop=st}
+ renderGuide();
+}
+function nextStep(){
+ if(draft.step===1){
+  if(draft.name.trim().length<2){draft.e.name=true;rerenderWiz();var i=$('#f-name');if(i)i.focus();return}
+  draft.e={};
+ }
+ if(draft.step===2){
+  var miss=[];if(draft.from.x==null)miss.push('A');if(draft.to.x==null)miss.push('B');
+  if(miss.length){
+   draft.e.pts=miss.length===2?'Поставьте точки A и B на схеме: нажмите на место, где оборудование стоит сейчас, и на место, куда его перенести.':(miss[0]==='A'?'Поставьте точку A: нажмите на схеме место, где оборудование стоит сейчас.':'Поставьте точку B: нажмите на схеме место, куда оборудование нужно перенести.');
+   if(draft.mode==='A'&&miss.indexOf('A')<0)draft.mode='B';
+   if(draft.mode==='B'&&miss.indexOf('B')<0)draft.mode='A';
+   rerenderWiz();var e=$('#e-pts');if(e&&e.scrollIntoView)e.scrollIntoView({block:'nearest'});return;
+  }
+  draft.e={};
+ }
+ draft.step++;refreshWiz();
+}
+function refreshWiz(){$('#app').querySelector('.steps').outerHTML=stepper();$('#wiz').innerHTML=wizStep();window.scrollTo(0,0);renderGuide()}
+function submitDraft(){
+ var seq=state.requests.reduce(function(m,r){return Math.max(m,parseInt(r.id.split('-')[1],10))},0)+1;
+ var id='ПО-'+String(seq).padStart(4,'0'),now=nowISO(),route=buildRoute(draft.comms,state.rules).map(function(s,i){return {svc:s.svc,reason:s.reason,state:i===0?'pending':'wait',time:'',who:'',comment:''}});
+ state.jiraSeq++;var jk='MOVE-'+state.jiraSeq;
+ var r={id:id,type:draft.type,name:draft.name.trim(),inv:draft.inv.trim(),size:draft.size.trim(),reason:draft.reason.trim(),comms:draft.comms.slice(),from:JSON.parse(JSON.stringify(draft.from)),to:JSON.parse(JSON.stringify(draft.to)),date:now.slice(0,10),init:'Петров А. В.',dept:'Цех № 1',status:'На согласовании',route:route,jira:{key:jk,status:'Ожидает согласования'},log:[]};
+ r.log.push({t:now,who:'Петров А. В.',text:'Создана заявка'});
+ r.log.push({t:now,who:'Система',text:'Отправлена на согласование. Маршрут: '+route.map(function(s){return SV[s.svc]}).join(' → ')});
+ r.log.push({t:now,who:'Система',text:'Создана задача '+jk+' в Jira (макет), схема приложена'});
+ state.requests.push(r);if(state.guide&&state.guide.on&&!state.guide.rid)state.guide.rid=id;save();draft=null;
+ go('#/req/'+encodeURIComponent(id));
+ toast('Заявка '+id+' отправлена. Уведомление ушло: '+SV[route[0].svc]+'.');
+}
+
+/* ---------- карточка ---------- */
+var STEPIC={done:'check',pending:'clock',ret:'undo',rej:'x'};
+var STEPTX={done:'Согласовано',pending:'Ждёт решения',ret:'Возвращено с замечанием',rej:'Отклонено',wait:'Ожидает очереди'};
+function routeHTML(r){
+ return '<ol class="tl">'+r.route.map(function(s,i){
+  var d=s.state==='wait'?'<span>'+(i+1)+'</span>':ic(STEPIC[s.state]);
+  var meta=STEPTX[s.state]+(s.time?' · '+fd(s.time):'')+(s.who?' · '+esc(s.who):'');
+  return '<li><span class="dot '+s.state+'">'+d+'</span><div><div class="t1">'+SV[s.svc]+'</div><div class="t2">'+meta+'</div>'+(s.reason!=='всегда'?'<div class="t2">Подключена из-за: '+esc(s.reason)+'</div>':'')+(s.comment?'<div class="cm">'+(s.state==='pending'?'Прошлое замечание: ':'')+'«'+esc(s.comment)+'»</div>':'')+'</div></li>';
+ }).join('')+'</ol>';
+}
+function jiraCls(s){return {'Ожидает согласования':'y','К выполнению':'','В работе':'b','Готово':'g','Закрыто':'r'}[s]||''}
+function viewCard(id){
+ var r=getReq(id);
+ if(!r)return '<div class="empty"><b>Заявка не найдена</b>Возможно, демо-данные были сброшены.<br><a class="btn line" href="#/list" style="margin-top:12px">К списку заявок</a></div>';
+ var same=state.requests.filter(function(x){return r.inv&&x.inv===r.inv}).length;
+ var act='';
+ if(canAct(r)){
+  var s=curStep(r);
+  act='<div class="panel act"><h3>Ждёт вашего решения: '+SV[s.svc]+'</h3>'+(state.role==='admin'&&!(s.svc==='head'||s.svc==='energy')?'<p class="muted small">Демо: вы действуете от имени службы «'+SV[s.svc]+'».</p>':'')+'<label class="fl" for="cmt">Комментарий</label><textarea id="cmt" placeholder="Обязателен, если возвращаете или отклоняете"></textarea><div class="err" id="e-cmt" hidden>Напишите, что не так: инициатор увидит комментарий в ленте.</div><div class="btns"><button type="button" class="btn pri" data-act="decide" data-d="approve" data-rid="'+esc(r.id)+'">'+ic('check')+'Согласовать</button><button type="button" class="btn line" data-act="decide" data-d="return" data-rid="'+esc(r.id)+'">'+ic('undo')+'Вернуть с замечанием</button><button type="button" class="btn dng" data-act="decide" data-d="reject" data-rid="'+esc(r.id)+'">'+ic('x')+'Отклонить</button></div></div>';
+ }else if(canResubmit(r)){
+  act='<div class="panel act"><h3>Заявку вернули на доработку</h3><p class="muted">Поправьте то, что просили, и отправьте снова. Вернётся к тому, кто сделал замечание.</p><label class="fl" for="cmt">Что исправили</label><textarea id="cmt" placeholder="Например, сдвинул точку B правее"></textarea><div class="btns"><button type="button" class="btn pri" data-act="resubmit" data-rid="'+esc(r.id)+'">'+ic('send')+'Отправить снова</button></div></div>';
+ }else if(r.status==='На согласовании'){
+  act='';
+ }else if(canExec(r)&&r.status==='Согласована'){
+  act='<div class="panel act"><h3>Задача у исполнителя: '+esc(r.jira.key)+'</h3><p class="muted">В рабочей версии исполнитель видит задачу в Jira вместе со схемой и меняет статус там, а сюда статус приходит сам. В прототипе нажмите здесь.</p><div class="btns"><button type="button" class="btn pri" data-act="jstatus" data-rid="'+esc(r.id)+'" data-to="work">'+ic('clock')+'Взять в работу</button></div></div>';
+ }else if(canExec(r)&&r.status==='В работе'){
+  act='<div class="panel act"><h3>Работы идут</h3><p class="muted">Когда оборудование перенесено и подключено, отметьте выполнение. Инициатор получит уведомление.</p><label class="fl" for="cmt">Комментарий <i>(необязательно)</i></label><textarea id="cmt" placeholder="Например, станок установлен, подключён к 380 В и сжатому воздуху"></textarea><div class="btns"><button type="button" class="btn pri" data-act="jstatus" data-rid="'+esc(r.id)+'" data-to="done">'+ic('check')+'Выполнено</button></div></div>';
+ }
+ var na=nextActor(r);
+ var nextp=(na&&!canAct(r)&&!canResubmit(r)&&!canExec(r))?'<div class="nextp"><span class="tx">'+ic('clock').replace('class="ic"','class="ic" style="vertical-align:-3px;margin-right:6px"')+na.text+'</span><button type="button" class="btn pri" data-act="role" data-r="'+na.role+'">'+esc(na.label)+'</button></div>':'';
+ var jbtn='';
+ return '<div class="crumbs"><a href="#/list">Заявки</a> / '+esc(r.id)+'</div>'+
+ '<div class="head"><div class="grow"><h1>'+esc(r.name)+'</h1><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><b>'+esc(r.id)+'</b>'+lz(r.status)+'<span class="muted">'+esc(r.type)+' · создана '+fdate(r.date)+'</span></div></div></div>'+flowHTML(r)+nextp+act+
+ '<div class="cols"><div>'+
+ '<div class="panel"><h2>Что и куда</h2><dl class="dl"><dt>Инициатор</dt><dd>'+esc(r.init)+', '+esc(r.dept)+'</dd><dt>Инвентарный номер</dt><dd>'+(r.inv?esc(r.inv)+' <a href="#/hist/'+encodeURIComponent(r.inv)+'">История ('+same+')</a>':'<span class="muted">не указан</span>')+'</dd>'+(r.size?'<dt>Габариты и вес</dt><dd>'+esc(r.size)+'</dd>':'')+'<dt>Коммуникации</dt><dd>'+(r.comms.length?r.comms.map(function(c){return '<span class="tag">'+cl(c)+'</span>'}).join(''):'<span class="muted">не нужны</span>')+'</dd><dt>Откуда (A)</dt><dd>'+esc(pointText(r.from)||'')+'</dd><dt>Куда (B)</dt><dd>'+esc(pointText(r.to)||'')+'</dd>'+(r.reason?'<dt>Обоснование</dt><dd>'+esc(r.reason)+'</dd>':'')+'</dl></div>'+
+ '<div class="panel"><h2>Схема</h2>'+figsHTML(r,true)+'</div>'+
+ '<div class="panel"><h2>Маршрут согласования</h2>'+routeHTML(r)+'</div></div>'+
+ '<div><div class="panel"><h2>Задача в Jira</h2><div class="jk"><strong>'+esc(r.jira.key)+'</strong><span class="jl '+jiraCls(r.jira.status)+'">'+esc(r.jira.status)+'</span></div><button type="button" class="btn line" data-act="jira" data-rid="'+esc(r.id)+'">'+ic('ext')+'Открыть в Jira</button> '+(jbtn?'<div style="margin-top:8px">'+jbtn+'</div>':'')+'<p class="muted small" style="margin:10px 0 0">Макет, реальная интеграция после доступа к Jira.</p></div>'+
+ '<div class="panel"><h2>Журнал действий</h2><ul class="log">'+r.log.slice().reverse().map(function(l){return '<li><time>'+fd(l.t)+'</time><b>'+esc(l.who)+'</b>: '+esc(l.text)+'</li>'}).join('')+'</ul></div></div></div>';
+}
+function decide(rid,d){
+ var r=getReq(rid),s=r&&curStep(r);if(!r||!s||!canAct(r))return;
+ var c=($('#cmt').value||'').trim();
+ if((d==='return'||d==='reject')&&!c){var t=$('#cmt');t.classList.add('bad');$('#e-cmt').hidden=false;t.focus();return}
+ var me=roleObj(),who=me[0]==='admin'?'Администратор (за «'+SV[s.svc]+'»)':me[2],now=nowISO(),msg;
+ s.time=now;s.who=who;s.comment=c;
+ if(d==='approve'){
+  s.state='done';
+  var nx=r.route.filter(function(x){return x.state==='wait'})[0];
+  r.log.push({t:now,who:who,text:SV[s.svc]+': согласовано'+(c?'. «'+c+'»':'')});
+  if(nx){nx.state='pending';r.log.push({t:now,who:'Система',text:'Уведомление отправлено: '+SV[nx.svc]});msg='Согласовано. Дальше решает: '+SV[nx.svc]+'.'}
+  else{r.status='Согласована';r.jira.status='К выполнению';r.log.push({t:now,who:'Система',text:'Все согласования получены. Задача '+r.jira.key+' в Jira передана исполнителю'});msg='Заявка согласована полностью. Задача в Jira готова к выполнению.'}
+ }else if(d==='return'){
+  s.state='ret';r.status='Возвращена на доработку';r.log.push({t:now,who:who,text:SV[s.svc]+': возвращено с замечанием. «'+c+'»'});r.log.push({t:now,who:'Система',text:'Уведомление отправлено инициатору: '+r.init});msg='Заявка возвращена инициатору с замечанием.';
+ }else{
+  s.state='rej';r.status='Отклонена';r.jira.status='Закрыто';r.log.push({t:now,who:who,text:SV[s.svc]+': отклонено. «'+c+'»'});msg='Заявка отклонена.';
+ }
+ save();render();toast(msg);
+}
+function resubmit(rid){
+ var r=getReq(rid);if(!r||!canResubmit(r))return;
+ var c=($('#cmt').value||'').trim(),s=r.route.filter(function(x){return x.state==='ret'})[0],now=nowISO();
+ if(s){s.state='pending';s.time='';s.who=''}
+ r.status='На согласовании';r.log.push({t:now,who:roleObj()[0]==='admin'?'Администратор':r.init,text:'Заявка исправлена и отправлена снова'+(c?'. «'+c+'»':'')});
+ if(s)r.log.push({t:now,who:'Система',text:'Уведомление отправлено: '+SV[s.svc]});
+ save();render();toast('Отправлено снова: '+(s?SV[s.svc]:'')+'.');
+}
+function jiraModal(r){
+ var f=figures(r)[0],att=pvHTML(f.key,f.marks,{small:true});
+ var ft=figures(r),title=r.id+': '+r.name+' ('+placeStr(r.from)+' → '+placeStr(r.to)+')';
+ openModal('<div class="mh"><span><b>Макет задачи в Jira</b> <span class="muted">· реальная интеграция после доступа к Jira</span></span><button type="button" class="btn sm line mclose" data-act="mclose2">'+ic('x')+'Закрыть</button></div><div class="mb"><div class="jira"><div><div class="jbc">Проекты / Перемещение оборудования / '+esc(r.jira.key)+'</div><div class="jt">'+esc(title)+'</div>'+
+ '<div style="display:flex;gap:8px;margin-bottom:16px"><span class="btn sm line" style="cursor:default">'+ic('plus')+'Прикрепить</span><span class="btn sm line" style="cursor:default">Создать подзадачу</span></div>'+
+ '<h3>Описание</h3><p>Заявка на '+(r.type==='Перемещение'?'перемещение оборудования':'технологическую перепланировку')+', создана в системе заявок.</p><ul style="margin:0 0 12px;padding-left:20px"><li>Оборудование: '+esc(r.name)+(r.inv?', инв. № '+esc(r.inv):'')+'</li><li>Откуда: '+esc(pointText(r.from)||'')+'</li><li>Куда: '+esc(pointText(r.to)||'')+'</li><li>Коммуникации: '+(r.comms.length?r.comms.map(cl).join(', '):'не нужны')+'</li>'+(r.size?'<li>Габариты и вес: '+esc(r.size)+'</li>':'')+'</ul>'+
+ '<h3>Вложения</h3><div class="att">'+att+'<div class="nm">'+ic('file').replace('class="ic"','class="ic" style="width:13px;height:13px;vertical-align:-2px"')+' схема_'+esc(r.id)+'.png</div></div>'+
+ '<h3 style="margin-top:16px">Связанные ресурсы</h3><p>Заявка в системе: <a href="#/req/'+encodeURIComponent(r.id)+'" data-act="mclose2">'+esc(r.id)+'</a> (ссылка ведёт обратно в систему заявок)</p>'+
+ '<h3>Активность</h3><div class="jcm"><span class="av">СИ</span><div><b>Система заявок</b> <span class="muted small">'+fd(r.log[0].t)+'</span><div>Задача создана автоматически из заявки '+esc(r.id)+'. Схема с отметками приложена.</div></div></div></div>'+
+ '<div><div class="jd"><h4>Детали</h4><dl><dt>Статус</dt><dd><span class="jl '+jiraCls(r.jira.status)+'">'+esc(r.jira.status)+'</span></dd><dt>Исполнитель</dt><dd'+(r.status==='В работе'||r.status==='Выполнена'?'>Орлов В. Н.':' class="muted">Не назначен')+'</dd><dt>Автор</dt><dd>Система заявок</dd><dt>Инициатор</dt><dd>'+esc(r.init)+'</dd><dt>Приоритет</dt><dd>Обычный</dd><dt>Метки</dt><dd><span class="tag">перемещение</span>'+(r.comms.length?'<span class="tag">коммуникации</span>':'')+'</dd><dt>Согласование</dt><dd>'+esc(r.status)+'</dd></dl></div></div></div></div>');
+}
+
+/* ---------- история оборудования ---------- */
+function viewHist(inv){
+ var list=state.requests.filter(function(r){return r.inv===inv}).sort(function(a,b){return a.date<b.date?1:-1});
+ if(!list.length)return '<div class="empty"><b>По номеру «'+esc(inv)+'» перемещений нет</b><a class="btn line" href="#/list" style="margin-top:12px">К списку заявок</a></div>';
+ var done=list.filter(function(r){return r.status==='Выполнена'})[0];
+ return '<div class="crumbs"><a href="#/list">Заявки</a> / История оборудования</div><h1>'+esc(list[0].name)+'</h1><div class="muted" style="margin-bottom:16px">Инвентарный номер '+esc(inv)+' · перемещений: '+list.length+(done?' · последнее выполненное: '+esc(placeStr(done.to))+' ('+esc(done.id)+')':'')+'</div>'+
+ '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Заявка</th><th>Дата</th><th>Откуда</th><th>Куда</th><th>Статус</th></tr></thead><tbody>'+list.map(function(r){return '<tr tabindex="0" data-open="'+esc(r.id)+'"><td class="num">'+esc(r.id)+'</td><td>'+fdate(r.date)+'</td><td>'+esc(placeStr(r.from))+'</td><td>'+esc(placeStr(r.to))+'</td><td>'+lz(r.status)+'</td></tr>'}).join('')+'</tbody></table></div>'+
+ '<div class="cards">'+list.map(function(r){return '<button type="button" class="rcard" data-open="'+esc(r.id)+'"><div class="r1"><b class="muted">'+esc(r.id)+'</b>'+lz(r.status)+'</div><div>'+esc(placeStr(r.from))+' → '+esc(placeStr(r.to))+'</div><div class="muted small">'+fdate(r.date)+'</div></button>'}).join('')+'</div>';
+}
+
+/* ---------- администратор ---------- */
+function viewAdmin(){
+ var h='<div class="head"><div class="grow"><h1>Администрирование</h1><div class="muted">Корпуса, планы этажей и маршрут согласования</div></div></div>';
+ h+='<div class="panel"><h2>Корпуса и этажи</h2><div class="hint">'+ic('info')+'<span>Здесь можно подставить свой план этажа: PNG или JPG до 8 МБ. Он станет подложкой, на которой сотрудники ставят точки A и B.</span></div><div id="upErr" class="err" hidden style="margin:-4px 0 12px"></div>';
+ BLD.forEach(function(b){
+  h+='<div class="bld"><h3>'+b.name+' · '+esc(b.desc)+'</h3><div class="floors">'+b.floors.map(function(f){
+   var key=b.id+'-'+f,up=state.uploads[key];
+   return '<div class="fcard">'+pvHTML(key,null,{small:true})+'<div class="pad"><div class="nm"><b>Этаж '+f+'</b><span class="lz '+(up?'lz-s4':'lz-s1')+'">'+(up?'Ваш план':'Схема по умолчанию')+'</span></div><div class="bt"><label class="btn line sm" style="cursor:pointer">'+ic('upload')+'Загрузить план этажа<input type="file" accept="image/png,image/jpeg" data-up="'+key+'" style="position:absolute;width:1px;height:1px;opacity:0"></label>'+(up?'<button type="button" class="btn sm lnk" data-act="upReset" data-key="'+key+'">Вернуть схему</button>':'')+'</div></div></div>';
+  }).join('')+'</div></div>';
+ });
+ h+='</div><div class="panel"><h2>Шаблон маршрута согласования</h2><p class="muted">Служба подключается к заявке, если в ней отмечена коммуникация из правила. Изменения действуют для новых заявок.</p><table class="rules"><tbody>'+
+ '<tr><td style="width:56px"><label class="sw"><input type="checkbox" checked disabled aria-label="Руководитель: всегда"><i></i></label></td><td>Всегда</td><td class="muted">→</td><td><b>'+SV.head+'</b></td></tr>'+
+ state.rules.map(function(r){return '<tr><td style="width:56px"><label class="sw"><input type="checkbox" data-rule="'+r.id+'"'+(r.on?' checked':'')+' aria-label="Правило: '+SV[r.svc]+'"><i></i></label></td><td>'+(r.always?'Всегда, последним шагом':r.comms.map(function(c){return '<span class="tag">'+cl(c)+'</span>'}).join(''))+'</td><td class="muted">→</td><td><b>'+SV[r.svc]+'</b>'+(r.on?'':' <span class="muted">(выключено)</span>')+'</td></tr>'}).join('')+'</tbody></table></div>';
+ return h;
+}
+function handleUpload(inp){
+ var f=inp.files&&inp.files[0],key=inp.dataset.up,er=$('#upErr');
+ function bad(t){er.textContent=t;er.hidden=false}
+ if(!f)return;er.hidden=true;
+ if(!/^image\/(png|jpeg)$/.test(f.type)){bad('Нужен файл PNG или JPG. Для PDF сначала сохраните страницу как картинку.');inp.value='';return}
+ if(f.size>8*1024*1024){bad('Файл больше 8 МБ. Уменьшите картинку и загрузите снова.');inp.value='';return}
+ var fr=new FileReader();
+ fr.onload=function(){
+  var im=new Image();
+  im.onload=function(){state.uploads[key]={src:fr.result,w:im.naturalWidth,h:im.naturalHeight};save();render();toast('План загружен: '+planTitle(key)+'. Теперь точки ставятся на нём.')};
+  im.onerror=function(){bad('Не удалось открыть картинку. Попробуйте другой файл.')};
+  im.src=fr.result;
+ };
+ fr.onerror=function(){bad('Не удалось прочитать файл.')};
+ fr.readAsDataURL(f);
+}
+
+/* ---------- подсказка по шагам ---------- */
+var GN=7;
+function gReq(){var g=state.guide;return g&&g.rid?getReq(g.rid):null}
+function gStepN(r){return {'На согласовании':5,'Возвращена на доработку':5,'Согласована':6,'В работе':6}[r.status]||7}
+function guideInfo(){
+ var r=gReq(),v=view.name;
+ if(!r){
+  if(v!=='new'||!draft)return {n:1,t:'Создайте заявку',p:'Вы сейчас инициатор: Петров А. В. из цеха № 1. Нажмите «Новая заявка», в ней три коротких шага.',b:[['Новая заявка','new',1]],hl:'[data-act="newReq"]'};
+  if(draft.step===1)return {n:2,t:'Что переносим',p:'Впишите оборудование и отметьте коммуникации в новой точке. От галочек зависит, кто будет согласовывать: например, 380 В добавит главного энергетика. Можно заполнить примером.',b:[['Заполнить примером','fill',0],['Далее','next',1]],hl:'.copts'};
+  if(draft.step===2)return {n:3,t:'Откуда и куда',p:'Нажмите на схеме место, где оборудование стоит сейчас (точка A), потом место, куда его перенести (точка B). Точку можно перетащить.',b:[['Поставить за меня','pts',0],['Далее','next',1]],hl:'#pvbox'};
+  return {n:4,t:'Проверка и отправка',p:'Маршрут согласования система собрала сама по коммуникациям. Нажмите «Отправить на согласование».',b:[['Отправить','submit',1]],hl:'[data-act="submit"]'};
+ }
+ if(v==='hist'&&r.status==='Выполнена')return {n:7,t:'История оборудования',p:'Здесь все переносы этого станка по инвентарному номеру с датами. Путь заявки пройден целиком.',b:[['Закончить','end',1],['Пройти ещё раз','again',0]]};
+ if(v!=='req'||view.arg!==r.id)return {n:gStepN(r),t:'Вернитесь к заявке',p:'Подсказка ведёт заявку '+r.id+'. Откройте её, чтобы продолжить.',b:[['Открыть '+r.id,'open',1]]};
+ var st=r.status;
+ if(st==='На согласовании'){
+  var cs=curStep(r),i=r.route.indexOf(cs)+1,n=r.route.length;
+  if(canAct(r))return {n:5,t:'Согласование '+i+' из '+n+': '+SV[cs.svc],p:'Теперь вы согласующий. Посмотрите схему и нажмите «Согласовать». Можно «Вернуть с замечанием», тогда заявка уйдёт инициатору на доработку.',b:[['Показать кнопку','show',1]],hl:'[data-act="decide"][data-d="approve"]'};
+  var ro=roleFor(cs.svc);
+  return {n:5,t:'Согласование '+i+' из '+n,p:'Заявку ждёт '+SV[cs.svc].toLowerCase()+', ему пришло уведомление. Переключитесь на эту роль и согласуйте.',b:[[roleBtnLabel(ro,cs.svc),'role:'+ro,1]],hl:'.nextp .btn'};
+ }
+ if(st==='Возвращена на доработку'){
+  if(canResubmit(r))return {n:5,t:'Доработка',p:'Заявку вернули с замечанием, оно видно в маршруте. Напишите, что исправили, и отправьте снова: заявка вернётся к тому, кто сделал замечание.',b:[['Показать кнопку','show',1]],hl:'[data-act="resubmit"]'};
+  return {n:5,t:'Заявка вернулась инициатору',p:'Переключитесь на инициатора, чтобы исправить заявку и отправить снова.',b:[['Стать: Инициатор','role:init',1]],hl:'.nextp .btn'};
+ }
+ if(st==='Согласована'){
+  if(state.role==='exec')return {n:6,t:'Исполнитель берёт задачу',p:'В рабочей версии исполнитель видит задачу '+r.jira.key+' в Jira вместе со схемой и меняет статус там. Здесь нажмите «Взять в работу».',b:[['Показать кнопку','show',1]],hl:'[data-act="jstatus"]'};
+  return {n:6,t:'Все согласовали',p:'Задача '+r.jira.key+' в Jira передана исполнителю, схема приложена. Переключитесь на исполнителя.',b:[['Стать: Исполнитель','role:exec',1]],hl:'.nextp .btn'};
+ }
+ if(st==='В работе'){
+  if(state.role==='exec')return {n:6,t:'Работы идут',p:'Когда оборудование перенесено и подключено, нажмите «Выполнено». Инициатор получит уведомление.',b:[['Показать кнопку','show',1]],hl:'[data-act="jstatus"]'};
+  return {n:6,t:'Заявка в работе',p:'Отметить выполнение может исполнитель.',b:[['Стать: Исполнитель','role:exec',1]],hl:'.nextp .btn'};
+ }
+ if(st==='Выполнена')return {n:7,t:'Заявка выполнена',p:'Все шаги остались в журнале действий, задача в Jira закрыта. Перенос попал в историю оборудования по инвентарному номеру.',b:r.inv?[['История станка','hist',1],['Закончить','end',0]]:[['Закончить','end',1]]};
+ return {n:7,t:'Заявку отклонили',p:'Так выглядит отказ: причина видна в маршруте и журнале. Можно пройти путь ещё раз и в этот раз согласовать.',b:[['Пройти ещё раз','again',1],['Закончить','end',0]]};
+}
+function renderGuide(){
+ var g=state.guide,root=$('#guideRoot');
+ $$('.gl').forEach(function(e){e.classList.remove('gl')});
+ document.body.classList.toggle('guide',!!(g&&g.on&&!g.min));
+ if(!g||!g.on){root.innerHTML='';return}
+ var gi=guideInfo();
+ if(g.min){root.innerHTML='<button type="button" class="gmini" data-act="g" data-g="max">'+ic('info')+'Подсказка · шаг '+gi.n+' из '+GN+'</button>';return}
+ root.innerHTML='<div class="gd" role="region" aria-label="Подсказка по шагам"><div class="gn"><span>Шаг '+gi.n+' из '+GN+'</span><span><button type="button" data-act="g" data-g="min">Свернуть</button><button type="button" data-act="g" data-g="end" aria-label="Закрыть подсказку">'+ic('x')+'</button></span></div><div class="bar"><b style="width:'+Math.round(gi.n/GN*100)+'%"></b></div><h4>'+esc(gi.t)+'</h4><p>'+esc(gi.p)+'</p><div class="gb">'+gi.b.map(function(b){return '<button type="button" class="btn '+(b[2]?'pri':'line')+'" data-act="g" data-g="'+b[1]+'">'+esc(b[0])+'</button>'}).join('')+'</div></div>';
+ if(gi.hl){var el=$(gi.hl);if(el)el.classList.add('gl')}
+}
+function guideStart(){state.guide={on:true,rid:null,min:false};state.role='init';filters={q:'',st:'',mine:false};draft=null;save();closeModal();go('#/list')}
+function gAction(k){
+ var g=state.guide,r=gReq();
+ if(k==='new'){state.role='init';save();draft=newDraft();go('#/new');return}
+ if(k==='fill'&&draft){draft.type='Перемещение';draft.name='Станок токарный 16К20';draft.inv='01-004512';draft.size='2800 × 1190 × 1500 мм, 2 900 кг';draft.reason='Переносим ближе к участку шлифовки, освобождаем проход к линии.';draft.comms=['380','air'];draft.e={};rerenderWiz();return}
+ if(k==='next'&&draft){nextStep();return}
+ if(k==='pts'&&draft){draft.from={b:'k1',f:1,x:24,y:38};draft.to={b:'k1',f:1,x:55,y:44};draft.mode='B';draft.e={};rerenderWiz();return}
+ if(k==='submit'&&draft){submitDraft();return}
+ if(k==='open'&&r){go('#/req/'+encodeURIComponent(r.id));return}
+ if(k.indexOf('role:')===0){state.role=k.slice(5);filters.mine=false;save();render();window.scrollTo(0,0);return}
+ if(k==='show'){var el=$('.gl');if(el){el.scrollIntoView({block:'center',behavior:'smooth'});try{el.focus({preventScroll:true})}catch(e){}}return}
+ if(k==='hist'&&r){go('#/hist/'+encodeURIComponent(r.inv));return}
+ if(k==='again'){guideStart();return}
+ if(k==='min'||k==='max'){g.min=k==='min';save();renderGuide();return}
+ if(k==='end'){state.guide={on:false,rid:null,min:false};save();renderGuide();toast('Подсказка закрыта. Вернуть её можно кнопкой «Пройти по шагам».');return}
+}
+function welcome(){
+ openModal('<div class="mh"><b>Прототип системы заявок</b><button type="button" class="btn sm line mclose" data-act="mclose2">'+ic('x')+'Закрыть</button></div><div class="mb welcome">'+
+ '<p>Это кликабельный прототип. Данные вымышленные и хранятся только в вашем браузере, так что можно нажимать что угодно.</p>'+
+ '<p><b>Путь заявки:</b></p><ol><li>Инициатор создаёт заявку и ставит на схеме точки «откуда» и «куда».</li><li>Система сама собирает маршрут согласования по коммуникациям.</li><li>Руководитель и службы согласуют или возвращают с замечанием.</li><li>Задача уходит исполнителю в Jira, он берёт её в работу и отмечает выполнение.</li><li>Перенос попадает в историю оборудования.</li></ol>'+
+ '<p>Роль меняется вверху справа. Проще пройти путь с подсказками, это минуты две.</p>'+
+ '<div class="btns" style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" data-act="guideStart">'+ic('info')+'Пройти по шагам</button><button type="button" class="btn line" data-act="mclose2">Посмотрю сам</button></div></div>');
+}
+
+/* ---------- события ---------- */
+document.addEventListener('click',function(ev){
+ var t=ev.target;
+ var row=t.closest&&t.closest('[data-open]');
+ if(row&&!t.closest('a,button[data-act]')){go('#/req/'+encodeURIComponent(row.dataset.open));return}
+ var a=t.closest&&t.closest('[data-act]');
+ if(a){
+  var act=a.dataset.act;
+  if(act==='mclose'){if(t.id==='ovl')closeModal();return}
+  if(act==='mclose2'){closeModal();return}
+  if(act==='role'){state.role=a.dataset.r;save();filters.mine=false;render();return}
+  if(act==='newReq'){draft=newDraft();go('#/new');return}
+  if(act==='g'){gAction(a.dataset.g);return}
+  if(act==='guideStart'){guideStart();return}
+  if(act==='mine'){filters.mine=!filters.mine;a.setAttribute('aria-pressed',filters.mine);fillListBody();return}
+  if(act==='clearF'){filters={q:'',st:'',mine:false};render();return}
+  if(act==='export'){exportCSV();return}
+  if(act==='next'){nextStep();return}
+  if(act==='back'){draft.step--;draft.e={};refreshWiz();return}
+  if(act==='submit'){submitDraft();return}
+  if(act==='mode'){draft.mode=a.dataset.m;rerenderWiz();return}
+  if(act==='zoom'){
+   var pv=a.closest('.pv'),z=Math.min(4,Math.max(1,parseFloat(pv.dataset.zoom)*parseFloat(a.dataset.f)));
+   pv.dataset.zoom=z;$('.plan',pv).style.width=(z*100)+'%';var zv=$('.zv',pv);if(zv)zv.textContent=Math.round(z*100)+'%';if(pv.dataset.wiz)draft.zoom=z;return;
+  }
+  if(act==='decide'){decide(a.dataset.rid,a.dataset.d);return}
+  if(act==='resubmit'){resubmit(a.dataset.rid);return}
+  if(act==='jira'){jiraModal(getReq(a.dataset.rid));return}
+  if(act==='jstatus'){
+   var r=getReq(a.dataset.rid),now=nowISO(),ex=state.role==='admin'?'Администратор (за исполнителя)':'Орлов В. Н.',cm=$('#cmt'),c=cm?cm.value.trim():'';
+   if(!r||!canExec(r))return;
+   if(a.dataset.to==='work'){r.status='В работе';r.jira.status='В работе';r.log.push({t:now,who:ex,text:'Взял задачу '+r.jira.key+' в работу (статус пришёл из Jira)'});r.log.push({t:now,who:'Система',text:'Уведомление отправлено инициатору: '+r.init})}
+   else{r.status='Выполнена';r.jira.status='Готово';r.log.push({t:now,who:ex,text:'Работы выполнены'+(c?'. «'+c+'»':'')+' (статус пришёл из Jira)'});r.log.push({t:now,who:'Система',text:'Заявка закрыта. Уведомление отправлено инициатору: '+r.init})}
+   save();render();window.scrollTo(0,0);toast(r.status==='В работе'?'Заявка в работе. Инициатор получил уведомление.':'Заявка выполнена. Инициатор получил уведомление, история оборудования обновилась.');return;
+  }
+  if(act==='viewer'){
+   var rq=getReq(a.dataset.rid),fg=figures(rq)[+a.dataset.i];
+   openModal('<div class="mh"><b>'+esc(fg.title)+'</b><button type="button" class="btn sm line mclose" data-act="mclose2">'+ic('x')+'Закрыть</button></div><div class="mb">'+pvHTML(fg.key,fg.marks,{tools:true,zoom:isMobile()?2.2:1})+'</div>');return;
+  }
+  if(act==='upReset'){delete state.uploads[a.dataset.key];save();render();toast('Вернули схему по умолчанию.');return}
+  if(act==='resetDemo'){try{localStorage.removeItem(LS)}catch(e){}state=initialState();state.seen=true;filters={q:'',st:'',mine:false};draft=null;closeModal();save();go('#/list');toast('Демо-данные сброшены.');return}
+ }
+ var pl=t.closest&&t.closest('.plan.int');
+ if(pl&&!t.closest('.mk')&&draft){
+  var rc=pl.getBoundingClientRect(),x=(ev.clientX-rc.left)/rc.width*100,y=(ev.clientY-rc.top)/rc.height*100;
+  placePoint(draft.mode,x,y);
+ }
+});
+function clamp(v){return Math.round(Math.min(100,Math.max(0,v))*10)/10}
+function placePoint(side,x,y){
+ var o=side==='A'?draft.from:draft.to;o.x=clamp(x);o.y=clamp(y);draft.e.pts='';
+ var e=$('#e-pts');if(e)e.hidden=true;
+ if(side==='A'&&draft.to.x==null){
+  draft.mode='B';
+  if(draft.from.b+'-'+draft.from.f!==draft.to.b+'-'+draft.to.f){rerenderWiz();return}
+ }
+ updateWizPlan();
+ var mb=$$('.mode button');mb.forEach(function(b){b.setAttribute('aria-pressed',b.dataset.m===draft.mode)});
+}
+function $$(s){return Array.prototype.slice.call(document.querySelectorAll(s))}
+/* перетаскивание точек */
+var drag=null;
+document.addEventListener('pointerdown',function(ev){
+ var m=ev.target.closest&&ev.target.closest('.plan.int .mk');
+ if(!m||!draft)return;
+ drag={s:m.dataset.mk,pl:m.closest('.plan')};try{m.setPointerCapture(ev.pointerId)}catch(e){}
+ ev.preventDefault();
+});
+document.addEventListener('pointermove',function(ev){
+ if(!drag)return;
+ var rc=drag.pl.getBoundingClientRect(),o=drag.s==='A'?draft.from:draft.to;
+ o.x=clamp((ev.clientX-rc.left)/rc.width*100);o.y=clamp((ev.clientY-rc.top)/rc.height*100);
+ var el=drag.pl.querySelector('.mk-'+drag.s);if(el){el.style.left=o.x+'%';el.style.top=o.y+'%'}
+});
+function endDrag(){if(!drag)return;drag=null;updateWizPlan()}
+document.addEventListener('pointerup',endDrag);
+document.addEventListener('pointercancel',endDrag);
+
+document.addEventListener('input',function(ev){
+ var t=ev.target;
+ if(t.id==='q'){filters.q=t.value;fillListBody();return}
+ if(t.dataset&&t.dataset.f&&draft){
+  draft[t.dataset.f]=t.value;
+  if(t.dataset.f==='name'&&t.value.trim().length>=2){draft.e.name=false;t.classList.remove('bad');t.removeAttribute('aria-invalid');var e=$('#e-name');if(e)e.hidden=true}
+ }
+ if(t.id==='cmt'&&t.value.trim()){t.classList.remove('bad');var ec=$('#e-cmt');if(ec)ec.hidden=true}
+});
+document.addEventListener('change',function(ev){
+ var t=ev.target;
+ if(t.id==='fst'){filters.st=t.value;fillListBody();return}
+ if(t.id==='rsel'){state.role=t.value;save();filters.mine=false;render();return}
+ if(t.dataset&&t.dataset.comm&&draft){var c=t.dataset.comm,i=draft.comms.indexOf(c);if(t.checked&&i<0)draft.comms.push(c);if(!t.checked&&i>=0)draft.comms.splice(i,1);return}
+ if(t.dataset&&t.dataset.f==='type'&&draft){draft.type=t.value;return}
+ if(t.dataset&&t.dataset.sel&&draft){
+  var p=t.dataset.sel.split('.'),o=draft[p[0]];
+  if(p[1]==='b'){o.b=t.value;o.f=bld(o.b).floors[0]}else o.f=+t.value;
+  o.x=null;o.y=null;
+  draft.mode=p[0]==='from'?'A':'B';
+  rerenderWiz();return;
+ }
+ if(t.dataset&&t.dataset.rule){var r=state.rules.filter(function(x){return x.id===t.dataset.rule})[0];r.on=t.checked;save();render();toast(t.checked?'Правило включено. Действует для новых заявок.':'Правило выключено. Действует для новых заявок.');return}
+ if(t.dataset&&t.dataset.up){handleUpload(t);return}
+});
+document.addEventListener('keydown',function(ev){
+ if(ev.key==='Escape'&&$('#ovl'))closeModal();
+ if((ev.key==='Enter'||ev.key===' ')&&ev.target.matches&&ev.target.matches('tr[data-open]')){ev.preventDefault();go('#/req/'+encodeURIComponent(ev.target.dataset.open))}
+});
+
+render();
+if(!state.seen){state.seen=true;save();welcome()}
+})();
+</script>
+</body>
+</html>
