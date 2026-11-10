@@ -1,0 +1,204 @@
+<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Кому продавать внедрение ИИ</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Onest:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Раскладка: одна колонка 880px, сверху ответ, дальше карта ниш, цены, спрос, конкуренты, риски, первый шаг */
+:root{--bg:#f6f8f5;--card:#ffffff;--fg:#17211c;--mut:#5d6b63;--line:#dbe3dc;--acc:#0b6e4f;--acc-soft:#dff1e8;--warn:#a15c00;--warn-soft:#fbecd2;--bad:#a8322b;--bad-soft:#f9dedb;--bar:#c9d6cd;
+--f:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;--m:"JetBrains Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111714;--card:#19221d;--fg:#e8efe9;--mut:#9aaba1;--line:#2b3830;--acc:#5fd3a4;--acc-soft:#17382b;--warn:#f0b65a;--warn-soft:#3a2c12;--bad:#f08d85;--bad-soft:#3d1c19;--bar:#34443a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111714;--card:#19221d;--fg:#e8efe9;--mut:#9aaba1;--line:#2b3830;--acc:#5fd3a4;--acc-soft:#17382b;--warn:#f0b65a;--warn-soft:#3a2c12;--bad:#f08d85;--bad-soft:#3d1c19;--bar:#34443a;color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--f)}
+.w{max-width:880px;margin:0 auto;padding-block:28px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:36px}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.1;margin:0;font-weight:700;letter-spacing:-.02em;text-wrap:balance}
+h2{font-size:22px;line-height:1.2;margin:0 0 4px;font-weight:700;text-wrap:balance}
+h3{font-size:16px;margin:0;font-weight:600}
+p{margin:0}.mut{color:var(--mut)}.sm{font-size:14px}
+.eyebrow{font:500 12px var(--m);letter-spacing:.06em;text-transform:uppercase;color:var(--mut)}
+section{display:flex;flex-direction:column;gap:14px}
+.lead{font-size:18px;max-width:62ch}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px}
+.note{background:var(--warn-soft);border-radius:10px;padding:16px 18px}
+.note b{color:var(--warn)}
+ul{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px}
+.grid>*{min-width:0}
+.pill{display:inline-block;font:500 12px var(--m);padding:2px 8px;border-radius:99px;white-space:nowrap}
+.ok{background:var(--acc-soft);color:var(--acc)}.mid{background:var(--warn-soft);color:var(--warn)}.no{background:var(--bad-soft);color:var(--bad)}
+.tag{font:500 11px var(--m);color:var(--mut);border:1px solid var(--line);border-radius:4px;padding:0 5px;white-space:nowrap}
+.price{font:500 15px var(--m);font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;min-width:640px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font:500 12px var(--m);color:var(--mut);text-transform:uppercase;letter-spacing:.04em}
+td b{font-weight:600}
+.row{display:grid;grid-template-columns:minmax(120px,210px) 1fr;gap:12px;align-items:center}
+.track{position:relative;height:26px;background:var(--bg);border:1px solid var(--line);border-radius:6px}
+.seg{position:absolute;top:3px;bottom:3px;background:var(--acc);border-radius:4px;min-width:6px}
+.bars{display:flex;flex-direction:column;gap:10px}
+.hb{display:grid;grid-template-columns:1fr 46px;gap:10px;align-items:center}
+.hb i{display:block;height:10px;border-radius:5px;background:var(--acc)}
+.hb span{font:500 14px var(--m);text-align:right}
+.stack{display:flex;height:34px;border-radius:8px;overflow:hidden}
+.stack div{display:flex;align-items:center;justify-content:center;font:500 13px var(--m);color:#fff}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:14px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+.axis{display:flex;justify-content:space-between;font:500 11px var(--m);color:var(--mut);margin-left:222px}
+a{color:var(--acc)}
+@media (max-width:560px){.row{grid-template-columns:1fr;gap:4px}.axis{margin-left:0}}
+</style>
+</head><body>
+<div class="w">
+<header style="display:flex;flex-direction:column;gap:12px">
+<span class="eyebrow">Ресёрч · 11 ноября 2026 · для Дмитрия и Сани</span>
+<h1>Кому продавать внедрение ИИ‑ботов и агентов</h1>
+<p class="lead">Деньги лежат не в боте‑ответчике для мелких точек, а в разборе заявок и документов для фирм, где одна заявка стоит дорого. Ниже карта: куда идти, куда нет, сколько платят и что подсмотреть у зарубежных конкурентов.</p>
+</header>
+
+<div class="note"><b>Насколько этому можно верить.</b> Это карта, где искать, а не доказательство спроса. Пять исследователей открыли несколько сотен страниц, восемь ключевых цифр перепроверены отдельно, семь сошлись. Но почти все цены взяты со страниц продавцов и начинаются со слова «от», независимых отзывов покупателей с суммами не нашлось, с живыми покупателями никто не говорил.</div>
+
+<section>
+<span class="eyebrow">Вывод за минуту</span>
+<div class="card"><ul>
+<li><b>Бот‑ответчик для салона, кафе или мастера это дно по цене.</b> Готовые продукты стоят 990–15 000 ₽ в месяц, простого бота уже дают сами рабочие системы (Битрикс24, YCLIENTS, Авито).</li>
+<li><b>Чек растёт вместе с размером клиента.</b> На Kwork за бота хотят платить 10–14 тыс. ₽, в Telegram‑чатах 42,5 тыс. ₽, средние фирмы и тендеры начинаются от 300 тыс. ₽.</li>
+<li><b>Лучший вход для двоих:</b> фирмы с дорогой заявкой, где владелец сам отвечает клиентам и не успевает. Стройка, ремонт, дома и бани.</li>
+<li><b>Самые большие чеки:</b> внутренние агенты для оптовиков и экспедиторов. Заказы из почты и Excel в учёт, разбор заявок из писем. 90–470 тыс. ₽ за один процесс.</li>
+<li><b>Клиенты не любят говорить с роботом.</b> Работает бот, который стоит перед человеком и быстро передаёт разговор, а не заменяет его.</li>
+<li><b>У конкурентов за рубежом работает одна и та же связка:</b> узкая отрасль, цена на сайте, демо без регистрации, запуск плюс ежемесячное ведение.</li>
+</ul></div>
+</section>
+
+<section>
+<span class="eyebrow">Карта ниш</span>
+<h2>Куда идти и что там продавать</h2>
+<div class="scroll"><table>
+<tr><th>Ниша</th><th>Что продаём</th><th>Цена в РФ</th><th>Кто решает</th><th>Главный риск</th><th>Войти за 30 дней</th></tr>
+<tr><td><b>Стройка, ремонт, дома и бани</b></td><td>Агент отвечает на заявки с Авито, сайта и мессенджеров, задаёт вопросы, заводит сделку в amoCRM, зовёт владельца на тёплого клиента</td><td class="price">153 000 ₽ запуск<br>≈4 000 ₽/мес</td><td>Владелец, он же продавец</td><td>Цена одного кейса, написанного исполнителем</td><td><span class="pill ok">да</span></td></tr>
+<tr><td><b>Опт и дистрибуция, 15–100 человек</b></td><td>Заказы из почты и Excel попадают в учёт, прайсы поставщиков разбираются сами</td><td class="price">185–314 тыс. ₽<br>15–50 тыс. ₽/мес</td><td>Собственник или коммерческий директор</td><td>Нужна 1С и тёплый вход</td><td><span class="pill mid">трудно</span></td></tr>
+<tr><td><b>Экспедиторы и логистика</b></td><td>Разбор заявок на перевозку из писем, расчёт и черновик ответа</td><td class="price">90–330 тыс. ₽</td><td>Собственник</td><td>Три описанных проекта, но без цен в кейсах</td><td><span class="pill mid">трудно</span></td></tr>
+<tr><td><b>Помощник сотрудникам по своим документам</b></td><td>Отвечает операторам и новичкам по инструкциям и регламентам фирмы</td><td class="price">от 300 тыс. ₽<br>до 0,8–3 млн ₽ в тендерах</td><td>Руководитель отдела, закупки</td><td>Долгая продажа, конкурс</td><td><span class="pill mid">трудно</span></td></tr>
+<tr><td><b>Недвижимость, фитнес, онлайн‑школы, автосервис</b></td><td>Разбор и ведение заявок под ключ</td><td class="price">50–150 тыс. ₽<br>3–25 тыс. ₽/мес</td><td>Владелец или руководитель продаж</td><td>Много студий с тем же предложением</td><td><span class="pill mid">трудно</span></td></tr>
+<tr><td><b>Клиники и стоматологии</b></td><td>Запись, напоминания, ответы пациентам</td><td class="price">150–350 тыс. ₽<br>или 30–50 тыс. ₽/мес</td><td>Владелец, главврач</td><td>Медицинские данные, связка с системой клиники, голос</td><td><span class="pill no">нет</span></td></tr>
+</table></div>
+<p class="sm mut">Цены со страниц и кейсов продавцов. Кейс «Арт‑Комфорт» (153 000 ₽) открыт и сверен, но написан исполнителем; «3 млн ₽» в нём это сделки в работе, а не выручка. Столбцы «кто решает» и «войти за 30 дней» это оценка.</p>
+</section>
+
+<section>
+<span class="eyebrow">Цены</span>
+<h2>Три этажа рынка в России</h2>
+<div class="card bars">
+<div class="row"><div><h3>Готовый отраслевой сервис</h3><p class="sm mut">салоны, общепит, отзывы, отбор резюме</p></div><div><div class="track"><div class="seg" style="left:0;width:1%"></div></div><p class="sm"><span class="price">0 ₽</span> запуск, <span class="price">1–15 тыс. ₽</span> в месяц</p></div></div>
+<div class="row"><div><h3>Студии под ключ</h3><p class="sm mut">недвижимость, стройка, фитнес, школы</p></div><div><div class="track"><div class="seg" style="left:10.6%;width:21.3%"></div></div><p class="sm"><span class="price">50–150 тыс. ₽</span> запуск, <span class="price">3–25 тыс. ₽</span> в месяц</p></div></div>
+<div class="row"><div><h3>Внутренние агенты</h3><p class="sm mut">опт, логистика, бухгалтерия, производство</p></div><div><div class="track"><div class="seg" style="left:27.7%;width:72.3%"></div></div><p class="sm"><span class="price">130–470 тыс. ₽</span> запуск, <span class="price">15–50 тыс. ₽</span> в месяц</p></div></div>
+<div class="axis"><span>0</span><span>150 тыс.</span><span>300 тыс.</span><span>470 тыс. ₽ за запуск</span></div>
+</div>
+<p class="sm mut">Против этих прайсов есть трезвая цифра: эксперт в опросе Т‑Банка называет средний чек внедрения у малого бизнеса 6 000 ₽, у среднего около 50 000 ₽. За ИИ вообще платят 26% предпринимателей, чаще до 3 000 ₽ в месяц (проверено по первоисточнику).</p>
+</section>
+
+<section>
+<span class="eyebrow">Живой спрос</span>
+<h2>Что заказывают прямо сейчас</h2>
+<div class="grid">
+<div class="card"><h3>Чаще всего просят</h3><p class="sm mut" style="margin-bottom:10px">из 67 найденных заказов и тендеров 2026 года</p>
+<div class="bars">
+<div><p class="sm">Ответы и разбор заявок в мессенджерах с записью в amoCRM</p><div class="hb"><i style="width:100%"></i><span>14</span></div></div>
+<div><p class="sm">Агент для CRM и внутренних процессов</p><div class="hb"><i style="width:86%"></i><span>12</span></div></div>
+<div><p class="sm">Голосовые роботы</p><div class="hb"><i style="width:43%"></i><span>6</span></div></div>
+<div><p class="sm">Помощник сотрудникам по своим документам</p><div class="hb"><i style="width:43%"></i><span>6</span></div></div>
+</div></div>
+<div class="card"><h3>Сколько готовы платить</h3><p class="sm mut" style="margin-bottom:10px">медиана бюджета заказа</p>
+<div class="bars">
+<div><p class="sm">Kwork, чат‑бот</p><div class="hb"><i style="width:3%"></i><span>9 тыс.</span></div></div>
+<div><p class="sm">Telegram‑чаты, чат‑бот</p><div class="hb"><i style="width:7%"></i><span>20 тыс.</span></div></div>
+<div><p class="sm">Telegram‑чаты, ИИ‑автоматизация</p><div class="hb"><i style="width:14%"></i><span>43 тыс.</span></div></div>
+<div><p class="sm">Тендеры на Workspace, половина от</p><div class="hb"><i style="width:100%"></i><span>300 тыс.</span></div></div>
+</div></div>
+</div>
+<p class="sm mut">Отдельный сигнал: обычные компании ищут в штат «внедренца ИИ» за 100–220 тыс. ₽ в месяц. Среди них бренды одежды, сеть из 50 магазинов, клиника, ремонт квартир, фармлогистика. Это фирмы, которые уже решили платить. Две трети строк в таблице заказов прочитаны по выдержке, а не целиком.</p>
+</section>
+
+<section>
+<span class="eyebrow">Куда не идти</span>
+<h2>Ниши‑ловушки</h2>
+<div class="grid">
+<div class="card"><h3>Салоны красоты</h3><p class="sm">Не меньше шести готовых продуктов поверх YCLIENTS, от 990 ₽ в месяц, запуск бесплатный.</p></div>
+<div class="card"><h3>Общепит</h3><p class="sm">Готовый агент со связкой с кассой за 1 900–5 900 ₽ в месяц, и нужен голос.</p></div>
+<div class="card"><h3>Ответы на отзывы маркетплейсов</h3><p class="sm">0,28–2 ₽ за ответ, есть бесплатные тарифы и инструменты самих площадок.</p></div>
+<div class="card"><h3>Мастера и микробизнес</h3><p class="sm">Владелец сам ведёт клиентов: нет ни бюджета, ни боли.</p></div>
+<div class="card"><h3>Исходящий ИИ‑обзвон</h3><p class="sm">Истории провалов на 120–200 тыс. ₽ без результата, рекламный автодозвон запрещён.</p></div>
+<div class="card"><h3>Фирмы без учёта</h3><p class="sm">Грязная CRM: бот называет клиентам старые цены и неверные статусы.</p></div>
+</div>
+</section>
+
+<section>
+<span class="eyebrow">Главное возражение</span>
+<h2>Люди не хотят говорить с роботом</h2>
+<div class="card" style="display:flex;flex-direction:column;gap:12px">
+<p class="sm mut">Если на деловой звонок ответит ИИ. Опрос SuperJob, 1 000 компаний, март–апрель 2026. Проверено по первоисточнику; отвечали кадровики, вопрос про звонок подрядчику.</p>
+<div class="stack"><div style="width:61%;background:#a8322b">61%</div><div style="width:17%;background:#6b1f1b">17%</div><div style="width:15%;background:#0b6e4f">15%</div><div style="width:7%;background:#7c8a82">7%</div></div>
+<div class="legend"><span><i class="dot" style="background:#a8322b"></i>сразу попросят человека</span><span><i class="dot" style="background:#6b1f1b"></i>положат трубку</span><span><i class="dot" style="background:#0b6e4f"></i>готовы говорить</span><span><i class="dot" style="background:#7c8a82"></i>не знают</span></div>
+<p><b>Что из этого следует.</b> Продаём не «робота вместо администратора», а помощника перед человеком: запись, статус заказа, цены, ночные обращения и быстрая передача разговора живому сотруднику. Эти задачи люди ИИ доверяют.</p>
+</div>
+</section>
+
+<section>
+<span class="eyebrow">Зарубежные конкуренты</span>
+<h2>Как работают те, кто уже продаёт</h2>
+<p class="mut">Разобрано 37 компаний из США, Германии и Великобритании. Цены у рынка тоже в три этажа: сервис «сделай сам» за 29–350 $ в месяц, «сделаем и ведём» с запуском 300–5 000 и ведением 190–1 500 в месяц, заказная разработка от 5 000 до 25 000+ с платным аудитом на входе.</p>
+<div class="scroll"><table>
+<tr><th>Компания</th><th>Кому продаёт</th><th>Что и почём</th><th>Как цепляет клиента</th></tr>
+<tr><td><b><a href="https://spacelane.io/">spacelane</a></b><br><span class="mut">Германия</span></td><td>Местный бизнес: стоматологии, автосервисы, адвокаты</td><td>Телефонный помощник: от 1 900 € запуск за две недели, от 189 € в месяц <span class="tag">сверено</span></td><td>Голосовое демо прямо на сайте, рядом видна карточка заявки. Калькулятор пропущенных звонков</td></tr>
+<tr><td><b><a href="https://www.hallopetra.de/preise">HalloPetra</a></b><br><span class="mut">Германия</span></td><td>Только ремесленные фирмы</td><td>От 149 € в месяц за 150 минут, телефон, почта, документы <span class="tag">сверено</span></td><td>Номер, по которому можно позвонить и послушать. 10 пробных минут без карты</td></tr>
+<tr><td><b>My AI Voice Agent</b><br><span class="mut">Великобритания</span></td><td>Строители и ремонтники</td><td>Голосовой администратор</td><td>Письменная цель до запуска. Не достигли за 30 дней, возвращают деньги</td></tr>
+<tr><td><b>Alexor</b><br><span class="mut">США</span></td><td>Домашние услуги</td><td>299 $ запуск, 197–597 $ в месяц</td><td>«Оставь номер, бот перезвонит и сам запишет на показ»</td></tr>
+<tr><td><b>AutomateNexus</b><br><span class="mut">США</span></td><td>Малый и средний бизнес, внутренние процессы</td><td>Аудит 500 $ с зачётом в цену работы</td><td>Один процесс за 5 дней по твёрдой цене: работает или не платите</td></tr>
+<tr><td><b>Arini, Avoca, Loman</b><br><span class="mut">США</span></td><td>Одна отрасль каждый: стоматологии, домашние услуги, рестораны</td><td>Цены скрыты</td><td>Кейсы в деньгах клиента. Все цифры со слов самих компаний</td></tr>
+<tr><td><b>Goodcall, Rosie, Smith.ai</b><br><span class="mut">США</span></td><td>Любой малый бизнес</td><td>49–79 $ в месяц, есть бесплатный тариф</td><td>Регистрация за минуту. В отзывах жалуются на поддержку и рост цен</td></tr>
+</table></div>
+<div class="card"><h3 style="margin-bottom:10px">Что взять себе</h3><ul>
+<li><b>Одна отрасль.</b> Доказательства в деньгах есть почти только у узких игроков.</li>
+<li><b>Запуск разово плюс ведение каждый месяц.</b> Две недели доводки на настоящих обращениях и ежемесячный разбор входят в цену.</li>
+<li><b>Демо без регистрации.</b> Бот отвечает от имени фирмы клиента, рядом видно, какая заявка придёт владельцу.</li>
+<li><b>Калькулятор потерь.</b> Пропущенные заявки × средний чек × доля, итог за год минус стоимость.</li>
+<li><b>Малая исполнимая гарантия.</b> Письменная цель до запуска, возврат, если не достигли за 30 дней.</li>
+<li><b>Платный аудит с зачётом.</b> Небольшие деньги на входе отсеивают любопытных и засчитываются в работу.</li>
+<li><b>Один процесс за 5 дней по твёрдой цене.</b> Показ результата каждую неделю.</li>
+</ul></div>
+<p class="sm mut">Предостережение из того же разбора: Air AI собрала с клиентов около 19 млн $, гарантии возврата не исполняла и получила иск регулятора США. Обещать можно только то, что готовы выполнить. И рынок забит одинаковыми студиями без единого названного клиента: выигрывает тот, у кого есть настоящий кейс.</p>
+</section>
+
+<section>
+<span class="eyebrow">Арифметика</span>
+<h2>Что нужно для миллиона в месяц</h2>
+<div class="grid">
+<div class="card"><h3>Только на запусках</h3><p class="sm">По 153 000 ₽ это 7 запусков в месяц на миллион выручки и 13 на миллион каждому при делении пополам. Один сборщик при цикле в три недели столько не сделает.</p></div>
+<div class="card"><h3>Дорогие внутренние агенты</h3><p class="sm">При медиане 246 000 ₽ за процесс это 4–5 проектов в месяц на миллион выручки. Реальнее, но продажа дольше.</p></div>
+<div class="card"><h3>Ведение каждый месяц</h3><p class="sm">30 клиентов по 30 000 ₽ в месяц дают 900 000 ₽ без новых продаж. Поэтому ежемесячная плата важнее цены запуска.</p></div>
+</div>
+<p class="sm mut">Это расчёт из цен продавцов, без расходов и налогов. Настоящих цифр оттока в России не нашли; за рубежом клиенты уходят на 30–60‑й день, первый клиент у новичка появляется через 2,5–3 месяца.</p>
+</section>
+
+<section>
+<span class="eyebrow">Предложение</span>
+<h2>С чего начать: 14 дней без кода продукта</h2>
+<div class="card"><ul>
+<li><b>Выбрать одну нишу.</b> Стройка, ремонт и дома: владелец решает сам, работа текстовая, связка одна.</li>
+<li><b>Собрать показ.</b> Бот отвечает от имени вымышленной строительной фирмы, рядом карточка заявки. Плюс калькулятор потерянных заявок.</li>
+<li><b>Саня говорит с 10 владельцами.</b> Сначала знакомые, лично, в Telegram, без рассылок. Вопрос один: сколько заявок теряется и кто на них отвечает вечером.</li>
+<li><b>Продать платный разбор с зачётом.</b> Идём дальше, если двое заплатили. Закрываем нишу, если после 10 разговоров оплат нет.</li>
+</ul></div>
+</section>
+
+<section>
+<span class="eyebrow">Чего мы не знаем</span>
+<div class="card"><ul class="sm">
+<li>Купит ли хоть один владелец у нас: с покупателями никто не говорил.</li>
+<li>Настоящие суммы договоров: видели только прайсы «от» и кейсы исполнителей.</li>
+<li>Умеем ли мы работать с 1С. От этого зависят два самых дорогих направления.</li>
+<li>Правила работы с данными клиентов: закон о персональных данных требует хранения в России, штраф для фирм и ИП 1–6 млн ₽. До первого договора нужен юрист.</li>
+<li>Карточку отклонённого законопроекта «робот обязан представиться» открыть не удалось, это со слов исследователя.</li>
+</ul></div>
+<p class="sm mut">Полные заметки с сотнями ссылок лежат в пяти PDF: спрос в РФ, отрасли и прайсы, зарубежный рынок, разбор конкурентов, скептик и закон.</p>
+</section>
+</div>
+</body></html>
