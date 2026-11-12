@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>DemoCRM — внедряем ИИ в бизнес-процессы</title>
+<meta name="description" content="DemoCRM внедряет ИИ в бизнес-процессы малого и среднего бизнеса: заявки, документы, ответы по регламентам.">
+<link rel="icon" href="data:,">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fira+Sans+Extra+Condensed:wght@800;900&family=Geist:wght@400..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/site.css">
+</head>
+<body>
+
+<!-- 0. Шапка -->
+<header class="hdr" id="top">
+  <div class="hdr__bar">
+    <div class="hdr__left">
+      <button class="hdr__burger" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="mnav"><span></span><span></span></button>
+      <a class="hdr__logo" href="#top">DemoCRM</a>
+      <nav class="hdr__nav" aria-label="Основное меню">
+        <ul>
+          <li class="has-sub">
+            <a class="roll" href="#chto" aria-haspopup="true">Что делаем</a>
+            <ul class="sub">
+              <li><a class="roll" href="#scenarii">Заявки</a></li>
+              <li><a class="roll" href="#scenarii">Документы</a></li>
+              <li><a class="roll" href="#scenarii">Регламенты</a></li>
+              <li><a class="roll" href="#scenarii">Авито</a></li>
+              <li><a class="roll" href="#scenarii">Мессенджеры</a></li>
+              <li><a class="roll" href="#scenarii">Счета и накладные из PDF и сканов</a></li>
+            </ul>
+          </li>
+          <li><a class="roll" href="#scenarii">Сценарии</a></li>
+          <li><a class="roll" href="#kak">Как работаем</a></li>
+          <li><a class="roll" href="#komu">Кому подходит</a></li>
+          <li><a class="roll" href="#voprosy">Вопросы</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="hdr__right">
+      <a class="btn btn--white hdr__tg roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Telegram</a>
+      <a class="btn btn--white hdr__ex roll" href="#lenta">Пример</a>
+      <a class="btn btn--dark roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Обсудить задачу</a>
+    </div>
+    <div class="mnav" id="mnav">
+      <a href="#chto">Что делаем</a>
+      <a href="#scenarii">Сценарии</a>
+      <a href="#kak">Как работаем</a>
+      <a href="#komu">Кому подходит</a>
+      <a href="#voprosy">Вопросы</a>
+      <a href="https://t.me/demigod_build" target="_blank" rel="noopener">Telegram</a>
+      <a href="#lenta">Пример</a>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<!-- 1. Первый экран -->
+<section class="hero panel" aria-label="Первый экран">
+  <div class="hero__bg"><div class="hero__bgi"><video class="hero__v" autoplay muted loop playsinline preload="metadata" poster="video/hero.jpg"><source src="video/hero.mp4" type="video/mp4"></video></div></div>
+  <div class="hero__veil"></div>
+  <div class="hero__in">
+    <h1 class="hx hero__h">ВНЕДРЯЕМ<br>ИИ В БИЗНЕС-<br>ПРОЦЕССЫ.</h1>
+    <p class="hero__p">Находим работу, которую сотрудники делают по кругу, и отдаём её ИИ: заявки, сообщения, документы, ответы клиентам.</p>
+    <div class="hero__btns">
+      <a class="btn btn--white btn--l roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Обсудить задачу</a>
+      <a class="btn btn--line btn--l roll" href="#lenta">Пример</a>
+    </div>
+  </div>
+  <a class="promo" href="#lenta">
+    <span class="promo__img" aria-hidden="true"></span>
+    <span class="promo__t"><small>СЕЙЧАС</small><b>Берём первых клиентов. Начинаем с пилота на одном процессе.</b></span>
+    <svg class="promo__ar" viewBox="0 0 10 10" width="10" height="10" aria-hidden="true"><path d="M1.5 8.5 8.5 1.5M3 1.5h5.5V7" fill="none" stroke="currentColor" stroke-width="1.2"/></svg>
+  </a>
+</section>
+
+<!-- 2. Лента программ -->
+<section class="apps" aria-label="Программы">
+  <p class="apps__cap">Подключаем к программам, в которых вы уже работаете</p>
+  <div class="marquee">
+    <ul class="marquee__track">
+      <li>Авито</li><li>Telegram</li><li>Сайт</li><li>Почта</li><li>amoCRM</li><li>Битрикс24</li><li>1С</li><li>Google Таблицы</li><li>МойСклад</li><li>Яндекс Диск</li><li>Excel</li><li>PDF и сканы</li><li>Регламенты</li><li>Прайсы</li>
+    </ul>
+  </div>
+</section>
+
+<!-- 3. Боль -->
+<section class="pain" id="chto">
+  <div class="pain__top">
+    <span class="sv shape shape--clover" aria-hidden="true"><video autoplay muted loop playsinline preload="metadata" poster="video/clover.jpg"><source src="video/clover.mp4" type="video/mp4"></video><img src="img/shape-clover.png" width="985" height="1000" alt=""></span>
+    <h2 class="hx pain__h" data-fill>ЗАЯВКА<br class="br-d"> ПРИШЛА<br class="br-m"> В 23:40.<br class="br-d"> ОТВЕТИЛИ<br class="br-m"> УТРОМ.</h2>
+  </div>
+  <p class="pain__p">Берём повторяющуюся работу и отдаём её ИИ. Люди работают в привычных программах.</p>
+  <div class="pain__card">
+    <div class="pain__col">
+      <span class="mx" aria-hidden="true"><i>⠁</i><i>⠃</i><i>⠉</i><i>⠙</i></span>
+      <div><h3>Заявки и сообщения</h3><p>Агент читает входящие с сайта, Авито и Telegram, отвечает клиенту, заводит сделку в CRM и отсеивает спам.</p></div>
+    </div>
+    <div class="pain__col">
+      <span class="mx" aria-hidden="true"><i>⠑</i><i>⠋</i><i>⠛</i><i>⠓</i></span>
+      <div><h3>Документы</h3><p>Счета и накладные из PDF и сканов попадают в 1С. В договорах агент отмечает сроки и штрафы.</p></div>
+    </div>
+    <div class="pain__col">
+      <span class="mx mx--pink" aria-hidden="true"><i>⠙</i><i>⠁</i><i>⠓</i><i>⠃</i></span>
+      <div><h3>Ответы по регламентам</h3><p>Отвечает сотрудникам и клиентам по вашим документам и ссылается на нужный пункт.</p></div>
+    </div>
+  </div>
+  <p class="pain__note">Сотрудники работают как раньше: в CRM, 1С, почте и Telegram. <a class="ul" href="#scenarii">Посмотреть сценарии</a></p>
+</section>
+
+<!-- 4. Розовая панель -->
+<section class="panel panel--pink night" id="agent">
+  <div class="wrap">
+    <h2 class="hx night__h" data-reveal>ВЫ СПАЛИ 8 ЧАСОВ.<br><img class="shape shape--pill" src="img/shape-pill.png" width="136" height="44" alt="" aria-hidden="true"> АГЕНТ РАБОТАЛ.</h2>
+    <p class="night__p">Агент на заявках отвечает клиентам. Агент на документах разносит счета. Агент на регламентах отвечает сотрудникам. Утром всё сделанное видно в отчёте.</p>
+    <p class="night__cap">Цифры — пример работы агента за одну ночь</p>
+  </div>
+  <div class="wrap stats">
+    <article class="stat">
+      <div class="stat__top"><span class="stat__brand">DemoCRM</span><span class="chip chip--pink">Заявки</span></div>
+      <div class="stat__num"><div class="drum" data-from="2" data-to="14">14</div>
+        <svg class="spark spark--pink" viewBox="0 0 120 40" aria-hidden="true"><path class="spark__a" d="M2 36 L20 35 L38 33 L56 30 L74 31 L92 24 L108 6 L118 2 L118 40 L2 40 Z"/><path class="spark__l" pathLength="1" d="M2 36 L20 35 L38 33 L56 30 L74 31 L92 24 L108 6 L118 2"/></svg></div>
+      <p class="stat__label">заявок разобрано ночью</p>
+      <p class="stat__ex">Пример: заявка с Авито в 23:40 → ответ клиенту за минуту и сделка в CRM</p>
+      <div class="stat__mini"><div><span>Ответов</span><b>14</b></div><div><span>Сделок в CRM</span><b>6</b></div><div><span>Спам</span><b>23</b></div></div>
+      <p class="stat__status"><i class="dot dot--pink"></i>Пишет отчёт руководителю</p>
+    </article>
+    <article class="stat">
+      <div class="stat__top"><span class="stat__brand">DemoCRM</span><span class="chip chip--lime">Документы</span></div>
+      <div class="stat__num"><div class="drum" data-from="1" data-to="9">9</div>
+        <svg class="spark spark--lime" viewBox="0 0 120 40" aria-hidden="true"><path class="spark__a" d="M2 36 L20 35 L38 34 L56 31 L74 32 L92 25 L108 8 L118 3 L118 40 L2 40 Z"/><path class="spark__l" pathLength="1" d="M2 36 L20 35 L38 34 L56 31 L74 32 L92 25 L108 8 L118 3"/></svg></div>
+      <p class="stat__label">документов разнесено</p>
+      <p class="stat__ex">Пример: 9 счетов из почты → строки в 1С, суммы сверены с заказами</p>
+      <div class="stat__mini"><div><span>Счета</span><b>9</b></div><div><span>Накладные</span><b>7</b></div><div><span>Договоры</span><b>2</b></div></div>
+      <p class="stat__status"><i class="dot dot--lime"></i>Сверяет суммы с 1С</p>
+    </article>
+    <article class="stat">
+      <div class="stat__top"><span class="stat__brand">DemoCRM</span><span class="chip chip--yellow">Знания</span></div>
+      <div class="stat__num"><div class="drum" data-from="4" data-to="31">31</div>
+        <svg class="spark spark--yellow" viewBox="0 0 120 40" aria-hidden="true"><path class="spark__a" d="M2 36 L20 34 L38 35 L56 31 L74 30 L92 26 L108 7 L118 2 L118 40 L2 40 Z"/><path class="spark__l" pathLength="1" d="M2 36 L20 34 L38 35 L56 31 L74 30 L92 26 L108 7 L118 2"/></svg></div>
+      <p class="stat__label">ответов сотрудникам</p>
+      <p class="stat__ex">Пример: «Какой срок возврата?» → ответ со ссылкой на п. 4.2 регламента</p>
+      <div class="stat__mini"><div><span>Вопросов</span><b>31</b></div><div><span>Со ссылкой</span><b>28</b></div><div><span>Человеку</span><b>3</b></div></div>
+      <p class="stat__status"><i class="dot dot--yellow"></i>Отвечает по регламентам</p>
+    </article>
+  </div>
+</section>
+
+<!-- 5. Жёлтая панель с лентой -->
+<section class="lenta-wrap" id="lenta">
+  <div class="panel panel--yellow lenta">
+    <span class="sv shape shape--flower" aria-hidden="true"><video autoplay muted loop playsinline preload="metadata" poster="video/flower.jpg"><source src="video/flower.mp4" type="video/mp4"></video><img src="img/shape-flower.png" width="942" height="1000" alt=""></span>
+    <h2 class="hx lenta__h"><span class="lenta__a">СОТРУДНИК,</span><span class="lenta__b">КОТОРЫЙ НЕ СПИТ</span></h2>
+    <div class="stack">
+      <article class="lc"><div class="lc__row"><time>23:42</time><span class="chip chip--ylw">Авито</span></div><h3>Ответил покупателю на Авито</h3><p>«Есть доставка в Пятигорск?» Ответ по вашему прайсу, контакт записан в CRM.</p></article>
+      <article class="lc"><div class="lc__row"><time>01:15</time><span class="chip chip--lime2">Сайт</span></div><h3>Завёл сделку из заявки с сайта</h3><p>«40 стеллажей до 15.12» → сделка в CRM и задача менеджеру на утро.</p></article>
+      <article class="lc"><div class="lc__row"><time>03:08</time><span class="chip chip--blue">Почта</span></div><h3>Разнёс счёт в 1С</h3><p>Счёт № 418 из PDF → строка в 1С. Сумма сверена с заказом.</p></article>
+      <article class="lc"><div class="lc__row"><time>04:33</time><span class="chip chip--pink2">Спам</span></div><h3>Отсеял спам во входящих</h3><p>Рассылки и реклама ушли в отдельную папку. Заявки остались на месте.</p></article>
+      <article class="lc"><div class="lc__row"><time>05:01</time><span class="chip chip--ylw">Договоры</span></div><h3>Отметил сроки в договоре</h3><p>Поставка до 20.12, штраф 0,1% в день. Напоминание юристу за неделю.</p></article>
+      <article class="lc"><div class="lc__row"><time>05:47</time><span class="chip chip--lime2">Регламент</span></div><h3>Ответил сотруднику по регламенту</h3><p>«Какой срок возврата?» → п. 4.2 регламента и ссылка на документ.</p></article>
+      <article class="lc"><div class="lc__row"><time>06:22</time><span class="chip chip--blue">Telegram</span></div><h3>Ответил клиенту в Telegram</h3><p>Вопрос про наличие → ответ по складу, клиент записан на завтра.</p></article>
+      <article class="lc"><div class="lc__row"><time>07:55</time><span class="chip chip--pink2">Отчёт</span></div><h3>Отправил отчёт руководителю</h3><p>За ночь: заявки, счета, вопросы. Что требует решения человека, стоит сверху.</p></article>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Голубая панель -->
+<section class="panel panel--blue scen" id="scenarii">
+  <div class="wrap">
+    <h2 class="hx scen__h" data-reveal>ГОТОВЫЕ СЦЕНАРИИ, ЗАПУСКАЕМ <img class="shape shape--spin" src="img/shape-flower.png" width="96" height="102" alt="" aria-hidden="true"> ЗА ВАС.</h2>
+    <div class="scen__side">
+      <p>Сценарий — готовая работа для агента. Берём тот, что ближе к вашей боли, и настраиваем под ваши данные.</p>
+      <div class="scen__nav">
+        <button class="rb" type="button" data-dir="-1" aria-label="Назад"><svg viewBox="0 0 8 12" width="8" height="12"><path d="M6.5 1 1.5 6l5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+        <button class="rb rb--dark" type="button" data-dir="1" aria-label="Вперёд"><svg viewBox="0 0 8 12" width="8" height="12"><path d="M1.5 1l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg></button>
+      </div>
+    </div>
+  </div>
+  <div class="car" tabindex="0" aria-label="Карусель сценариев">
+    <div class="car__track">
+      <article class="sc"><div class="sc__top"><span class="sc__b">DemoCRM</span><h3>Ответы на Авито</h3></div><div class="sc__bot"><span class="sc__s">сценарий DemoCRM</span><p>Агент отвечает покупателям на Авито по вашему прайсу и наличию, ночью и в выходные. Горячих передаёт менеджеру.</p></div></article>
+      <article class="sc"><div class="sc__top"><span class="sc__b">DemoCRM</span><h3>Заявки с сайта в CRM</h3></div><div class="sc__bot"><span class="sc__s">сценарий DemoCRM</span><p>Заявка с формы или из почты сразу становится сделкой с задачей менеджеру. Спам отсеивается.</p></div></article>
+      <article class="sc"><div class="sc__top"><span class="sc__b">DemoCRM</span><h3>Счета и накладные в 1С</h3></div><div class="sc__bot"><span class="sc__s">сценарий DemoCRM</span><p>PDF и сканы из почты разносятся в 1С, суммы сверяются с заказом. Человек смотрит только расхождения.</p></div></article>
+      <article class="sc"><div class="sc__top"><span class="sc__b">DemoCRM</span><h3>Ответы по регламентам</h3></div><div class="sc__bot"><span class="sc__s">сценарий DemoCRM</span><p>Сотрудники спрашивают в Telegram, агент отвечает по вашим документам и даёт ссылку на пункт.</p></div></article>
+      <article class="sc"><div class="sc__top"><span class="sc__b">DemoCRM</span><h3>Сроки и штрафы в договорах</h3></div><div class="sc__bot"><span class="sc__s">сценарий DemoCRM</span><p>Агент читает договоры, выписывает сроки, штрафы и даты продления и напоминает заранее.</p></div></article>
+      <article class="sc"><div class="sc__top"><span class="sc__b">DemoCRM</span><h3>Ответы клиентам в мессенджерах</h3></div><div class="sc__bot"><span class="sc__s">сценарий DemoCRM</span><p>Типовые вопросы закрывает агент: наличие, цены, доставка, статус заказа. Сложные отдаёт человеку.</p></div></article>
+      <article class="sc"><div class="sc__top"><span class="sc__b">DemoCRM</span><h3>Отчёт руководителю утром</h3></div><div class="sc__bot"><span class="sc__s">сценарий DemoCRM</span><p>Каждое утро в Telegram: что пришло, что сделано, где нужен человек.</p></div></article>
+      <article class="sc"><div class="sc__top"><span class="sc__b">DemoCRM</span><h3>Чат на сайте</h3></div><div class="sc__bot"><span class="sc__s">сценарий DemoCRM</span><p>Отвечает посетителям по материалам вашего сайта. Не знает ответа — передаёт заявку менеджеру.</p></div></article>
+    </div>
+  </div>
+</section>
+
+<!-- 7. Облако -->
+<section class="cloud" aria-label="Один подрядчик, три задачи">
+  <div class="cloud__stage">
+    <span class="sv shape shape--cloud" aria-hidden="true"><video autoplay muted loop playsinline preload="metadata" poster="video/cloud.jpg"><source src="video/cloud.mp4" type="video/mp4"></video><img src="img/shape-cloud.png" width="1000" height="933" alt=""></span>
+    <p class="hx cw cw--l">ОДИН</p>
+    <p class="hx cw cw--r">ПОДРЯДЧИК,</p>
+    <p class="hx cw cw--l">ТРИ</p>
+    <p class="hx cw cw--r">ЗАДАЧИ</p>
+  </div>
+  <div class="cloud__card">
+    <div class="cc">
+      <div class="cc__top"><span>DemoCRM</span><span class="chip chip--dpink">Заявки</span></div>
+      <h3>Отвечаем. Заводим. Передаём.</h3>
+      <ul class="dots dots--pink"><li>Авито, сайт, почта, Telegram</li><li>Ответ клиенту за минуту, днём и ночью</li><li>Сделка и задача в CRM</li><li>Горячих клиентов сразу менеджеру</li></ul>
+    </div>
+    <div class="cc">
+      <div class="cc__top"><span>DemoCRM</span><span class="chip chip--dlime">Документы</span></div>
+      <h3>Читаем. Разносим. Сверяем.</h3>
+      <ul class="dots dots--lime"><li>Счета и накладные из PDF и сканов</li><li>Строки в 1С без ручного ввода</li><li>Сроки и штрафы из договоров</li><li>Расхождения человеку на проверку</li></ul>
+    </div>
+    <div class="cc">
+      <div class="cc__top"><span>DemoCRM</span><span class="chip chip--dyellow">Знания</span></div>
+      <h3>Знаем. Отвечаем. Ссылаемся.</h3>
+      <ul class="dots dots--yellow"><li>Ваши регламенты, прайсы, инструкции</li><li>Ответы сотрудникам в Telegram</li><li>Ссылка на пункт документа в каждом ответе</li><li>Не знает ответа — зовёт человека</li></ul>
+    </div>
+  </div>
+</section>
+
+<!-- 8. Салатовая панель -->
+<section class="panel panel--green kak" id="kak">
+  <div class="wrap kak__head">
+    <span class="tag tag--yellow">Как работаем</span>
+    <div class="kak__title">
+      <h2 class="hx kak__h" data-reveal>НАЧИНАЕМ С<br class="br-d"> ОДНОГО ПРОЦЕССА.<br class="br-d"> ДОКАЗЫВАЕМ<br class="br-d"> ПОЛЬЗУ.</h2>
+      <p class="kak__p">Не внедряем всё сразу. Сначала пилот на одном процессе на ваших настоящих данных, потом расширяем.</p>
+    </div>
+  </div>
+  <div class="wrap steps">
+    <article class="step"><h3>Разбор.</h3><p>Смотрим, как процесс устроен сейчас: откуда приходят задачи, кто их делает, сколько уходит времени.</p></article>
+    <article class="step"><h3>План.</h3><p>Выбираем место, где ИИ окупится быстрее всего. Пишем, что автоматизируем, сколько стоит и как поймём, что работает.</p></article>
+    <article class="step"><h3>Пилот.</h3><p>Ставим агента на один процесс и несколько недель сверяем его работу с работой сотрудника.</p></article>
+    <article class="step"><h3>Встраивание.</h3><p>Пилот себя оправдал — подключаем агента к CRM, 1С, почте, Telegram или таблицам.</p></article>
+    <article class="step"><h3>Сопровождение.</h3><p>Правки сотрудников становятся примерами для агента. Раз в месяц короткий отчёт: что поменяли и почему.</p></article>
+    <article class="step step--dark"><p><b>Первым клиентам — пилот на особых условиях.</b><br><a class="ul roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Обсудить задачу</a></p></article>
+  </div>
+</section>
+
+<!-- 9. Кому подходит -->
+<section class="komu" id="komu">
+  <div class="komu__in">
+    <div class="komu__l">
+      <span class="tag tag--blue">Кому подходит</span>
+      <h2 class="komu__h">Малому и среднему бизнесу, где люди тонут в рутине.</h2>
+    </div>
+    <div class="acc">
+      <div class="acc__item is-open" data-color="blue">
+        <i class="cn cn--tl"></i><i class="cn cn--tr"></i><i class="cn cn--bl"></i><i class="cn cn--br"></i>
+        <button class="acc__head" type="button" aria-expanded="true" aria-controls="acc1" id="accb1"><span class="acc__t hx">ТОРГОВЛЯ</span><span class="acc__s">Заявки и вопросы покупателей.</span></button>
+        <div class="acc__body" id="acc1" role="region" aria-labelledby="accb1"><div class="acc__w"><div class="acc__inner">
+          <ul class="bul"><li>Ответы на Авито и в мессенджерах</li><li>Наличие, цены, доставка без менеджера</li><li>Заказы сразу в CRM</li><li>Отчёт руководителю утром</li></ul>
+          <div class="acc__cta"><a class="btn btn--dark btn--l roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Обсудить задачу</a><a class="ul ul--g roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Написать в Telegram</a></div>
+        </div></div></div>
+      </div>
+      <div class="acc__item" data-color="yellow">
+        <i class="cn cn--tl"></i><i class="cn cn--tr"></i><i class="cn cn--bl"></i><i class="cn cn--br"></i>
+        <button class="acc__head" type="button" aria-expanded="false" aria-controls="acc2" id="accb2"><span class="acc__t hx">УСЛУГИ</span><span class="acc__s">Запись и ответы клиентам.</span></button>
+        <div class="acc__body" id="acc2" role="region" aria-labelledby="accb2"><div class="acc__w"><div class="acc__inner">
+          <ul class="bul"><li>Ответы на типовые вопросы ночью</li><li>Запись и напоминания</li><li>Заявки с сайта в CRM</li><li>Сложные вопросы человеку</li></ul>
+          <div class="acc__cta"><a class="btn btn--dark btn--l roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Обсудить задачу</a><a class="ul ul--g roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Написать в Telegram</a></div>
+        </div></div></div>
+      </div>
+      <div class="acc__item" data-color="pink">
+        <i class="cn cn--tl"></i><i class="cn cn--tr"></i><i class="cn cn--bl"></i><i class="cn cn--br"></i>
+        <button class="acc__head" type="button" aria-expanded="false" aria-controls="acc3" id="accb3"><span class="acc__t hx">ОПТ И ПРОИЗВОДСТВО</span><span class="acc__s">Документы и регламенты.</span></button>
+        <div class="acc__body" id="acc3" role="region" aria-labelledby="accb3"><div class="acc__w"><div class="acc__inner">
+          <ul class="bul"><li>Счета и накладные в 1С</li><li>Сроки и штрафы в договорах</li><li>Ответы сотрудникам по регламентам</li><li>Меньше ручного ввода</li></ul>
+          <div class="acc__cta"><a class="btn btn--dark btn--l roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Обсудить задачу</a><a class="ul ul--g roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Написать в Telegram</a></div>
+        </div></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 10. Призыв -->
+<section class="cta" id="voprosy">
+  <h2 class="hx cta__h"><span class="ln"><span>ХВАТИТ ДЕЛАТЬ</span></span> <span class="ln"><span>ВРУЧНУЮ<br class="br-m"> ТО, ЧТО</span></span> <span class="ln"><span>МОЖЕТ ИИ.</span></span></h2>
+  <p class="cta__p">Расскажите, какую работу хотите отдать ИИ. Ответим в течение рабочего дня.</p>
+  <div class="cta__card">
+    <i class="cn cn--tl"></i><i class="cn cn--tr"></i><i class="cn cn--bl"></i><i class="cn cn--br"></i>
+    <div class="cta__field">
+      <input type="text" placeholder="Telegram или почта" aria-label="Telegram или почта" autocomplete="off">
+      <a class="btn btn--dark roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Обсудить задачу →</a>
+    </div>
+    <p class="cta__note">Бесплатно · Ни к чему не обязывает · Ответ за день</p>
+    <a class="btn btn--out btn--l cta__tg" href="https://t.me/demigod_build" target="_blank" rel="noopener"><span class="ava" aria-hidden="true"><i></i><i></i><i></i></span><span class="roll">Написать в Telegram</span></a>
+  </div>
+</section>
+
+</main>
+
+<!-- 11. Подвал -->
+<footer class="panel panel--dark foot">
+  <div class="foot__logo" role="img" aria-label="DemoCRM"><video class="foot__v" autoplay muted loop playsinline preload="metadata" poster="video/footer-democrm.jpg"><source src="video/footer-democrm.mp4" type="video/mp4"></video><img class="foot__fb" src="img/footer-democrm.png" width="2172" height="724" alt=""></div>
+  <div class="wrap">
+    <div class="foot__row">
+      <p class="foot__about">DemoCRM внедряет ИИ в работу малого и среднего бизнеса.</p>
+      <a class="foot__big roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Написать нам →</a>
+    </div>
+    <hr class="foot__hr">
+    <div class="foot__ai">
+      <div><h3>Хотите коротко?</h3><p>Спросите у ИИ, кто мы и чем полезны, и сравните с другими вариантами.</p></div>
+      <div class="pills"><a href="#" class="pill">ChatGPT</a><a href="#" class="pill">Claude</a><a href="#" class="pill">Google AI Mode</a><a href="#" class="pill">Grok</a><a href="#" class="pill">Perplexity</a></div>
+    </div>
+    <hr class="foot__hr">
+    <div class="foot__cols">
+      <div><h4>Что делаем</h4><ul>
+        <li><a class="roll" href="#scenarii">Ответы на Авито</a></li><li><a class="roll" href="#scenarii">Заявки с сайта в CRM</a></li><li><a class="roll" href="#scenarii">Чат на сайте</a></li><li><a class="roll" href="#scenarii">Ответы в Telegram</a></li><li><a class="roll" href="#scenarii">Счета в 1С</a></li><li><a class="roll" href="#scenarii">Накладные из сканов</a></li><li><a class="roll" href="#scenarii">Сроки в договорах</a></li><li><a class="roll" href="#scenarii">Ответы по регламентам</a></li><li><a class="roll" href="#scenarii">Отсев спама</a></li><li><a class="roll" href="#scenarii">Отчёт руководителю</a></li></ul></div>
+      <div><h4>Кому подходит</h4><ul>
+        <li><a class="roll" href="#komu">Для торговли</a></li><li><a class="roll" href="#komu">Для услуг</a></li><li><a class="roll" href="#komu">Для опта</a></li><li><a class="roll" href="#komu">Для производства</a></li><li><a class="roll" href="#komu">Для сервиса и ремонта</a></li><li><a class="roll" href="#komu">Для клиник и салонов</a></li><li><a class="roll" href="#komu">Для доставки</a></li><li><a class="roll" href="#komu">Для B2B-продаж</a></li></ul></div>
+      <div><h4>Сравнить</h4><ul>
+        <li><a class="roll" href="#">ИИ или ещё один менеджер</a></li><li><a class="roll" href="#">ИИ или чат-бот на кнопках</a></li><li><a class="roll" href="#">ИИ или ручной ввод в 1С</a></li><li><a class="roll" href="#">ИИ или фрилансер</a></li><li><a class="roll" href="#">Готовый сервис или своя разработка</a></li><li><a class="roll" href="#">Пилот или всё сразу</a></li></ul></div>
+      <div><h4>Компания</h4><ul>
+        <li><a class="roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Обсудить задачу</a></li><li><a class="roll" href="#voprosy">Вопросы</a></li><li><a class="roll" href="#kak">Как работаем</a></li><li><a class="roll" href="#">Кто мы</a></li><li><a class="roll" href="#">Политика конфиденциальности</a></li><li><a class="roll" href="#">Согласие на обработку</a></li><li><a class="roll" href="https://t.me/demigod_build" target="_blank" rel="noopener">Написать в Telegram</a></li></ul></div>
+      <div><h4>Блог</h4><ul>
+        <li><a class="roll" href="#">Все статьи</a></li><li><a class="roll" href="#">Какую работу отдать ИИ первой</a></li><li><a class="roll" href="#">Сколько стоит пилот</a></li><li><a class="roll" href="#">Ошибки при внедрении ИИ</a></li><li><a class="roll" href="#">С чего начать внедрение</a></li></ul></div>
+    </div>
+    <div class="foot__int">
+      <h4>Интеграции</h4>
+      <ul><li>Авито</li><li>Telegram</li><li>amoCRM</li><li>Битрикс24</li><li>1С</li><li>МойСклад</li><li>RetailCRM</li><li>YClients</li><li>Google Таблицы</li><li>Яндекс Диск</li><li>Почта</li><li>Excel</li></ul>
+    </div>
+    <div class="foot__bot">
+      <span>© 2026 DemoCRM · ИП Романенко А. А.</span>
+      <a href="#">Политика конфиденциальности</a>
+      <a href="#">Согласие на обработку данных</a>
+    </div>
+  </div>
+</footer>
+
+<!-- 12. Cookie -->
+<div class="cookie" id="cookie" role="dialog" aria-label="Уведомление о файлах cookie" hidden>
+  <p>Мы используем cookie, чтобы понимать, как работает сайт, и делать его удобнее. <a class="ul" href="#">Политика конфиденциальности</a></p>
+  <div class="cookie__b"><button class="btn btn--dark btn--l" type="button" data-cookie="yes">Принять</button><button class="cookie__no" type="button" data-cookie="no">Отклонить</button></div>
+</div>
+
+<!-- 13. Спросить ИИ -->
+<a class="ask" href="https://t.me/demigod_build" target="_blank" rel="noopener"><span class="ask__in"><svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M8 1.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Z" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M3 15l.6-3" fill="none" stroke="currentColor" stroke-width="1.4"/></svg>Спросить ИИ</span></a>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+<script src="js/site.js"></script>
+</body>
+</html>
